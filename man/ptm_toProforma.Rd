@@ -10,6 +10,8 @@ ptm_toProforma(seq, mod, Nterm = FALSE)
 \item{seq}{The sequence to be modified.}
 
 \item{mod}{The modifications with their positions on the peptide}
+
+\item{Nterm}{N-terminal modification}
 }
 \value{
 sequence with monoisotopic mass of ptm at its modification site.
@@ -18,8 +20,11 @@ sequence with monoisotopic mass of ptm at its modification site.
 Proforma modified peptide representation
 }
 \examples{
-ptm_toProforma(seq ="KSAPATGGVKKPHR", mod= "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
+ptm_toProforma(seq = "KSAPATGGVKKPHR",
+               mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
 
-ptm_toProforma(seq ="KQLATKVAR", mod= "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)", Nterm = "[+56.026]")
+ptm_toProforma(  seq = "KQLATKVAR",
+                 mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
+               Nterm = "[+56.026]-")
 
 }

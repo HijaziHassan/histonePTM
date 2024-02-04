@@ -7,7 +7,7 @@
   stringr::str_match_all(string = mod,
                          pattern = "(?<modif>[a-zA-Z0-9_-]+\\s?[a-zA-Z0-9_-]+?) \\([A-Z](?<index>\\d+)\\)") |>
     data.frame() |>
-    dplyr::mutate(modif = paste0("[",stringr::str_replace_all(modif, histptm_mass), "]"))
+    dplyr::mutate(modif = paste0("[",stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
 }
 
 #insert ptm in its respective position in the sequence
@@ -43,17 +43,21 @@ for(i in nrow(replace):1){
 #'
 #' @param seq The sequence to be modified.
 #' @param mod The modifications with their positions on the peptide
+#' @param Nterm N-terminal modification
 #'
 #' @return sequence with monoisotopic mass of ptm at its modification site.
 #'
 #' @import purrr
 #' @import stringr
-#' @import purrr
+#' @import dplyr
 #' @examples
-#' ptm_toProforma(seq ="KSAPATGGVKKPHR", mod= "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
+#' ptm_toProforma(seq = "KSAPATGGVKKPHR",
+#'                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
 #'
 #' @examples
-#' ptm_toProforma(seq ="KQLATKVAR", mod= "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)", Nterm = "[+56.026]")
+#' ptm_toProforma(  seq = "KQLATKVAR",
+#'                  mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
+#'                Nterm = "[+56.026]-")
 #'
 #' @export
 ptm_toProforma <- function(seq, mod, Nterm = FALSE){
