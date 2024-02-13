@@ -5,7 +5,7 @@
 \title{A function to normalize intensities of peptidoforms by dividing an intensity value by the
 sum of all intensities other peptidoforms of the same sequence.}
 \usage{
-quant_relIntensity(df, select_cols)
+quant_relIntensity(df, select_cols, grouping_var)
 }
 \arguments{
 \item{df}{A \code{tibble} or a \code{dataframe}}
@@ -25,8 +25,7 @@ A function to normalize intensities of peptidoforms by dividing an intensity val
 sum of all intensities other peptidoforms of the same sequence.
 }
 \examples{
-quant_relIntensity(mtcars, select_cols = contains("m"))
-quant_relIntensity(mtcars, select_cols = c(wt,  qsec, vs))
-
+quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
+quant_relIntensity(iris, starts_with("Sepal"), grouping_var = "Species")
 
 }

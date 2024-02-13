@@ -27,19 +27,20 @@
 #'
 #'
 #' @examples
-#' quant_relIntensity(mtcars, select_cols = contains("m"))
-#' quant_relIntensity(mtcars, select_cols = c(wt,  qsec, vs))
+#' quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
+#' quant_relIntensity(iris, starts_with("Sepal"), grouping_var = "Species")
 #'
 #'@import rlang
 #'@import dplyr
 #'
 #' @export
-quant_relIntensity <- function(df, select_cols){
+quant_relIntensity <- function(df, select_cols, grouping_var){
 
   select_exp <- rlang::enexpr(select_cols)
 
   df_norm <- df |>
-    dplyr::mutate( dplyr::across(!!select_exp, ~ .normalize_vec(x=.))
+    dplyr::mutate( dplyr::across(!!select_exp, ~ .normalize_vec(x=.)),
+                   .by = {{grouping_var}}
     )
 
 
@@ -50,6 +51,7 @@ quant_relIntensity <- function(df, select_cols){
 
 
 
+quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
 
 
 

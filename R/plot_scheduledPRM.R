@@ -18,6 +18,7 @@
 #' @import ggplot2
 #' @import grid
 #' @import tidyr
+#' @import cli
 #'
 #' @examples
 #' plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = TRUE)
