@@ -53,10 +53,9 @@ if(plot == TRUE){
   print(plot_aa_freq)
 
 
-  return(df_count)
-
-
 }
+
+return(df_count)
 
 }
 
