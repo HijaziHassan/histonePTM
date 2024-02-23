@@ -7,7 +7,7 @@
   stringr::str_match_all(string = mod,
                          pattern = "(?<modif>[a-zA-Z0-9_-]+\\s?[a-zA-Z0-9_-]+?) \\([A-Z](?<index>\\d+)\\)") |>
     data.frame() |>
-    dplyr::mutate(modif = paste0("[",stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
+    dplyr::mutate(modif = paste0("[+",stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
 }
 
 #insert ptm in its respective position in the sequence
