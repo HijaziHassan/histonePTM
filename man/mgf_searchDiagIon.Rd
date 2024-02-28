@@ -4,7 +4,7 @@
 \alias{mgf_searchDiagIon}
 \title{Find MS/MS spectra that contain a diagnostic ion.}
 \usage{
-mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002)
+mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002, save_file = FALSE)
 }
 \arguments{
 \item{mgf_file}{mgf file to search.}
@@ -14,7 +14,7 @@ mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002)
 \item{tol}{A mass tolerance to respect during the search}
 }
 \value{
-A \code{tibble} with 6 columns diagnostic ion and its intensity relative to the base peak.
+A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 }
 \description{
 Report user-defined diagnsotic ion(s) per MS/MS spectrum.

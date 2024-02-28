@@ -2,18 +2,22 @@
 % Please edit documentation in R/mgf_extractMS2scan.R
 \name{mgf_extractMS2scan}
 \alias{mgf_extractMS2scan}
-\title{Extract mz & intensity of an MS2 scan from an mgf file}
+\title{Extract mz and intensity values of an MS2 scan from an mgf file}
 \usage{
-mgf_extractMS2scan(mgf_file, scan)
+mgf_extractMS2scan(mgf_file, scan, save_file = FALSE, export_mgf = FALSE)
 }
 \arguments{
 \item{mgf_file}{.mgf file.}
 
-\item{scan}{scan number containing ms2 of interest}
+\item{scan}{scan number(s) containing of MS/MS events of interest.}
+
+\item{save_file}{\code{logical}. Save scans' mz and intensity values as \code{.csv} file.}
+
+\item{export_mgf}{\code{logical}. export subset mgf file only containing the selected MS/MS scans.}
 }
 \value{
 \code{dataframe} containing 4 columns: _mz_, _intensity_, _scan_, and _file_.
 }
 \description{
-Extract mz & intensity of an MS2 scan from an mgf file
+extract user-defined scans as \code{mgf} or as \code{.csv} file.
 }

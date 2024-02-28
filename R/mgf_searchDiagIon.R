@@ -2,9 +2,8 @@
 
 
 .mgf_to_sp <- function(mgf_file){
-
+  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
   BiocParallel::register(BiocParallel::SerialParam())
-
   Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
 
 }
@@ -15,20 +14,19 @@
 #' @description
 #' Report user-defined diagnsotic ion(s) per MS/MS spectrum.
 #' @param mgf_file mgf file to search.
-#' @param diag_ion  The mz of the diagnsotic ion
+#' @param diag_ion The mz of the diagnsotic ion
 #' @param tol A mass tolerance to respect during the search
 #'
-#' @return A \code{tibble} with 6 columns diagnostic ion and its intensity relative to the base peak.
+#' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @import dplyr
 #' @import Spectra
 #' @import BiocParallel
 #' @import MsBackendMgf
 #' @import cli
 #' @export
-mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002){
+mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE){
 
-  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
-
+  file_name = stringr::str_remove(string = mgf_file, pattern = ".mgf")
 
   sps <- .mgf_to_sp(mgf_file)
 
@@ -88,6 +86,11 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002){
 
   return(final_df)
 
+  if(isTRUE(save_file)){
+    file_csv = paste0("diagIons_", file_name, ".csv")
+    write.csv(x = df, file = file_csv, row.names = FALSE)
+    cli::cli_alert_success("{file_name} file is saved sucessfully.")
+  }
 
 }
 

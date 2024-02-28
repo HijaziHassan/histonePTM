@@ -1,48 +1,100 @@
 
 
+
 #function to read mgf file
 .mgf_to_sp <- function(mgf_file){
+  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
+  BiocParallel::register(BiocParallel::SerialParam())
   Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
 
 }
 
+#extract scan to mgf
+.scan_to_df <- function(scan, spec, mgf_file){
 
-#function to extract scan from Spectra object created out of mgf
-.extract_scan <- function(sps, scan, mgf_file){
+  spec <- spec[spec$acquisitionNum == scan]
 
-  peaks_df <- sps[sps$acquisitionNum %in% c(scan)] |>
-    peaksData() |>
-    unlist()|>
-    as.data.frame()
+  todf <- data.frame(
+    scan = scan,
+    mgf= mgf_file,
+    unlist(peaksData(spec))
+  )
 
-  peaks_df$scan <- scan
-  peaks_df$file <- mgf_file
-
-  return(peaks_df)
 
 }
 
 
-#' Extract mz & intensity of an MS2 scan from an mgf file
+
+#' Extract mz and intensity values of an MS2 scan from an mgf file
+#' @description
+#' extract user-defined scans as \code{mgf} or as \code{.csv} file.
 #'
 #' @param mgf_file .mgf file.
-#' @param scan scan number containing ms2 of interest
+#' @param scan scan number(s) containing of MS/MS events of interest.
+#' @param save_file \code{logical}. Save scans' mz and intensity values as \code{.csv} file.
+#' @param export_mgf \code{logical}. export subset mgf file only containing the selected MS/MS scans.
 #'
 #' @return \code{dataframe} containing 4 columns: _mz_, _intensity_, _scan_, and _file_.
 #'
 #' @import Spectra
 #' @import MsBackendMgf
 #' @import purrr
+#' @import BiocParallel
+#' @import cli
+#' @import stringr
 #'
 #'
 #'@export
-mgf_extract_ms2scan <- function(mgf_file, scan){
-  sps <- .mgf_to_sp(mgf_file)
+mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
 
-  df <- purrr::map_df(scan, .f = ~.extract_scan(sps = sps, scan= .x, mgf_file = mgf_file))
+  file_name = stringr::str_remove(string = mgf_file, pattern = ".mgf")
 
-  return(df)
+        sps <- .mgf_to_sp(mgf_file)
+
+    sub_sps <- sps[sps$acquisitionNum %in% c(scan)]
+
+
+    if(isTRUE(length(sub_sps$acquisitionNum) == 0L)){
+      cli::cli_abort(c("Must provide valid scan number(s).",
+                       "i"= " The following {scan} do(es)n't exist in {mgf_file} file." ,
+                       "x"= "You can quickly check by opening {mgf_file} in any text editor."))
+    }
+
+
+
+     if (isTRUE(export_mgf)) {
+    file_submgf = paste0("selectedscans_", file_name, ".mgf")
+    map <-
+      c(spectrumName = "TITLE", Spectra::spectraVariableMapping(MsBackendMgf::MsBackendMgf()))
+    Spectra::export(sub_sps,
+           backend = MsBackendMgf::MsBackendMgf(),
+           file = file_submgf,
+           mapping = map)
+    cli::cli_alert_success("{file_submgf} file is saved sucessfully.")
+  }
+
+
+
+  sub_sps_df <- map(.x = scan, ~ .scan_to_df(
+    scan = .x,
+    spec = sub_sps,
+    mgf_file = mgf_file
+  )) |>
+    dplyr::bind_rows()
+
+
+  return(sub_sps_df)
+
+  if (isTRUE(save_file)) {
+    file_csv = paste0("selectedscans_", file_name, ".csv")
+    write.csv(x =  sub_sps_df,
+              file = file_csv,
+              row.names = FALSE)
+    cli::cli_alert_success("{file_csv} file is saved sucessfully.")
+  }
+
+
+
 }
-
 
 
