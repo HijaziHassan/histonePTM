@@ -4,7 +4,7 @@
 #function to read mgf file
 .mgf_to_sp <- function(mgf_file){
   cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
-  BiocParallel::register(BiocParallel::SerialParam())
+
   Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
 
 }
@@ -16,7 +16,7 @@
 
   todf <- data.frame(
     scan = scan,
-    mgf= mgf_file,
+    mgf= basename(mgf_file),
     unlist(peaksData(spec))
   )
 
@@ -46,8 +46,11 @@
 #'
 #'@export
 mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
+  if(rlang::is_missing(mgf_file)) cli::cli_abort(c("Error:",
+                   "i" = 'argument mgf_file is missing with no default'))
 
-  file_name = stringr::str_remove(string = mgf_file, pattern = ".mgf")
+  file_name = basename(stringr::str_remove(string = mgf_file, pattern = ".mgf"))
+
 
         sps <- .mgf_to_sp(mgf_file)
 
@@ -80,7 +83,8 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
     spec = sub_sps,
     mgf_file = mgf_file
   )) |>
-    dplyr::bind_rows()
+    dplyr::bind_rows() |>
+    as_tibble()
 
 
   return(sub_sps_df)

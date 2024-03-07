@@ -26,7 +26,7 @@
 #' @export
 mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE){
 
-  file_name = stringr::str_remove(string = mgf_file, pattern = ".mgf")
+  file_name = basename(stringr::str_remove(string = mgf_file, pattern = ".mgf"))
 
   sps <- .mgf_to_sp(mgf_file)
 
@@ -54,7 +54,7 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE
         for (indx in seq_along(indices)) {
           #report data
           temp_vec_list[[indx]] <- c(
-            file         = mgf_file,
+            file         = file_name,
             diag_ion     = round(Spectra::mz(sps)[[i]][indices[indx]], 4),
             diag_relint  = round(Spectra::intensity(sps)[[i]][indices[indx]] / max(Spectra::intensity(sps)[[i]]),3),
             scan         = Spectra::acquisitionNum(sps)[[i]],

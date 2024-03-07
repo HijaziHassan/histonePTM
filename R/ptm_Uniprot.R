@@ -1,80 +1,82 @@
 
-# Helper function to download data
-get_url <- function(url, ...) {
-  response <- httr::GET(url, ...)
 
-  if (httr::http_status(response)$category != "Success") {
-    cat(httr::content(response, as = "text"))
-    stop("Error in HTTP request:", httr::http_status(response)$reason)
+
+
+get_url <- function(accession){
+PROTEINS_API = "https://www.ebi.ac.uk/proteins/api"
+response_check <- httr2::request(PROTEINS_API) |>
+  httr2::req_url_path_append('proteomics-ptm',
+                             {{accession}}) |>
+  httr2::req_error(is_error = \(resp) FALSE) |>
+  httr2::req_perform()
+
+if(httr2::resp_status(response_check) == 400){
+  cli::cli_abort(c("The request is failed.",
+                   "x" = "The provided accession '{accession}'  is not valid.",
+                   "i" = "Check the spelling or manually check it in Uniprot."))
+}
+
+return(response_check)
+}
+conditional_unnest <- function(df, var, stopme= FALSE){
+
+  ifelse({{var}} %in% names(df),
+    return(tidyr::unnest_wider(df, {{var}})),
+         return(df)
+        )
+
   }
 
-  return(response)
-}
 
 
-PROTEINS_API = "https://www.ebi.ac.uk/proteins/api"
-
-
-#' Retreive proteomics-validated PTMs from Uniprot
+#' Retreive MS-reported PTMs from Uniprot
 #' @description
-#' A function that access to Uniprot to retreive documented and classifed PTMs along with
-#' many other features such as universal spectrum idetifier (USI) if reported by the database of origin.
+#' Get PTM information  reported in literature and documented by Uniprot.
 #'
-#' @param accession The accession number of the interrogated protein.
-#' @param config For advanced users.
-#' @param ... for any later addition.
-#' @import rlang
-#' @import stringr
-#' @import tidyr
-#' @import httr
-#' @import jsonlite
 #'
-#' @return A \code{tibble} with PTMs reported in Uniprot with their labels (gold, silver, ...).
-#' Note not all PTMs are yet documented in Uniport.
+#' @param Uniprot_accession Uniprot protein-specific accession code.
+#' @param save_file \code{logical}. save results as a \code{.csv} file (optional).
+#'
+#' @return A \code{tibble} and \code{.csv} file.
 #' @examples
-#' ptm_Uniprot(acession = "B9FXV5")
+#' ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = TRUE)
+#'
 #' @export
 
-ptm_Uniprot <- function(accession, config = httr::accept("application/json"), ...){
+ptm_Uniprot <- function(Uniprot_accession, save_file= FALSE){
 
-  accession = rlang::enexpr(accession)
-
-  full_url= stringr::str_glue("{PROTEINS_API}/proteomics-ptm/{accession}")
-
-  #select the columns that I think would be of interest.
-  # cols_to_keep <- c('accession', 'entryName', 'taxid', 'begin', 'end', 'peptide',
-  #                   'name', 'position', 'sources', 'id', 'properties.Pubmed ID',
-  #                   'properties.Confidence score','properties.Universal Spectrum Id',
-  #                   'properties.Proforma', 'dbReferences.properties.Localization probability')
+resp <- get_url(accession = {{Uniprot_accession}})
 
 
-  response = get_url(url= {{full_url}})
+  resp_df <- resp |>
+  httr2::resp_body_json() |>
+   purrr::pluck("features") |>
+  purrr::map_dfr(\(x) {as_tibble(x)})
 
-  #turn json to a readable format
-  data_chr <- base::rawToChar(response$content)
+  if('ptms' %in% resp_df){
 
-  #then to a dataframe
-  data_json <-jsonlite::fromJSON(data_chr, flatten = TRUE)
+  resp_df <- resp_df |>
+   tidyr::unnest_wider("ptms") |>
+   tidyr::unnest_longer(c(dbReferences,sources)) |>
+   tidyr::unnest_wider(c(xrefs, evidences, dbReferences), names_sep = "_") |>
+   tidyr::unnest_wider(c(evidences_source, dbReferences_properties), names_sep = "_") |>
+  conditional_unnest("evidences_source_properties")
+  }else{
 
-  #successive unnesting to only extract data of interest
-  df_final <- data_json |>
-    tidyr::as_tibble() |>
-    #tidyr::unnest_auto(c(features, ptms, dbReferences)) |>
-    #tidyr::unnest(cols = c(features, ptms, dbReferences)) |>
-    tidyr::unnest(features) |>
-    tidyr::unnest(ptms) |>
-    tidyr::unnest_longer(dbReferences) |>
-    tidyr::unpack(dbReferences, names_sep = ".")
-    #tidyr::unnest_wider(dbReferences)
-    #tidyr::unnest_longer(dbReferences)
-    # tidyr::unnest(dbReferences,
-    #               names_sep = "." ) |>
-    #  dplyr::select(any_of(cols_to_keep), ...)
-
-  return(df_final)
+    cli::cli_alert_info("No PTMs are found for '{Uniprot_accession}' in Uniprot.")
 }
 
 
+
+
+  if(isTRUE(save_file) & length(resp_df > 0L)){
+    file_name = paste0(Uniprot_accession, "_ptmUniprot.csv")
+    readr::write_csv(resp_df, file_name)
+    cli::cli_alert_success("The file {file_name} is saved successfully.")
+  }
+
+  return(resp_df)
+}
 
 
 

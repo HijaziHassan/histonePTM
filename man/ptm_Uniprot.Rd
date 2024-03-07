@@ -2,25 +2,22 @@
 % Please edit documentation in R/ptm_Uniprot.R
 \name{ptm_Uniprot}
 \alias{ptm_Uniprot}
-\title{Retreive proteomics-validated PTMs from Uniprot}
+\title{Retreive MS-reported PTMs from Uniprot}
 \usage{
-ptm_Uniprot(accession, config = httr::accept("application/json"), ...)
+ptm_Uniprot(Uniprot_accession, save_file = FALSE)
 }
 \arguments{
-\item{accession}{The accession number of the interrogated protein.}
+\item{Uniprot_accession}{Uniprot protein-specific accession code.}
 
-\item{config}{For advanced users.}
-
-\item{...}{for any later addition.}
+\item{save_file}{\code{logical}. save results as a \code{.csv} file (optional).}
 }
 \value{
-A \code{tibble} with PTMs reported in Uniprot with their labels (gold, silver, ...).
-Note not all PTMs are yet documented in Uniport.
+A \code{tibble} and \code{.csv} file.
 }
 \description{
-A function that access to Uniprot to retreive documented and classifed PTMs along with
-many other features such as universal spectrum idetifier (USI) if reported by the database of origin.
+Get PTM information  reported in literature and documented by Uniprot.
 }
 \examples{
-ptm_Uniprot(acession = "B9FXV5")
+ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = TRUE)
+
 }
