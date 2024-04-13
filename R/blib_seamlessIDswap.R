@@ -9,22 +9,51 @@
 #' @param db_main The name of the main Skyline \code{.blib} library file (\code{string}).
 #' @param db_redundant The name of the redundant Skyline \code{.blib} library file (\code{string}).
 #' @param rt Retention time (\code{numeric}) of the ID to be set as the best spectrum (rounded to first decimal).
+#' Also accepts numeric vector.
 #' @param mz \emph{m/z} (\code{numeric}) value of the target ID (it will be truncated to two decimal places).
+#' Also accepts numeric vector.
 #' @param tol The tolerance (\code{optional}) to be used to match the provided \emph{m/z} (\code{numeric}).
 #' The default value is used to have a perfect match.
 #' @param file MS raw file name without extension (\code{optional}). In case of multiple matches to \code{rt},
 #'  it is necessary to provide the \code{file} name to force specific ID selection (the file name is found at the top of
 #' chromatogram window of each sample in Skyline interface).
+#' Also accepts character vector.
+#'
+#' @import DBI
+#' @import dplyr
+#' @import RSQLite
+#' @import cli
 #'
 #' @return The same library but overwritten with the new values.
+#' A dataframe containing all details on the removed and added ids.
 #' @export
+
 blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=""){
+
 
   #establish connection with databases
   conn_redun   <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
-  conn_main <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
+  conn_main    <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
 
 
+  df_list <-
+    purrr::pmap(.l = list(rt=rt, mz=mz, tol=tol, file=file),
+                .f = .fetch_ID ,
+                .progress = TRUE) |>
+    dplyr::bind_rows()
+
+
+  return(df_list)
+
+  DBI::dbDisconnect(conn_redun)
+  DBI::dbDisconnect(conn_main)
+}
+
+
+
+
+#top function
+.fetch_ID <- function(conn_main = conn_main, conn_redun, rt, mz, tol, file){
   #get id for specific rt and mz from reduandant library
   .blib_getRefID(conn= conn_redun, rt, mz, tol= 1e-12, file="") -> id_table
 
@@ -36,32 +65,35 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
   id_file   <- id_table$fileName
 
 
-
   #transfer the id from the redundant library to the main library
   .blib_transferID(conn_from = conn_redun, conn_to = conn_main, table = "RefSpectra", ids = id_redun)
   .blib_transferID(conn_from = conn_redun, conn_to = conn_main, table = "RefSpectraPeaks", ids = id_redun )
-
-  #make the id from the reduandant library as main id. i.e. best spectrum and get ref_id
-  .blib_swapID(conn = conn_main, ids = id_redun) -> ref_id
+  #
+  #make the id from the reduandant library as main id. i.e. best spectrum and get id_ref
+  .blib_swapID(conn = conn_main, ids = id_redun) -> id_ref
 
   #remove initial id (that was representing the best sepctrum) from the main library
-  .blib_removeID(conn = conn_main, ids = ref_id)
+  .blib_removeID(conn = conn_main, ids = id_ref)
 
-  DBI::dbDisconnect(conn_redun)
-  DBI::dbDisconnect(conn_main)
+  # cli::cli_alert_success("TRANSFER SUMMARY:
+  #                        peptide = {id_modseq},
+  #                        m/z  = {id_mz},
+  #                        z    = {id_z},
+  #                        rt   = {id_rt},
+  #                        file = {id_file},
+  #                        from: '{db_redundant}' to: '{db_main}'
+  #                        is successfully transfered.")
+  #
 
-  cli::cli_alert_success("TRANSFER SUMMARY:
-                         peptide = {id_modseq},
-                         m/z  = {id_mz},
-                         z    = {id_z},
-                         rt   = {id_rt},
-                         file = {id_file},
-                         from: '{db_redundant}' to: '{db_main}'
-                         is successfully transfered.")
+  df_summary <- dplyr::tbl(conn_redun, "RefSpectra") |>
+    dplyr::collect() |>
+    dplyr::filter( id %in% c(id_redun, id_ref)) |>
+    dplyr::mutate(status = ifelse(id == id_redun, "added", "removed"), .before = 2)
+
+
+  return(df_summary)
 
 }
-
-
 
 #get file names
 .blib_getFileID <- function(conn){
@@ -153,7 +185,7 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
     warning(paste("No rows with provided IDs found in table of redundant lib"))
   }else{
 
-    DBI::dbWriteTable(conn = conn_to,name = table, value = rows_to_copy, overwrite = FALSE, append = TRUE)
+    DBI::dbWriteTable(conn = conn_to, name = table, value = rows_to_copy, overwrite = FALSE, append = TRUE)
 
   }
 
@@ -184,7 +216,7 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
 
-  DBI::dbWriteTable(conn = conn, 'RetentionTimes', rt_table_updated, overwrite = TRUE)
+  DBI::dbWriteTable(conn = conn, name= 'RetentionTimes', value = rt_table_updated, overwrite = TRUE)
 
   return(as.integer(ref_id))
 
@@ -192,7 +224,11 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 #remove id from main library RefSpectra and RefSpectraPeaks tables.
 .blib_removeID <- function(conn, ids) {
 
-  DBI::dbExecute(conn, paste0("DELETE FROM RefSpectra WHERE id = ", ids))
-  DBI::dbExecute(conn, paste0("DELETE FROM RefSpectraPeaks WHERE RefSpectraID = ", ids))
+  DBI::dbExecute(conn = conn, paste0("DELETE FROM RefSpectra WHERE id = ", ids))
+  DBI::dbExecute(conn = conn, paste0("DELETE FROM RefSpectraPeaks WHERE RefSpectraID = ", ids))
 
 }
+
+
+
+
