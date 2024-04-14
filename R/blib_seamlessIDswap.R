@@ -31,29 +31,43 @@
 blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=""){
 
 
-  #establish connection with databases
-  conn_redun   <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
-  conn_main    <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
+
+  #databases are super assigned to be used by all underlying functions.
+  conn_redun   <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
+  conn_main    <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
+
+  on.exit({
+    dbDisconnect(conn_redun)
+    dbDisconnect(conn_main)
+    rm(list = c("conn_redun", "conn_main"), envir = .GlobalEnv)
+  }, add = TRUE)
+
+
+
 
 
   df_list <-
-    purrr::pmap(.l = list(rt=rt, mz=mz, tol=tol, file=file),
-                .f = .fetch_ID ,
+    purrr::pmap(.l = list(
+                          rt=rt,
+                          mz=mz,
+                          tol=tol,
+                          file = file
+                          ),
+                .f = .fetch_ID,
                 .progress = TRUE) |>
     dplyr::bind_rows()
 
-
   return(df_list)
 
-  DBI::dbDisconnect(conn_redun)
-  DBI::dbDisconnect(conn_main)
+
+
 }
 
 
 
 
 #top function
-.fetch_ID <- function(conn_main = conn_main, conn_redun, rt, mz, tol, file){
+.fetch_ID <- function(rt, mz, tol, file){
   #get id for specific rt and mz from reduandant library
   .blib_getRefID(conn= conn_redun, rt, mz, tol= 1e-12, file="") -> id_table
 
@@ -92,6 +106,8 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
   return(df_summary)
+
+
 
 }
 
