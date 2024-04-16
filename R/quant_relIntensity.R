@@ -34,21 +34,34 @@
 #'@import dplyr
 #'
 #' @export
+# quant_relIntensity <- function(df, select_cols, grouping_var){
+#
+#   select_exp <- rlang::enexpr(select_cols)
+#
+#   df_norm <- df |>
+#     dplyr::mutate( dplyr::across(!!select_exp, ~ .normalize_vec(x=.)),
+#                    .by = {{grouping_var}}
+#     )
+#
+#
+#
+#   rlang::eval_tidy(df_norm)
+#
+# }
 quant_relIntensity <- function(df, select_cols, grouping_var){
 
-  select_exp <- rlang::enexpr(select_cols)
+  #select_exp <- rlang::enexpr(select_cols)
 
   df_norm <- df |>
-    dplyr::mutate( dplyr::across(!!select_exp, ~ .normalize_vec(x=.)),
+    dplyr::mutate( dplyr::across({{select_cols}}, ~ .normalize_vec(x=.)),
                    .by = {{grouping_var}}
     )
 
 
 
-  rlang::eval_tidy(df_norm)
+  return(df_norm)
 
 }
-
 
 
 quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
