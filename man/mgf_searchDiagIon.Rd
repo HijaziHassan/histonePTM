@@ -12,10 +12,12 @@ mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002, save_file = FALSE)
 \item{diag_ion}{The mz of the diagnsotic ion}
 
 \item{tol}{A mass tolerance to respect during the search}
+
+\item{save_file(logical)}{Save the results as csv file.}
 }
 \value{
 A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 }
 \description{
-Report user-defined diagnsotic ion(s) per MS/MS spectrum.
+Report user-defined diagnsotic ion(s) per MS/MS spectrum from an \code{mgf} file.
 }

@@ -12,10 +12,11 @@
 
 #' Find MS/MS spectra that contain a diagnostic ion.
 #' @description
-#' Report user-defined diagnsotic ion(s) per MS/MS spectrum.
+#' Report user-defined diagnsotic ion(s) per MS/MS spectrum from an \code{mgf} file.
 #' @param mgf_file mgf file to search.
 #' @param diag_ion The mz of the diagnsotic ion
 #' @param tol A mass tolerance to respect during the search
+#' @param save_file(logical) Save the results as csv file.
 #'
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @import dplyr
@@ -34,8 +35,9 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE
   final_list = list()
 
 
-  cli::cli_inform(message = "Extracting diagnostic ions from {mgf_file}.")
+cli::cli_inform(message = "Extracting diagnostic ions from {mgf_file}.")
 
+cli::cli_progress_bar()
 
   for (i in 1:length(acquisitionNum(sps))) {
     temp_list_combined <- list()
@@ -63,7 +65,7 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE
             rt           = round(Spectra::rtime(sps)[[i]] / 60, 2) #sec to min
           )
 
-
+          cli::cli_progress_update()
 
         }
 
@@ -80,9 +82,13 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE
     final_list[[i]] <- dplyr::bind_rows(temp_list_combined)
   }
 
-  final_df <- dplyr::bind_rows(final_list)
+  final_df <- dplyr::bind_rows(final_list) |>
+    dplyr::mutate(
+      dplyr::across(dplyr::all_of(c("diag_ion", "diag_relint", "prec_mass", "rt")), as.double),
+      dplyr::across(dplyr::all_of(c("scan", "prec_z")), as.integer)
+    )
 
-
+#cli::cli_progress_done()
 
   return(final_df)
 
