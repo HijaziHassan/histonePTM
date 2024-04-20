@@ -21,12 +21,13 @@ reticulate::source_python("./inst/python/extract_scan_mgf.py")
 
   my_spec = data.frame(
     mgf = file_name,
-    scan = spec$params$scans,
+    scan = as.integer(spec$params$scans),
     mz = spec$`m/z array`,
-    intenisty = spec$`intensity array`
+    intensity = spec$`intensity array`
   ) |> tibble::as_tibble()
 
 return(my_spec)
 }
 }
+
 
