@@ -53,7 +53,7 @@ resp <- get_url(accession = {{Uniprot_accession}})
    purrr::pluck("features") |>
   purrr::map_dfr(\(x) {as_tibble(x)})
 
-  if('ptms' %in% resp_df){
+  if('ptms' %in% names(resp_df)){
 
   resp_df <- resp_df |>
    tidyr::unnest_wider("ptms") |>

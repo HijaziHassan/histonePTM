@@ -105,7 +105,7 @@ litReview <- function(start, end, term, db= "pubmed"){
     dplyr::summarize(dplyr::across(id:title, ~paste0(na.omit(.x), collapse = ";")), .groups = "drop") |>
     readr::write_csv(str_glue("{term}_{start_year}_{end_year}.csv"))
 
-  cat(stringr::str_glue("\n\nFile {term}_{start_year}_{end_year}.csv is saved sucessfully.\n"))
+  cat(stringr::str_glue("\n\nFile {term}_{start_year}_{end_year}.csv is saved successfully.\n"))
 
   cat("\n\nÀ plus dans l'bus !\n")
 

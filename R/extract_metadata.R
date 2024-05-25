@@ -12,14 +12,14 @@
 #'
 #' @return \code{.csv} file with 3 columns: \code{file}, \code{channel}, and \code{dat}.
 #' @export
-extract_metadata <- function(filename){
+extract_metadata <- function(filename, save_file= 'metadata.csv'){
 
   suppressWarnings({
 
     extract_names <- readxl::read_excel(path = {{filename}},
                                         sheet = "Search settings and infos",
                                         .name_repair = "unique_quiet") %>%
-      #I used those since they'are always present even if one sample is being analyzed.
+      #I used those row identifiers since they'are always present even if one sample is being processed in Proline.
       dplyr::filter(project_name %in% c("result_file_name", "raw_file_name", "job_number")) %>%
       tibble::as_tibble(.name_repair = "unique_quiet")
 
@@ -30,7 +30,9 @@ extract_metadata <- function(filename){
     dplyr::mutate(dat= as.integer(dat)) |>
     dplyr::mutate(channel= stringr::str_remove(channel, ".dat"))
 
-  write.csv("metadata.csv")
+  if(save_file){
+  write.csv({{save_file}})
+  }
   return(dat_files)
 }
 
