@@ -12,7 +12,14 @@ mgf_extractScan <- function(mgf_file, scan){
 
 reticulate::source_python("./inst/python/extract_scan_mgf.py")
 
-  spec <- extract_scan(mgf_file_path = mgf_file, target_scan = scan)
+list_df <- vector(mode = "list", length = length(mgf_file)*length(scan))
+
+
+for(mgf in mgf_file){
+
+  for(s in scan){
+
+spec <- extract_scan(mgf_file_path = mgf, target_scan = s)
 
   if(!is.null(spec)){
 
@@ -21,12 +28,24 @@ reticulate::source_python("./inst/python/extract_scan_mgf.py")
 
   my_spec = data.frame(
     mgf = file_name,
-    scan = spec$params$scans,
+    scan = as.integer(spec$params$scans),
     mz = spec$`m/z array`,
-    intenisty = spec$`intensity array`
-  ) |> tibble::as_tibble()
+    intensity = spec$`intensity array`
+              ) |>
+    tibble::as_tibble()
 
-return(my_spec)
-}
+
+  # Append the data frame to the results list
+  list_df[[length(list_df) + 1]] <- my_spec
+
+          }
+      }
+
 }
 
+  final_df <- dplyr::bind_rows(list_df)
+
+  return(final_df)
+
+
+  }

@@ -15,9 +15,11 @@
   spec <- spec[spec$acquisitionNum == scan]
 
   todf <- data.frame(
-    scan = scan,
+
     mgf= basename(mgf_file),
+    scan = as.integer(scan),
     unlist(peaksData(spec))
+
   )
 
 
@@ -46,6 +48,8 @@
 #'
 #'@export
 mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
+
+
   if(rlang::is_missing(mgf_file)) cli::cli_abort(c("Error:",
                    "i" = 'argument mgf_file is missing with no default'))
 
@@ -56,16 +60,43 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
 
     sub_sps <- sps[sps$acquisitionNum %in% c(scan)]
 
+    if(length(sub_sps$acquisitionNum) == 0L & all(is.na(sps$acquisitionNum))){
 
-    if(isTRUE(length(sub_sps$acquisitionNum) == 0L)){
+      pattern <- "(scan=|_?scan:|Scan|Index:)\\s*(\\d+)"
+      for(s in scan){
+      for(ti in 1:length(sps)){
+
+
+        title = sps$TITLE[ti]
+
+        # Search for the pattern in the title
+        match <- stringr::str_extract(title, pattern = pattern, group = 2)
+
+        #if scan is found in the title, replace NA with this scan to extract mz and intensity values
+        if(match == s){
+          scan_number <- as.integer(match)
+          sps$acquisitionNum[ti] = scan_number
+          cat("Scan number found:", scan_number, "\n")
+          break
+
+        }else{next}
+
+        }
+      }
+
+      sub_sps <- sps[sps$acquisitionNum %in% c(scan)]
+
+      }else{
+
       cli::cli_abort(c("Must provide valid scan number(s).",
-                       "i"= " The following {scan} do(es)n't exist in {mgf_file} file." ,
+                       "i"= " The following {scan} do(es)n't exist or it is neither found
+                       as a separate line or in the TITLE line in {mgf_file} file." ,
                        "x"= "You can quickly check by opening {mgf_file} in any text editor."))
     }
 
 
 
-     if (isTRUE(export_mgf)) {
+     if(export_mgf){
     file_submgf = paste0("selectedscans_", file_name, ".mgf")
     map <-
       c(spectrumName = "TITLE", Spectra::spectraVariableMapping(MsBackendMgf::MsBackendMgf()))
@@ -84,12 +115,12 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
     mgf_file = mgf_file
   )) |>
     dplyr::bind_rows() |>
-    as_tibble()
+    tidyr::as_tibble()
 
 
   return(sub_sps_df)
 
-  if (isTRUE(save_file)) {
+  if (save_file) {
     file_csv = paste0("selectedscans_", file_name, ".csv")
     write.csv(x =  sub_sps_df,
               file = file_csv,

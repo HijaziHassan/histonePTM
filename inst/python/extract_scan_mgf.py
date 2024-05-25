@@ -19,7 +19,7 @@ def extract_scan(mgf_file_path, target_scan):
         for spectrum in mgf_reader:
             try:
                 scan_number = int(spectrum['params']['scans'])
-                if scan_number == target_scan:
+                if scan_number == int(target_scan):
                     # Found the target scan, store its information and break the loop
                     return spectrum
             #sometimes, 'SCANS=xxx' line is missing. check for the scan in the 'TITLE' line.
@@ -29,10 +29,14 @@ def extract_scan(mgf_file_path, target_scan):
             title = spectrum['params'].get('title', '')
             try:
                 #Different tools export mgf title format in a different way. Try to capture the scan in any of the cases.
-                scan_number = int(re.split('scan=|scan:|Scan |Index: ', title)[1].rstrip('"'))
+                #scan_number = int(re.split('scan=|_?scan:|Scan |Index: ', title)[1].rstrip('"'))
+                pattern = r"(scan=|scan:|Scan|Index:)\s*(\d+)"
+                match = re.search(pattern, title)
+                scan_number = int(match.group(2))
 
-                if scan_number == target_scan:
+                if scan_number == int(target_scan):
                     # Found the target scan, store its information and break the loop
+                    spectrum['params']['scans'] = scan_number
                     return spectrum
 
             except (IndexError, ValueError):
@@ -41,3 +45,4 @@ def extract_scan(mgf_file_path, target_scan):
     # If the loop completes without finding the target scan, print a message
     print(f"Scan {target_scan} is not found in {os.path.basename(mgf_file_path)}.")
     return None  # Return None if the scan is not found
+
