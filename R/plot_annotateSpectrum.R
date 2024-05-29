@@ -12,6 +12,7 @@
 #' @param mz \code{numeric} vector containing mz values
 #' @param intensity \code{numeric} vector containing intensity values
 #' @param title title of the annotate MS/MS plot
+#' @param output_plot_name Name of the plot in case you want to save it
 #'
 #'
 #' @return Annotate MS/MS plot

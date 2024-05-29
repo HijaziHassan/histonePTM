@@ -6,7 +6,8 @@
 #' @param tr_end ending retention time column name.
 #' @param y_axis column name of the variable to appear on x-axis. Default is "m/z" but the axis texts are balnked out.
 #' @param label Default is m/z. number will appear in the middle of the horizontal bar.
-#' @param ...
+#' @param ... For any additions
+#' @param save_plot \code{logical} in case needed to save the plot
 #'
 #' @return plot with ranges representing intervals when each precursor m/z is monitored.
 #' @import ggplot2
