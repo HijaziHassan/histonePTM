@@ -1,0 +1,26 @@
+#' @title Histone peptides
+#' @description
+#' a named list of proteins including a nested list of sequence, enzyme fragments and labels
+#'
+#' \itemize{
+#'   \item Protein. H3, H4, and iRT
+#'      \item seq. Full amino acid sequence.
+#'      \item Fragments. argC_frags/tryp_frags.
+#'      \item label. Representation of fragments by position in sequence (e.g. "H3 (3-8)" )
+#'
+#' }
+#' @format a named character vector of proteins.
+#' @source in-house user defined names
+#' @examples
+#' # sequenceDB[['H3']]
+#' # sequenceDB[['H4']][['label']]
+#' # sequenceDB$H3$argC_frags
+#' # sequenceDB$H3$seq
+#'
+
+#'
+#'
+#'
+#'
+
+"sequenceDB"
