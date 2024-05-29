@@ -25,7 +25,9 @@ plot_schdueldPRMranges(
 
 \item{label}{Default is m/z. number will appear in the middle of the horizontal bar.}
 
-\item{...}{}
+\item{save_plot}{\code{logical} in case needed to save the plot}
+
+\item{...}{For any additions}
 }
 \value{
 plot with ranges representing intervals when each precursor m/z is monitored.

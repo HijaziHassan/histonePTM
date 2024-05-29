@@ -25,7 +25,9 @@ A wrapper function around \code{rentrez} package functions to extract article ti
 Check \code{rentrez package} \href{https://cran.r-project.org/web/packages/rentrez/vignettes/rentrez_tutorial.html}{documentation}.
 }
 \examples{
-litReview(start = 2019, end = 2024, term = "Huntington's disease AND histone post-translational modifications")
-
+\dontrun{
+litReview(start = 2019, end = 2024, term = "Huntington's disease
+AND histone post-translational modifications")
+}
 
 }

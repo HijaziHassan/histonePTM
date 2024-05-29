@@ -4,7 +4,15 @@
 \alias{plot_annotateSpectrum}
 \title{Annotate MS/MS Spectra}
 \usage{
-plot_annotateSpectrum(Profrma_peptide, prec_mz, prec_z, mz, intensity, title)
+plot_annotateSpectrum(
+  Profrma_peptide,
+  prec_mz,
+  prec_z,
+  mz,
+  intensity,
+  title,
+  output_plot_name
+)
 }
 \arguments{
 \item{Profrma_peptide}{Peptide in proforma representation}
@@ -18,6 +26,8 @@ plot_annotateSpectrum(Profrma_peptide, prec_mz, prec_z, mz, intensity, title)
 \item{intensity}{\code{numeric} vector containing intensity values}
 
 \item{title}{title of the annotate MS/MS plot}
+
+\item{output_plot_name}{Name of the plot in case you want to save it}
 }
 \value{
 Annotate MS/MS plot

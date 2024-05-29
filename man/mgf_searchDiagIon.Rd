@@ -13,7 +13,7 @@ mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002, save_file = FALSE)
 
 \item{tol}{A mass tolerance to respect during the search}
 
-\item{save_file(logical)}{Save the results as csv file.}
+\item{save_file}{\code{logical} Save the results as csv file.}
 }
 \value{
 A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.

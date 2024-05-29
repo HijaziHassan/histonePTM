@@ -13,6 +13,8 @@ quant_relIntensity(df, select_cols, grouping_var)
 \item{select_cols}{Either one of the select helper functions with proper argument
 (e.g. \code{starts_with("WT_")}) or a vector \code{c()}containing the names of
  intensity/abundance columns to be normalized.}
+
+\item{grouping_var}{A unqiue variable to group by like 'peptide sequence' or so.}
 }
 \value{
 The provided \code{dataframe} is returned with relative instead of absolute
