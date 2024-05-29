@@ -5,6 +5,10 @@
 #' @param mgf_file mgf file (path) name
 #' @param scan \code{numeric}. scan number
 #'
+#' @import reticulate
+#' @import dplyr
+#' @import tibble
+#'
 #' @return tibble with 4 colums: file name, scan number and their corresponfing mz and intensity values.
 #' @export
 
