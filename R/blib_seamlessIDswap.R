@@ -32,10 +32,11 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
 
-  #databases are super assigned to be used by all underlying functions.
+  #databases are super-assigned to be used by all underlying functions.
   conn_redun   <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
   conn_main    <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
 
+  #remove databases from global environment
   on.exit({
     dbDisconnect(conn_redun)
     dbDisconnect(conn_main)
@@ -65,7 +66,7 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
 
-
+#' @noRd
 #top function
 .fetch_ID <- function(rt, mz, tol, file){
   #get id for specific rt and mz from reduandant library
@@ -111,6 +112,8 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 }
 
+
+#' @noRd
 #get file names
 .blib_getFileID <- function(conn){
 
@@ -122,6 +125,9 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
   return(src_file)
 
 }
+
+
+#' @noRd
 #get id of an ID from library by providing mz and RT
 .blib_getRefID <- function(conn, rt, mz, tol= 1e-12, file=""){
 
@@ -159,6 +165,9 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
 }
+
+
+#' @noRd
 #transfer ID from redundant library to main library
 .blib_transferID <- function(conn_from, conn_to, table = c("RefSpectra", "RefSpectraPeaks"), ids) {
 
@@ -207,6 +216,9 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
 }
+
+
+#' @noRd
 #This function opertes on the retention time table of the main library to promote redun_id and silence ref_id
 .blib_swapID <- function(conn, ids){
 
@@ -237,6 +249,9 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
   return(as.integer(ref_id))
 
 }
+
+
+#' @noRd
 #remove id from main library RefSpectra and RefSpectraPeaks tables.
 .blib_removeID <- function(conn, ids) {
 
