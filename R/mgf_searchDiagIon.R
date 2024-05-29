@@ -1,12 +1,7 @@
 
 
 
-.mgf_to_sp <- function(mgf_file){
-  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
-  BiocParallel::register(BPPARAM = BiocParallel::SerialParam())
-  Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
 
-}
 
 
 
@@ -16,7 +11,7 @@
 #' @param mgf_file mgf file to search.
 #' @param diag_ion The mz of the diagnsotic ion
 #' @param tol A mass tolerance to respect during the search
-#' @param save_file(logical) Save the results as csv file.
+#' @param save_file \code{logical} Save the results as csv file.
 #'
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @import dplyr
@@ -25,12 +20,14 @@
 #' @import Spectra
 #' @import cli
 #' @import rlang
+#' @import BiocManager
+#'
 #' @export
 mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE){
 
   libraries <- c("BiocParallel", "Spectra", "MsBackendMgf")
 
-  if (!require("BiocManager")) install.packages("BiocManager")
+  if (!requireNamespace("BiocManager")) install.packages("BiocManager")
 
   #Checking if the package belongs to CRAN or to Bioconductor and installing them accordingly.
 
@@ -43,7 +40,7 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, save_file = FALSE
   }
 
   #Loading the libraries
-  sapply(libraries,require,character=TRUE)
+  sapply(libraries,requireNamespace,character=TRUE)
 
 
 if(is_missing(mgf_file)){
@@ -146,3 +143,11 @@ cli::cli_progress_done(result = "done")
 #'
 
 
+
+#' @noRd
+.mgf_to_sp <- function(mgf_file){
+  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
+  BiocParallel::register(BPPARAM = BiocParallel::SerialParam())
+  Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
+
+}
