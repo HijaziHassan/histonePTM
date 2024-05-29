@@ -19,6 +19,7 @@
 #' @param select_cols Either one of the select helper functions with proper argument
 #' (e.g. \code{starts_with("WT_")}) or a vector \code{c()}containing the names of
 #'  intensity/abundance columns to be normalized.
+#' @param grouping_var A unqiue variable to group by like 'peptide sequence' or so.
 #'
 #' @return The provided \code{dataframe} is returned with relative instead of absolute
 #' intensities values of the abundance/intensity columns passed to the function.
