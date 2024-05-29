@@ -2,31 +2,6 @@
 
 
 
-get_url <- function(accession){
-PROTEINS_API = "https://www.ebi.ac.uk/proteins/api"
-response_check <- httr2::request(PROTEINS_API) |>
-  httr2::req_url_path_append('proteomics-ptm',
-                             {{accession}}) |>
-  httr2::req_error(is_error = \(resp) FALSE) |>
-  httr2::req_perform()
-
-if(httr2::resp_status(response_check) == 400){
-  cli::cli_abort(c("The request is failed.",
-                   "x" = "The provided accession '{accession}'  is not valid.",
-                   "i" = "Check the spelling or manually check it in Uniprot."))
-}
-
-return(response_check)
-}
-conditional_unnest <- function(df, var, stopme= FALSE){
-
-  ifelse({{var}} %in% names(df),
-    return(tidyr::unnest_wider(df, {{var}})),
-         return(df)
-        )
-
-  }
-
 
 
 #' Retreive MS-reported PTMs from Uniprot
@@ -37,7 +12,14 @@ conditional_unnest <- function(df, var, stopme= FALSE){
 #' @param Uniprot_accession Uniprot protein-specific accession code.
 #' @param save_file \code{logical}. save results as a \code{.csv} file (optional).
 #'
+#' @import httr2
+#' @import cli
+#' @import tidyr
+#'
+#'
 #' @return A \code{tibble} and \code{.csv} file.
+#'
+#'
 #' @examples
 #' ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = TRUE)
 #'
@@ -71,7 +53,7 @@ resp <- get_url(accession = {{Uniprot_accession}})
 
   if(isTRUE(save_file) & length(resp_df > 0L)){
     file_name = paste0(Uniprot_accession, "_ptmUniprot.csv")
-    readr::write_csv(resp_df, file_name)
+    write.csv(x = resp_df,file =  file_name, row.names = FALSE)
     cli::cli_alert_success("The file {file_name} is saved successfully.")
   }
 
@@ -79,4 +61,35 @@ resp <- get_url(accession = {{Uniprot_accession}})
 }
 
 
+
+
+#' @noRd
+get_url <- function(accession){
+  PROTEINS_API = "https://www.ebi.ac.uk/proteins/api"
+  response_check <- httr2::request(PROTEINS_API) |>
+    httr2::req_url_path_append('proteomics-ptm',
+                               {{accession}}) |>
+    httr2::req_error(is_error = \(resp) FALSE) |>
+    httr2::req_perform()
+
+  if(httr2::resp_status(response_check) == 400){
+    cli::cli_abort(c("The request is failed.",
+                     "x" = "The provided accession '{accession}'  is not valid.",
+                     "i" = "Check the spelling or manually check it in Uniprot."))
+  }
+
+  return(response_check)
+}
+
+
+
+#' @noRd
+conditional_unnest <- function(df, var, stopme= FALSE){
+
+  ifelse({{var}} %in% names(df),
+         return(tidyr::unnest_wider(df, {{var}})),
+         return(df)
+  )
+
+}
 
