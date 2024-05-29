@@ -15,11 +15,13 @@
 #' @import purrr
 #' @import dplyr
 #' @import tidyr
-#' @import rentrez
 #'
 #' @return csv file with year, id, and title of the resulting articles.
-#' @examples litReview(start = 2019, end = 2024, term = "Huntington's disease AND histone post-translational modifications")
-#'
+#' @examples
+#'\dontrun{
+#' litReview(start = 2019, end = 2024, term = "Huntington's disease
+#' AND histone post-translational modifications")
+#'}
 #'
 #' @export
 
@@ -69,9 +71,9 @@ litReview <- function(start, end, term, db= "pubmed"){
   #function to get titles of articles
 
   get_titles <- function(df) {
-    df2 <- df %>%
-      dplyr::filter(count > 0) %>%
-      tidyr::unnest(id) %>%
+    df2 <- df |>
+      dplyr::filter(count > 0) |>
+      tidyr::unnest(id) |>
       dplyr::mutate(title = map_chr(
         .x = id,
         ~ rentrez::entrez_summary(db = {{db}}, id = .x)$title,
@@ -94,7 +96,9 @@ litReview <- function(start, end, term, db= "pubmed"){
   title_df |>
     dplyr::mutate(title = as.character(title)) |>
     dplyr::select(-c(search, count)) |>
-    readr::write_csv(stringr::str_glue("long_{term}_{start_year}_{end_year}.csv"))
+    write.csv(file = stringr::str_glue("long_{term}_{start_year}_{end_year}.csv"),
+                     row.names = FALSE
+                      )
 
 
 
@@ -107,7 +111,6 @@ litReview <- function(start, end, term, db= "pubmed"){
 
   cat(stringr::str_glue("\n\nFile {term}_{start_year}_{end_year}.csv is saved successfully.\n"))
 
-  cat("\n\nÀ plus dans l'bus !\n")
 
 }
 
