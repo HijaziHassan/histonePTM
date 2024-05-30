@@ -10,8 +10,8 @@ plot_annotateSpectrum(
   prec_z,
   mz,
   intensity,
-  title,
-  output_plot_name
+  title = "",
+  output_plot_name = ""
 )
 }
 \arguments{
