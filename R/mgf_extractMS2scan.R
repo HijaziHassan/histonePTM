@@ -1,30 +1,6 @@
 
 
 
-#function to read mgf file
-.mgf_to_sp <- function(mgf_file){
-  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
-
-  Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
-
-}
-
-#extract scan to mgf
-.scan_to_df <- function(scan, spec, mgf_file){
-
-  spec <- spec[spec$acquisitionNum == scan]
-
-  todf <- data.frame(
-
-    mgf= basename(mgf_file),
-    scan = as.integer(scan),
-    unlist(peaksData(spec))
-
-  )
-
-
-}
-
 
 
 #' Extract mz and intensity values of an MS2 scan from an mgf file
@@ -132,4 +108,34 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
 
 }
 
+
+
+#' @noRd
+
+#function to read mgf file
+.mgf_to_sp <- function(mgf_file){
+  cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
+
+  Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
+
+}
+
+
+
+#' @noRd
+#extract scan to mgf
+.scan_to_df <- function(scan, spec, mgf_file){
+
+  spec <- spec[which(spec$acquisitionNum == scan)]
+
+  todf <- data.frame(
+
+    mgf= basename(mgf_file),
+    scan = as.integer(scan),
+    unlist(peaksData(spec))
+
+  )
+
+
+}
 
