@@ -20,8 +20,8 @@
 plot_annotateSpectrum <- function(Profrma_peptide,
                                   prec_mz, prec_z,
                                   mz, intensity,
-                                  title,
-                                  output_plot_name){
+                                  title= "",
+                                  output_plot_name= ""){
 
 
 reticulate::source_python("./inst/python/plot_annotateSpectra.py")
