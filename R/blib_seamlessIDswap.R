@@ -23,6 +23,7 @@
 #' @import dplyr
 #' @import RSQLite
 #' @import cli
+#' @importFrom purrr pmap
 #'
 #' @return The same library but overwritten with the new values.
 #' A dataframe containing all details on the removed and added ids.
