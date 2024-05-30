@@ -1,18 +1,19 @@
 Package: histonePTM
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Tool set to analyze histone PTMs proteomics Data
 Version: 0.1.0
 Author: Hassan M. Hijazi
 Maintainer: The package maintainer <hejaziihassan@gmail.com>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Useful function to organize, analyse, and visualize histone PTMs proteomics data
 License: CC0
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
 Depends: 
-    R (>= 2.10), stringr, purrr, dplyr, cli, 
-    rlang, tibble, tidyr
+    R (>= 4.2.2), rlang,  cli, tidyverse
 Imports: 
-     Spectra, MsBackendMgf, BiocParallel, ggplot2, httr, jsonlite, readxl,
-     rentrez, scales, ggtext
+     Spectra, MsBackendMgf, BiocParallel, BiocManager, ggplot2, ggtext, scales, 
+     httr, jsonlite, rentrez, readxl,DBI, RSQLite, httr2, reticulate
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
