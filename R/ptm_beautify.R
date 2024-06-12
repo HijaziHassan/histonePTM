@@ -70,6 +70,7 @@ ptm_beautify <- function(PTM,
 
   if (residue == 'keep') {
     pattern <- "\\[(\\+\\d+\\.?\\d*)\\]"
+
   renamed_ptm <- stringr::str_replace_all({{PTM}}, pattern, function(mod) {
     # Extract what is inside the brackets
     ptm_mass <- stringr::str_match(mod, pattern)[2]
@@ -85,28 +86,36 @@ ptm_beautify <- function(PTM,
 
   })
 
+#if the Skyline mdofied string was the one of the three letter code [2Me] for me2 ...
+#then it returns the same string but with the square brackets.
+if(renamed_ptm == {{PTM}}){
+  renamed_ptm <- str_remove_all({{PTM}}, '\\[|\\]')
+}
+
+
 
   } else if (residue == 'remove'){
 
-    pattern = '(?<=\\[)([+-]\\d+.\\d*)(?=\\])'
+    #pattern <- '[A-Z]?(?<=\\[)([-?+?0-9a-zA-Z]+)(?=\\])[A-Z]?'
+    pattern <- '[A-Z]?(?<=\\[)([-+?0-9a-zA-Z]*\\.?[0-9a-zA-Z]+)(?=\\])[A-Z]?'
 
     renamed_ptm <-  purrr::map_chr(stringr::str_extract_all({{PTM}}, pattern = pattern),
                    ~ stringr::str_c(.round_mod(.x), collapse="-")
                    ) |>
       stringr::str_replace_all(rounded_lookup)
 
-    #Sklyline doesn't accept two modifications on the same residue.
-    # for Nterm+Kmod we make custome modifications like [+72.021129] which represents la-Nt.
-    #When replacing the string of sequence it nice to have Nt- before the sequence not after N-term K.
-    #This if statement removes it infort of N-terminal K and return back.
-    if(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-')){
-      Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-')
-      renamed_ptm <- stringr::str_remove(string = renamed_ptm, pattern = Nterm)
-      renamed_ptm <- paste0(Nterm, renamed_ptm)}
+
 
   }
 
-
+  #Sklyline doesn't accept two modifications on the same residue.
+  # for Nterm+Kmod we make custome modifications like [+72.021129] which represents la-Nt.
+  #When replacing the string of sequence it nice to have Nt- before the sequence not after N-term K.
+  #This if statement removes it infort of N-terminal K and return back.
+  if(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-')){
+    Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-')
+    renamed_ptm <- stringr::str_remove(string = renamed_ptm, pattern = Nterm)
+    renamed_ptm <- paste0(Nterm, renamed_ptm)}
 
   return(renamed_ptm)
 
@@ -118,6 +127,9 @@ ptm_beautify <- function(PTM,
 
 #' @noRd
 .round_mod <- function(mod) {
-  round(as.numeric(mod), 1)
+  if(anyNA(suppressWarnings(as.numeric(mod)))){
+    return(mod)
+  }else{
+  round(as.numeric(mod), 1)}
 }
 
