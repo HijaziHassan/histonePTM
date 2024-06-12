@@ -1,16 +1,16 @@
 test_that("PTM conversion Sklyine works", {
-  expect_equal(ptm_beautify('K[+72]SAPSTGGVK[+28]K[+56]PHR',
+  expect_equal(ptm_beautify('K[+42.04695]SAPSTGGVK[+42.010565]K[+56.026215]PHR',
                             lookup =shorthistptm_mass,
                             software = 'Skyline',
                             residue = 'remove')
   ,
 
 
-  "la-me2-pr")
+  "me3-ac-pr")
 })
 
 test_that("PTM conversion from Sklyine works", {
-  expect_equal(ptm_beautify('K[+72]SAPSTGGVK[+28]K[+56]PHR',
+  expect_equal(ptm_beautify('K[+72.021129]SAPSTGGVK[+28.0313]K[+56.026215]PHR',
                             lookup =shorthistptm_mass,
                             software = 'Skyline',
                             residue = 'keep')
@@ -47,7 +47,7 @@ test_that("PTM conversion from Proline with residue removal works", {
 
 
 test_that("PTM conversion from Skyline with Nterm+mod combined works", {
-  expect_equal(ptm_beautify('K[+112.1]SAPSIGGVK[+28]K[+56]PHR',
+  expect_equal(ptm_beautify('K[+112.05243]SAPSIGGVK[+28.0313]K[+56.026215]PHR',
                             lookup = shorthistptm_mass,
                             software = 'Skyline',
                             residue = 'remove')

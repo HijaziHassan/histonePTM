@@ -3,7 +3,7 @@
 #' @param PTM The PTM string to be shorthanded
 #' @param lookup The shorthanded names to replace the long PTM names (`histptm_lookup` and `shorthistptm_mass` are named vector provided by default.
 #' The user can provide any named vector adapted to the PTM being used.)
-#' @param software The software used for proteomic analysis (ex. Proline (Default) or Skyline)
+#' @param software The software used for proteomic analysis (ex. Proline (Default) 'ptm_protein_positions' or 'modifications' columns or Skyline 'Peptide Modified Sequence Monoisotopic Masses' column.)
 #' @param residue Choose to keep or remove the residues. If `removed` ptms will be separated by a hyphen.
 #'
 #' @return renamed PTM string
@@ -130,6 +130,6 @@ if(renamed_ptm == {{PTM}}){
   if(anyNA(suppressWarnings(as.numeric(mod)))){
     return(mod)
   }else{
-  round(as.numeric(mod), 1)}
+  round(as.numeric(mod), 2)}
 }
 

@@ -17,7 +17,7 @@ ptm_beautify(
 \item{lookup}{The shorthanded names to replace the long PTM names (`histptm_lookup` and `shorthistptm_mass` are named vector provided by default.
 The user can provide any named vector adapted to the PTM being used.)}
 
-\item{software}{The software used for proteomic analysis (ex. Proline (Default) or Skyline)}
+\item{software}{The software used for proteomic analysis (ex. Proline (Default) 'ptm_protein_positions' or 'modifications' columns or Skyline 'Peptide Modified Sequence Monoisotopic Masses' column.)}
 
 \item{residue}{Choose to keep or remove the residues. If `removed` ptms will be separated by a hyphen.}
 }
