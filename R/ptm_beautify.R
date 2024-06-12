@@ -39,7 +39,12 @@ ptm_beautify <- function(PTM,
 
   software <- match.arg(software)
   residue <- match.arg( residue)
-
+  if(rlang::is_missing(lookup)){
+    cli::cli_abort(c('You forget to add "lookup" argument.',
+      'i' = 'provide a named vector depending on the PTMs you want to repalce.
+      Ex: c("oldptm" = "new ptm").',
+      'x'= '"lookup" argument is missing.'))
+  }
 
 
   if (software == "Proline"){
@@ -60,10 +65,11 @@ ptm_beautify <- function(PTM,
 } else if (software == "Skyline"){
 
   # match what is inside the square brackets
-  pattern <- "\\[(\\+\\d+\\.?\\d*)\\]"
+
   rounded_lookup <- setNames( {{lookup}}, sapply(names( {{lookup}}), .round_mod))
 
   if (residue == 'keep') {
+    pattern <- "\\[(\\+\\d+\\.?\\d*)\\]"
   renamed_ptm <- stringr::str_replace_all({{PTM}}, pattern, function(mod) {
     # Extract what is inside the brackets
     ptm_mass <- stringr::str_match(mod, pattern)[2]
@@ -75,36 +81,35 @@ ptm_beautify <- function(PTM,
     } else {
       return(mod)
     }
+
+
   })
+
 
   } else if (residue == 'remove'){
 
+    pattern = '(?<=\\[)([+-]\\d+.\\d*)(?=\\])'
 
-    # Find all matches
-    matches <- str_match_all({{PTM}}, pattern)[[1]]
+    renamed_ptm <-  purrr::map_chr(stringr::str_extract_all({{PTM}}, pattern = pattern),
+                   ~ stringr::str_c(.round_mod(.x), collapse="-")
+                   ) |>
+      stringr::str_replace_all(rounded_lookup)
 
-    # Extract numbers within brackets in column 2
-    ptm_mass <- matches[, 2]
-
-    #round the matched masses
-    ptm_mass_rounded <- sapply(ptm_mass, .round_mod)
-
-    # Replace the modifications using the normalized lookup vector
-    replaced_ptm <- sapply(ptm_mass_rounded, function(mod) {
-      mod_str <- as.character(mod)
-      if (mod_str %in% names(rounded_lookup)) {
-        return(rounded_lookup[[mod_str]])
-      } else {
-        return(mod)
-      }
-    })
-
-    renamed_ptm <- paste(replaced_ptm, collapse = "-")
-
+    #Sklyline doesn't accept two modifications on the same residue.
+    # for Nterm+Kmod we make custome modifications like [+72.021129] which represents la-Nt.
+    #When replacing the string of sequence it nice to have Nt- before the sequence not after N-term K.
+    #This if statement removes it infort of N-terminal K and return back.
+    if(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-')){
+      Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-')
+      renamed_ptm <- stringr::str_remove(string = renamed_ptm, pattern = Nterm)
+      renamed_ptm <- paste0(Nterm, renamed_ptm)}
 
   }
 
-return(renamed_ptm)
+
+
+  return(renamed_ptm)
+
 
   }
 
