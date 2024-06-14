@@ -3,16 +3,17 @@
 #' @description
 #' Extract .raw file and .dat file names from Proline output excel file (\code{"Search settings and infos"} sheet).
 #'
-#' @param filename Proteomics experiment excel output.
-#' @import tibble
-#' @import dplyr
-#' @import tibble
-#' @import stringr
-#' @import readxl
+#' @param filename Proline export excel filename ('\code{Search settings and infos}' sheet is hardcoded.)
+#' @param save_file Provide a file name if you want to save the extracted metadata.
+#' @importFrom tibble as_tibble
+#' @importFrom dplyr filter rename mutate
+#' @importFrom stringr str_remove
+#' @importFrom readxl read_excel
+#' @importFrom openxlsx write.xlsx
 #'
 #' @return \code{.csv} file with 3 columns: \code{file}, \code{channel}, and \code{dat}.
 #' @export
-extract_metadata <- function(filename, save_file= FALSE){
+misc_extractMetaData <- function(filename, save_file= ""){
 
   suppressWarnings({
 
@@ -28,11 +29,20 @@ extract_metadata <- function(filename, save_file= FALSE){
   dat_files <- tibble::as_tibble(t(extract_names[ , - 1])) %>%
     dplyr::rename(file = V1, channel = V2, dat = V3) %>%
     dplyr::mutate(dat= as.integer(dat)) |>
-    dplyr::mutate(channel= stringr::str_remove(channel, ".dat"))
+    dplyr::mutate(channel= stringr::str_remove(channel, ".dat|.pep.xml|.pepXML|.msf|.pdResult|.mzid"))
 
   if(save_file != ""){
+    if(tools::file_ext(save_file) %in% c('xls', 'xlsx')){
+
+    openxlsx::write.xlsx({{save_file}})
+    }else{
+      if(tools::file_ext(save_file) == ""){
+
+        save_file = paste0(save_file, ".csv")
+      }
   write.csv(x = dat_files, file = {{save_file}}, row.names = FALSE)
-  }
+      }
+    }
 
   return(dat_files)
 }
