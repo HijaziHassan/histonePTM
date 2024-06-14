@@ -1,16 +1,13 @@
-
-
-
-
-#EXTRACT Variant/Sequences
-#' Separate H3 sequence and sequence variants
-#' Each sequence/variant will be saved to a separate excel worksheet
+#' Separate peptides into spreadsheets
+#'
+#' @description
+#' Each sequence/variant will be saved to a separate excel worksheet. This facilitate focus on a specific site or peptide.
 #'
 #' @param df A dataframe
-#' @param histoneProtein Three options H3-H4', 'H3' or 'H4'. In none is selected 'H3-H4' will be selected by default.
+#' @param histoneProtein Three options 'H3-H4', 'H3' or 'H4'. In none is selected 'H3-H4' will be selected by default.
 #' @param split_by name of the column containing sequence labels. The values will be the name of the excel sheets.
 #' @param label_type label type to match by from \code{SequenceDB}. Two options 'labelbyK' (default) and 'label'.
-#' @param FileName In case you want to save the file as \code{.xlsx}, provide a name with this
+#' @param FileName In case you want to save the file as \code{.xlsx}, provide a name with this extension.
 #'
 #' @return A list of \code{Workbook} object(s), each with multiple excel worksheets.
 #' @export
@@ -125,12 +122,13 @@ seq_spreadIntoSheets <- function(df,
 
     if(FileName !=""){
 
-    filePSM = paste0('Histseq_', FileName)
+    filePSM = paste0('Histseq_', histoneProtein,'_', FileName)
     # ##save the file containing ##data per variant##
     openxlsx::saveWorkbook(wb = wb_varaints, file = filePSM, overwrite = TRUE)
 
-    cat("varaints/sequences are separated.\n File ", "\"", basename(filePSM), "\"", "is saved.\n")
+    cli::cli_alert_success("varaints/sequences are separated. File '{filePSM}' is saved.\n\n")
     }
+
     return(list(wb_varaints))
 
   }

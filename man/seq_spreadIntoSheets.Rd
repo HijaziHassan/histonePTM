@@ -2,8 +2,7 @@
 % Please edit documentation in R/seq_spreadIntoSheets.R
 \name{seq_spreadIntoSheets}
 \alias{seq_spreadIntoSheets}
-\title{Separate H3 sequence and sequence variants
-Each sequence/variant will be saved to a separate excel worksheet}
+\title{Separate peptides into spreadsheets}
 \usage{
 seq_spreadIntoSheets(
   df,
@@ -18,16 +17,15 @@ seq_spreadIntoSheets(
 
 \item{split_by}{name of the column containing sequence labels. The values will be the name of the excel sheets.}
 
-\item{histoneProtein}{Three options H3-H4', 'H3' or 'H4'. In none is selected 'H3-H4' will be selected by default.}
+\item{histoneProtein}{Three options 'H3-H4', 'H3' or 'H4'. In none is selected 'H3-H4' will be selected by default.}
 
 \item{label_type}{label type to match by from \code{SequenceDB}. Two options 'labelbyK' (default) and 'label'.}
 
-\item{FileName}{In case you want to save the file as \code{.xlsx}, provide a name with this}
+\item{FileName}{In case you want to save the file as \code{.xlsx}, provide a name with this extension.}
 }
 \value{
 A list of \code{Workbook} object(s), each with multiple excel worksheets.
 }
 \description{
-Separate H3 sequence and sequence variants
-Each sequence/variant will be saved to a separate excel worksheet
+Each sequence/variant will be saved to a separate excel worksheet. This facilitate focus on a specific site or peptide.
 }
