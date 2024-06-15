@@ -9,11 +9,11 @@
 #' @param ... Protein sequence as a character string.
 #' @param plot A \code{logical} argument to decide whether to plot or not the resuls.
 #' @import stringr
-#' @import dplyr
-#' @import purrr
+#' @importFrom dplyr bind_rows
+#' @importFrom purrr map map2
 #' @import ggplot2
 #' @import scales
-#' @import tibble
+#' @importFrom tibble tibble
 #'
 #' @return dataframe with 3 columns: name of a sequence, its amino acid residues and their count.
 #' a plot if \code{plot} argument is set to \code{TRUE} .
@@ -26,17 +26,18 @@
 #'seq_AAcountplot(H3_seq, H4_seq, plot = TRUE)
 #' @export
 seq_AAcountplot <- function(..., plot = FALSE) {
+#remove white spaces or line breaks
+seq_list <- purrr::map(list(...), ~stringr::str_remove_all(.x, pattern = "\\s+"))
 
-seq_list <- dplyr::lst(...)
+SEQsplit  <- purrr::map(unlist(seq_list), ~stringr::str_split_1(.x, pattern = ""))
 
-SEQsplit  <- purrr::map(unlist(seq_list), ~stringr::str_split_1(., pattern = ""))
 
 SEQunique <- purrr::map(SEQsplit, ~stringr::str_unique(.))
-
+#calculate relative percentage: count of AA/total number of AA in a sequence *100.
 df_count  <-  purrr::map2(.x = seq_list,
                           .y = SEQunique,
                           .f = ~ tibble::tibble(a.a = .y,
-                                        count = round(stringr::str_count(string = .x ,
+                                        relative_percent = round(stringr::str_count(string = .x ,
                                                                          pattern = .y)/nchar(.x), 2)*100
 
                           )) |> dplyr::bind_rows( .id= "seq")
@@ -46,7 +47,7 @@ df_count  <-  purrr::map2(.x = seq_list,
 if(plot == TRUE){
 
   plot_aa_freq <- df_count |>
-    ggplot2::ggplot(ggplot2::aes(x= a.a, y= count, fill= seq)) +
+    ggplot2::ggplot(ggplot2::aes(x= a.a, y= relative_percent, fill= seq)) +
     ggplot2::geom_col(position = ggplot2::position_dodge2(width  = 0.2, preserve = "single"))+
     ggplot2::labs(y= 'Relative Percentage (%)')+
     ggplot2::scale_fill_brewer(palette = "Dark2")+
