@@ -39,28 +39,38 @@ for(i in nrow(replace):1){
 
 
 
-#' Proforma modified peptide representation
+#' Convert sequence-PTM to ProForma notation.
+#' @description
+#' Convert Proline modification string to ProForma notation.
+#'
 #'
 #' @param seq The sequence to be modified.
-#' @param mod The modifications with their positions on the peptide
+#' @param mod The modifications with their positions on the *peptide*.
 #' @param Nterm N-terminal modification
 #'
-#' @return sequence with monoisotopic mass of ptm at its modification site.
+#' @return character string
 #'
 #' @import purrr
 #' @import stringr
 #' @import dplyr
 #' @examples
-#' ptm_toProforma(seq = "KSAPATGGVKKPHR",
+#' ptm_toProForma(seq = "KSAPATGGVKKPHR",
 #'                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
 #'
 #' @examples
-#' ptm_toProforma(  seq = "KQLATKVAR",
+#' ptm_toProForma(  seq = "KQLATKVAR",
 #'                  mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
-#'                Nterm = "[+56.026]-")
+#'                Nterm = "[+56.026]")
 #'
 #' @export
-ptm_toProforma <- function(seq, mod, Nterm = FALSE){
+
+ptm_toProForma <- function(seq, mod, Nterm = FALSE){
+
+if(str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)')){
+  Nterm = "[+56.026]"
+}else if(str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)')){
+  Nterm = "[+84.057515]"
+}else{Nterm = Nterm}
 
 modified_peptide <- purrr::map2_chr(
 
@@ -68,6 +78,8 @@ modified_peptide <- purrr::map2_chr(
     .y =  purrr::map(mod, .extract_ptm_indx),
     .f =~ .insert_ptm_seq(seq = .x, replace = .y),
     .progress = TRUE)
+
+
 if(Nterm == FALSE){
 return(noquote(modified_peptide))}else{
 return(noquote(paste0(Nterm,"-", modified_peptide)))
