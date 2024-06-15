@@ -9,7 +9,7 @@
 #' @param ... Protein sequence as a character string.
 #' @param plot A \code{logical} argument to decide whether to plot or not the resuls.
 #' @import stringr
-#' @importFrom dplyr bind_rows
+#' @importFrom dplyr bind_rows lst
 #' @importFrom purrr map map2
 #' @import ggplot2
 #' @import scales
@@ -27,7 +27,7 @@
 #' @export
 seq_AAcountplot <- function(..., plot = FALSE) {
 #remove white spaces or line breaks
-seq_list <- purrr::map(list(...), ~stringr::str_remove_all(.x, pattern = "\\s+"))
+seq_list <- purrr::map(dplyr::lst(...), ~stringr::str_remove_all(.x, pattern = "\\s+"))
 
 SEQsplit  <- purrr::map(unlist(seq_list), ~stringr::str_split_1(.x, pattern = ""))
 
@@ -49,12 +49,14 @@ if(plot == TRUE){
   plot_aa_freq <- df_count |>
     ggplot2::ggplot(ggplot2::aes(x= a.a, y= relative_percent, fill= seq)) +
     ggplot2::geom_col(position = ggplot2::position_dodge2(width  = 0.2, preserve = "single"))+
-    ggplot2::labs(y= 'Relative Percentage (%)')+
+    ggplot2::labs(y= 'Relative Percentage (%)', fill= "")+
     ggplot2::scale_fill_brewer(palette = "Dark2")+
     ggplot2::scale_y_continuous(labels = scales::percent_format(scale = 1))+
-    ggplot2::theme_minimal(base_size = 14)
+    ggplot2::theme_minimal(base_size = 14)+
+    ggplot2::theme(legend.direction = 'horizontal', legend.position = "top")
 
-  print(plot_aa_freq)
+
+ print(plot_aa_freq)
 
 
 }
