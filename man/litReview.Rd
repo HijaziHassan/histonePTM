@@ -4,7 +4,7 @@
 \alias{litReview}
 \title{A quick literature review on NCBI}
 \usage{
-litReview(start, end, term, db = "pubmed")
+litReview(start, end, term, db = "pubmed", save_file = FALSE)
 }
 \arguments{
 \item{start}{An \code{integer} specifying the year from which to start the search.}
@@ -16,6 +16,8 @@ litReview(start, end, term, db = "pubmed")
 for an exhaustive list.}
 
 \item{db}{database to searhc in. defaults is "pubmed". check \code{entrez_dbs()} for all options.}
+
+\item{save_file}{\code{logical}. If `TRUE` results will be saved as `.csv` files.}
 }
 \value{
 csv file with year, id, and title of the resulting articles.
