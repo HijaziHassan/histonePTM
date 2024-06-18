@@ -111,7 +111,8 @@ litReview <- function(start, end, term, db= "pubmed", save_file= FALSE){
 
   }
 
-  return(list((title_df_long), table(title_df_long$year)))
+return(list((title_df_long), table(title_df_long$year)))
+
 
   }
 
