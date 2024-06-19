@@ -8,9 +8,8 @@ plot_jitterbarIntvsPTM(
   dataset,
   x_axis,
   y_axis,
-  condition,
-  sequence,
-  label = "",
+  condition = "my sample",
+  id_col = "my sequence",
   plot_title = "",
   fun = c("median", "mean"),
   scale = 100,
@@ -22,13 +21,11 @@ plot_jitterbarIntvsPTM(
 
 \item{x_axis}{x variable (PTM column)}
 
-\item{y_axis}{y variable (intensity column). If already in %, set \code{scale} to 1.}
+\item{y_axis}{y variable (intensity column). If already values are percentage, set \code{scale} to 1.}
 
 \item{condition}{The condition column (WT vs disease, concentration, ...)}
 
-\item{sequence}{peptide sequence column}
-
-\item{label}{peptide label to be used for y-axis title (e.g. 'H3.3')}
+\item{id_col}{unique ID column such as sequence or sequence label}
 
 \item{fun}{median (default) or mean. This will be the height of the bar.}
 
@@ -39,10 +36,8 @@ plot_jitterbarIntvsPTM(
 \item{title_plot}{A plot title (optional)}
 }
 \value{
-ggplot object
+bar plot with jitter points.
 }
 \description{
-Each individual measurement will be plotted as datapoint.
-Their median/mean will be represented as a bar.
-Each bar will be colored according to the condition.
+Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
 }

@@ -1,14 +1,12 @@
-#' Intensity vs PTM grouped bar plot with jittered points
-#' @description Each individual measurement will be plotted as datapoint.
-#' Their median/mean will be represented as a bar.
-#' Each bar will be colored according to the condition.
+#' @title Intensity vs PTM grouped bar plot with jittered points
+#' @description
+#' Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
 #'
 #' @param dataset your data loaded as dataframe. Must be in long format.
 #' @param x_axis x variable (PTM column)
-#' @param y_axis y variable (intensity column). If already in %, set \code{scale} to 1.
+#' @param y_axis y variable (intensity column). If already values are percentage, set \code{scale} to 1.
 #' @param condition The condition column (WT vs disease, concentration, ...)
-#' @param sequence peptide sequence column
-#' @param label peptide label to be used for y-axis title (e.g. 'H3.3')
+#' @param id_col unique ID column such as sequence or sequence label
 #' @param title_plot A plot title (optional)
 #' @param fun median (default) or mean. This will be the height of the bar.
 #' @param save_plot (\code{logical})
@@ -18,15 +16,13 @@
 #' @importFrom scales label_percent
 #' @import ggplot2
 #'
-#' @return ggplot object
+#' @return bar plot with jitter points.
 #' @export
-#'
 plot_jitterbarIntvsPTM <- function(dataset,
                              x_axis, #PTM
                              y_axis, #Intensity
-                             condition, #variable on which comparison is done
-                             sequence, # peptide sequence col
-                             label= "", # labels will be used for y-axis title
+                             condition = 'my sample', #variable on which comparison is done
+                             id_col = 'my sequence', #could be sequence or sequence label
                              plot_title ="", #optional
                              fun = c("median", "mean"),
                              scale = 100,
@@ -34,7 +30,6 @@ plot_jitterbarIntvsPTM <- function(dataset,
 ){
 
   fun = match.arg(fun)
-
 
 
   p <- ggplot2::ggplot(dataset,
@@ -58,7 +53,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
     ggplot2::scale_fill_brewer(palette = "Set1") +
 
     ggplot2::labs(x= "",
-                  y= paste0('% of all variably modified forms of ', label),
+                  y= paste0('% of all variably modified forms of ', {{id_col}}),
                   title = plot_title) +
 
 
@@ -82,11 +77,11 @@ plot_jitterbarIntvsPTM <- function(dataset,
     )
 
 
-   writeLines(paste0("Plotting: ", label))
+   writeLines(paste0("Plotting: ", {{id_col}}))
 
 
    if(save_plot){
-     ggplot2::ggsave(filename = paste0(label, ".png"),
+     ggplot2::ggsave(filename = paste0({{id_col}}, ".png"),
             dpi = 300,
             height = 7,
             width = 10,
