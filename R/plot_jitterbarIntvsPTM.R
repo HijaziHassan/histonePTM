@@ -55,20 +55,23 @@ plot_jitterbarIntvsPTM <- function(dataset,
     ggplot2::labs(x= "",
                   y= paste0('% of all variably modified forms of ', {{id_col}}),
                   title = plot_title) +
+ggplot2::guides(
 
+    fill  = ggplot2::guide_legend(position = "inside")
+)+
 
     ggplot2::theme(
          panel.grid.minor = ggplot2::element_blank(),
       panel.grid.major.x  = ggplot2::element_blank(),
       panel.grid.major.y  = ggplot2::element_line(color = "grey70"),
-              axis.text.y = ggplot2::element_text(size = 12, margin = ggplot2::margin(t = 0, r = 20, b = 0, l = 20)),
-             axis.title.y = ggplot2::element_text(size = 14, face = "bold"),
-              axis.text.x = ggplot2::element_text(size = 12, angle = 60, colour = "black", hjust = 0.7),
+              axis.text.y = ggplot2::element_text(size = 14, margin = ggplot2::margin(t = 0, r = 20, b = 0, l = 20)),
+             axis.title.y = ggplot2::element_text(size = 16, face = "bold"),
+              axis.text.x = ggplot2::element_text(size = 13, angle = 60, colour = "black", hjust = 0.7),
               axis.line.x = ggplot2::element_blank(),
               axis.line.y = ggplot2::element_blank(),
               plot.margin = ggplot2::unit(c(0.5, 0.5, 0.2, 0.5), "cm") ,
-              legend.text = ggplot2::element_text(face = "bold", size = 10),
-              legend.position.inside = c(0.01, 0.8),
+              legend.text = ggplot2::element_text(face = "bold", size = 14),
+              legend.position.inside = c(0.01, 0.9),
                 legend.justification = c(0, 0),
                     legend.direction = "vertical",
             legend.title = ggplot2::element_blank(),
