@@ -25,12 +25,13 @@ misc_clearLabeling <- function(ptm_string, rules){
   )
   }
 
-  if(stringr::str_detect(ptm_string, "me1\\b") & "me1" %in% unname(rules)){
+  if(any(stringr::str_detect(ptm_string, "me1\\b")) & "me1" %in% unname(rules)){
     cli::cli_abort(c('You are trying to replace "bu" by "me1" but "me1" is already in the rules.',
-                "i" = "remove '{ptm_string}' and all ptm strings containing 'me1' then apply the function again."))
+                "i" = "remove any 'me1' occurnce in {ptm_string}' before applying the function or change the 'rules' argument."))
   }
 
- stringr::str_replace_all(ptm_string, rules)
+
+    stringr::str_replace_all(ptm_string, rules)
 
 }
 
