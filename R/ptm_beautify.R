@@ -5,7 +5,7 @@
 #' The user can provide any named vector adapted to the PTM being used.)
 #' @param software The software used for proteomic analysis (ex. Proline (Default) 'ptm_protein_positions' or 'modifications' columns or Skyline 'Peptide Modified Sequence Monoisotopic Masses' column.)
 #' @param residue Choose to keep or remove the residues. If `removed` ptms will be separated by a hyphen.
-#'
+#' @param rd rounding digit to match provided PTM mass with lookup vector. default is 2.
 #' @return renamed PTM string
 #'
 #'
@@ -35,7 +35,8 @@
 ptm_beautify <- function(PTM,
                        lookup,
                        software = c("Proline", "Skyline"),
-                       residue = c('keep', 'remove')){
+                       residue = c('keep', 'remove'),
+                       rd = 2){
 
   software <- match.arg(software)
   residue <- match.arg( residue)
@@ -66,53 +67,51 @@ ptm_beautify <- function(PTM,
 
   # match what is inside the square brackets
 
-  rounded_lookup <- setNames( {{lookup}}, sapply(names( {{lookup}}), .round_mod))
+  rounded_lookup <- setNames( {{lookup}}, sapply(names( {{lookup}}), \(x) .round_mod(x, rd={{rd}})))
 
   if (residue == 'keep') {
-    pattern <- "\\[(\\+\\d+\\.?\\d*)\\]"
+
+    pattern= '(?<=\\[)[^\\] ]+'
 
   renamed_ptm <- stringr::str_replace_all({{PTM}}, pattern, function(mod) {
     # Extract what is inside the brackets
-    ptm_mass <- stringr::str_match(mod, pattern)[2]
-    ptm_mass_rounded <- as.character(.round_mod(ptm_mass))
+    #ptm_mass <- stringr::str_match(mod, pattern)[2]
+    ptm_mass_rounded <- as.character(.round_mod(mod, {{rd}}))
 
-    # Replace using the roundec lookup vector, if  exists
+    # Replace using the rounded lookup vector, if  exists
     if (ptm_mass_rounded %in% names(rounded_lookup) ) {
+
       return(rounded_lookup[[ptm_mass_rounded]])
+
     } else {
       return(mod)
     }
 
+  }) |>  stringr::str_remove_all('\\[|\\]')
 
-  })
 
-#if the Skyline mdofied string was the one of the three letter code [2Me] for me2 ...
-#then it returns the same string but with the square brackets.
-if(renamed_ptm == {{PTM}}){
-  renamed_ptm <- str_remove_all({{PTM}}, '\\[|\\]')
-}
+
+
+
+
+
 
 
 
   } else if (residue == 'remove'){
 
-    #pattern <- '[A-Z]?(?<=\\[)([-?+?0-9a-zA-Z]+)(?=\\])[A-Z]?'
-    pattern <- '[A-Z]?(?<=\\[)([-+?0-9a-zA-Z]*\\.?[0-9a-zA-Z]+)(?=\\])[A-Z]?'
-
+    pattern= '(?<=\\[)[^\\] ]+'
     renamed_ptm <-  purrr::map_chr(stringr::str_extract_all({{PTM}}, pattern = pattern),
-                   ~ stringr::str_c(.round_mod(.x), collapse="-")
+                   ~ stringr::str_c(.round_mod(.x, rd), collapse="-")
                    ) |>
       stringr::str_replace_all(rounded_lookup)
-
-
-
   }
 
   #Sklyline doesn't accept two modifications on the same residue.
   # for Nterm+Kmod we make custome modifications like [+72.021129] which represents la-Nt.
   #When replacing the string of sequence it nice to have Nt- before the sequence not after N-term K.
   #This if statement removes it infort of N-terminal K and return back.
-  if(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-')){
+  if(any(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-'))){
     Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-')
     renamed_ptm <- stringr::str_remove(string = renamed_ptm, pattern = Nterm)
     renamed_ptm <- paste0(Nterm, renamed_ptm)}
@@ -126,10 +125,10 @@ if(renamed_ptm == {{PTM}}){
 }
 
 #' @noRd
-.round_mod <- function(mod) {
+.round_mod <- function(mod, rd) {
   if(anyNA(suppressWarnings(as.numeric(mod)))){
     return(mod)
   }else{
-  round(as.numeric(mod), 2)}
+  round(as.numeric(mod), rd)}
 }
 

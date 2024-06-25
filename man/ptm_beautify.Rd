@@ -8,7 +8,8 @@ ptm_beautify(
   PTM,
   lookup,
   software = c("Proline", "Skyline"),
-  residue = c("keep", "remove")
+  residue = c("keep", "remove"),
+  rd = 2
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ The user can provide any named vector adapted to the PTM being used.)}
 \item{software}{The software used for proteomic analysis (ex. Proline (Default) 'ptm_protein_positions' or 'modifications' columns or Skyline 'Peptide Modified Sequence Monoisotopic Masses' column.)}
 
 \item{residue}{Choose to keep or remove the residues. If `removed` ptms will be separated by a hyphen.}
+
+\item{rd}{rounding digit to match provided PTM mass with lookup vector. default is 2.}
 }
 \value{
 renamed PTM string
