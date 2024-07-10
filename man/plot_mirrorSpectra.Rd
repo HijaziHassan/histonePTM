@@ -11,7 +11,7 @@ plot_mirrorSpectra(
   grouping_col,
   top_spec,
   bottom_spec,
-  title,
+  title = "",
   norm_basepeak = TRUE,
   readfromfile = FALSE
 )
@@ -25,18 +25,19 @@ plot_mirrorSpectra(
 
 \item{grouping_col}{Any column that serve as ID. Could be scan number, or file, ... Those will annotate the y-axis.}
 
-\item{top_spec}{Value from the \code{grouping col}}
+\item{top_spec}{Value (\code{character}) from the \code{grouping col}. Ex: 'processed_spec".}
 
-\item{bottom_spec}{Value from the \code{grouping col}}
+\item{bottom_spec}{Value (\code{character}) from the \code{grouping col}. Ex: 'raw_spec".}
 
 \item{title}{Title of the plot.}
 
-\item{norm_basepeak}{\code{logical}. If \code{TRUE}, intensities will be normalized to base peak intensity.}
+\item{norm_basepeak}{\code{logical}. If \code{TRUE} (default), intensities will be normalized to base peak intensity.}
 
-\item{readfromfile}{\code{logical}. If \code{TRUE}, it means that the \code{data} argument is a file name and not a \code{dataframe}.}
+\item{readfromfile}{\code{logical}. If \code{FALSE} (default), it means that the \code{data} argument is  a \code{dataframe} and
+not a file name (\code{.csv}, \code{txt}, \code{xls} or \code{xlsx}.}
 }
 \value{
-mirror plot.
+A mirror plot.
 }
 \description{
 Mirror Plot
