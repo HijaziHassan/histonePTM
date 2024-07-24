@@ -75,20 +75,24 @@ plot_scheduledPRM <- function(df, rt_col, mz_col, rt_window, peak_width =0.3, sa
       names_transform = as.double,
       values_transform = as.integer
     ) |>
-    dplyr::mutate(tr_win = paste0(tr_win, " min"))
+    dplyr::mutate(tr_window = paste0(tr_win, " min"),
 
+                  tr_window = factor(tr_window, levels = unique(tr_window[order(tr_win)]))
+                  )
+
+y_axis_breaks <-  seq(0,
+                      ceiling(max(df3 |> dplyr::pull(num_prec))/5)*5,
+                      5)
   #draw the plot
 
   plot <- df3 |>
     ggplot2::ggplot(ggplot2::aes(x = time, y = num_prec)) +
-    ggplot2::geom_line(linewidth = 1.1,  ggplot2::aes(color = tr_win)) +
+    ggplot2::geom_line(linewidth = 1.1,  ggplot2::aes(color = tr_window)) +
     ggplot2::labs(x = "Scheduled Time (min)", y = "Concurrent Precursors", color = "") +
     ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(linewidth = 2))) +
     ggplot2::coord_cartesian(clip = 'off') +
-    ggplot2::scale_y_continuous(breaks = seq(0,
-                                             ceiling(max(df3 |> dplyr::pull(num_prec))),
-                                             5)) +
+    ggplot2::scale_y_continuous(breaks = y_axis_breaks, limits= c(0, max(y_axis_breaks))) +
     ggplot2::theme_classic(base_size = 16) +
     ggplot2::theme(
       panel.grid.major.y = ggplot2::element_line(linetype = "solid", colour = "grey95"),
@@ -100,14 +104,17 @@ plot_scheduledPRM <- function(df, rt_col, mz_col, rt_window, peak_width =0.3, sa
       legend.position = "top"
     )
 
-  return(plot)
-
 
   if(isTRUE(save_plot)){
 
     ggplot2::ggsave(stringr::str_glue("prm_scheduled.png"), height = 7, width =10, dpi = 300)
     cli::cli_alert_success(text = "Scheduled PRM plot is saved successfully.")
   }
+
+  return(plot)
+
+
+
 
 
 }
