@@ -121,22 +121,9 @@ cli::cli_progress_bar(type = "iterator", name = paste0("Extracting diagnostic io
     )
 
 
-
-
-    return(final_df)
-
-
-    if(save_file){
-      file_csv = paste0("diagIons_", file_name, ".csv")
-      write.csv(x = final_df, file = file_csv, row.names = FALSE)
-      wd = getwd()
-      cli::cli_alert_success("{file_csv} file is saved sucessfully into {wd}.")
-    }
-
 }
 
 cli::cli_progress_done(result = "done")
-
 
 
   if(save_file){
