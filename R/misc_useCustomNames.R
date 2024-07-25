@@ -10,6 +10,13 @@
 #' @export
 #'
 misc_useCustomNames <- function(raw_df, user_df){
+
+
+  #remove unnammed and automatically renamed columns "ex: ...1" before merging.
+  raw_df <- raw_df[, !grepl("^\\.{3}[1-9]$|^$", colnames(raw_df))]
+  user_df <- user_df[, !grepl("^\\.{3}[1-9]$|^$", colnames(user_df))]
+
+
   # the unmatced argument is not working.
   abn_ColNames <- dplyr::left_join(raw_df,
                                    user_df,
