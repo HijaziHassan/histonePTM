@@ -52,7 +52,6 @@ if(is_missing(diag_ion)){
 
 
   file_name = tools::file_path_sans_ext(basename(mgf_file))
-
   #read mgf file(s) as Spectra object(s)
   sps <- .mgf_to_sp(mgf_file)
 
@@ -61,8 +60,8 @@ if(is_missing(diag_ion)){
 
 
 #cli::cli_inform(message = "Extracting diagnostic ions from {mgf_file}.\n\n")
-
-cli::cli_progress_bar(type = "iterator", name = paste0("Extracting diagnostic ions from ", mgf_file))
+  msg = paste0("Extracting diagnostic ions from ", basename(mgf_file))
+cli::cli_progress_bar(type = "iterator", name = msg )
 
   for (i in 1:length(Spectra::acquisitionNum(sps))) {
 
@@ -108,7 +107,10 @@ cli::cli_progress_bar(type = "iterator", name = paste0("Extracting diagnostic io
 
 
     final_list[[i]] <- dplyr::bind_rows(temp_all_diag)
+
+
   }
+
 
   final_df <- dplyr::bind_rows(final_list)
 
@@ -120,18 +122,20 @@ cli::cli_progress_bar(type = "iterator", name = paste0("Extracting diagnostic io
       dplyr::across(dplyr::all_of(c("scan", "prec_z")), as.integer)
     )
 
-
+    cli::cli_progress_done(result = "done")
 }
 
-cli::cli_progress_done(result = "done")
+
 
 
   if(save_file){
     file_csv = paste0("diagIons_", file_name, ".csv")
     write.csv(x = final_df, file = file_csv, row.names = FALSE)
     wd = getwd()
-    cli::cli_alert_success("The '{file_csv}' file is saved sucessfully into '{wd}' directory.")
+    cli::cli_alert_success("'{file_csv}' is saved sucessfully into '{wd}' directory.")
   }
+
+
 
 cat("\n")
   return(final_df)
@@ -150,7 +154,7 @@ cat("\n")
   BiocParallel::register(BPPARAM = BiocParallel::SerialParam())
   mgftospec <- Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
   mgf_file_basename = basename(mgf_file)
-cli::cli_alert_success( "The file {mgf_file_basename} is converted into a 'Spectra' object.")
+cli::cli_alert_success( "'{mgf_file_basename}' is converted into a 'Spectra' object.")
 return(mgftospec)
 }
 
@@ -174,7 +178,8 @@ return(mgftospec)
            #if scan is found in the title, replace NA with this scan to extract mz and intensity values
            if(!is.na(match)){
              scan_number <- as.integer(match)
-            spec_obj$acquisitionNum[scan_i] = scan_number
+             return(scan_number)
+            #spec_obj$acquisitionNum[scan_i] = scan_number
            }else{NA}
          }
   )
