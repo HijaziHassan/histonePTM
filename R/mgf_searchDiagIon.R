@@ -119,9 +119,25 @@ cli::cli_progress_bar(type = "iterator", name = paste0("Extracting diagnostic io
       dplyr::across(dplyr::all_of(c("diag_ion", "diag_relint", "prec_mz", "rt")), as.double),
       dplyr::across(dplyr::all_of(c("scan", "prec_z")), as.integer)
     )
+
+
+
+
+    return(final_df)
+
+
+    if(save_file){
+      file_csv = paste0("diagIons_", file_name, ".csv")
+      write.csv(x = final_df, file = file_csv, row.names = FALSE)
+      wd = getwd()
+      cli::cli_alert_success("{file_csv} file is saved sucessfully into {wd}.")
+    }
+
+}
+
 cli::cli_progress_done(result = "done")
 
-  }
+
 
   if(save_file){
     file_csv = paste0("diagIons_", file_name, ".csv")
@@ -150,6 +166,8 @@ cat("\n")
 cli::cli_alert_success( "The file {mgf_file_basename} is converted into a 'Spectra' object.")
 return(mgftospec)
 }
+
+
 
 #' @noRd
 
