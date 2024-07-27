@@ -7,7 +7,6 @@
 #' @param tol A mass tolerance to respect during the search
 #' @param export_mgf \code{logical} Export only scans containing diagnsotic ion(s) into a an mgf file.
 #' @param save_file \code{logical} Save the results as csv file
-#'
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @import dplyr
 #' @import Spectra

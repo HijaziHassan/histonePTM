@@ -19,7 +19,11 @@ mgf_searchDiagIon(
 
 \item{tol}{A mass tolerance to respect during the search}
 
+<<<<<<< HEAD
 \item{export_mgf}{\code{logical} Export only scans containing diagnsotic ion(s) into a an mgf file.}
+=======
+\item{export_mgf}{Export only scans containing diagnsotic ion(s) into a an mgf file.}
+>>>>>>> 4c991e2b5f30f00e28a4507115375a4db4e2cc13
 
 \item{save_file}{\code{logical} Save the results as csv file}
 }
