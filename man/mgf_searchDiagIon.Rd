@@ -4,16 +4,24 @@
 \alias{mgf_searchDiagIon}
 \title{Find MS/MS spectra that contain a diagnostic ion.}
 \usage{
-mgf_searchDiagIon(mgf_file, diag_ion, tol = 0.002, save_file = FALSE)
+mgf_searchDiagIon(
+  mgf_file,
+  diag_ion,
+  tol = 0.002,
+  export_mgf = FALSE,
+  save_file = FALSE
+)
 }
 \arguments{
 \item{mgf_file}{mgf file to search.}
 
-\item{diag_ion}{The mz of the diagnsotic ion}
+\item{diag_ion}{The mz of the diagnsotic ion(s)}
 
 \item{tol}{A mass tolerance to respect during the search}
 
-\item{save_file}{\code{logical} Save the results as csv file.}
+\item{export_mgf}{Export only scans containing diagnsotic ion(s) into a an mgf file.}
+
+\item{save_file}{\code{logical} Save the results as csv file}
 }
 \value{
 A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
