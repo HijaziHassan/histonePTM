@@ -16,6 +16,7 @@
 #' @importFrom rlang ensym enexpr
 #' @importFrom purrr pluck map
 #' @importFrom dplyr filter
+#' @importFrom cli cli_abort
 #' @export
 
 seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All", "H3", "H4", "H2A", "H2B")){
@@ -27,9 +28,6 @@ seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All
          rlang::enexpr(seq_col)
          )
 
-
-
-  #histoneProtein = match.arg(histoneProtein)
 
   if(!histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B")){cli::cli_abort(c("Invalid input.",
                                                                                "x" = "'{histoneProtein}' is not recognized.",
