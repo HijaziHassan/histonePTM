@@ -2,12 +2,12 @@
 % Please edit documentation in R/seq_getHistPeptides.R
 \name{seq_getHistPeptide}
 \alias{seq_getHistPeptide}
-\title{Extract histone peptides}
+\title{Extract selected histone peptides}
 \usage{
 seq_getHistPeptide(
   df,
   seq_col = sequence,
-  histoneProtein = c("H3-H4", "H3", "H4")
+  histoneProtein = c("All", "H3", "H4", "H2A", "H2B")
 )
 }
 \arguments{
@@ -18,7 +18,8 @@ seq_getHistPeptide(
 \item{histoneProtein}{Histone protein(s) to be studied: "H3", "H4" or both "H3-H4".}
 }
 \value{
-A subset of \code{df} only containing peptides of the defined histone protein(s) with iRTs if present.
+A subset of \code{df} only containing peptides of the defined histone protein(s) with \href{https://biognosys.com/product/irt-kit/}{Biognosys}
+iRTs if present.
 }
 \description{
 Isolate specific fragments of user-defined histone protein(s).

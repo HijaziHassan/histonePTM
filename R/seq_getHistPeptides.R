@@ -2,7 +2,7 @@
 
 
 
-#' Extract histone peptides
+#' Extract selected histone peptides
 #' @description
 #' Isolate specific fragments of user-defined histone protein(s).
 #'
@@ -10,14 +10,15 @@
 #' @param seq_col The name of the column containing peptide sequences.
 #' @param histoneProtein Histone protein(s) to be studied: "H3", "H4" or both "H3-H4".
 #'
-#' @return A subset of \code{df} only containing peptides of the defined histone protein(s) with iRTs if present.
+#' @return A subset of \code{df} only containing peptides of the defined histone protein(s) with \href{https://biognosys.com/product/irt-kit/}{Biognosys}
+#' iRTs if present.
 #'
-#' @import rlang
-#' @import purrr
-#' @import dplyr
+#' @importFrom rlang ensym enexpr
+#' @importFrom purrr pluck map
+#' @importFrom dplyr filter
 #' @export
 
-seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("H3-H4", "H3", "H4")){
+seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All", "H3", "H4", "H2A", "H2B")){
 
   seq_col = rlang::enexpr(seq_col)
   #seq_col argument must be unquoted
@@ -28,33 +29,41 @@ seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("H3-
 
 
 
-  histoneProtein = match.arg(histoneProtein)
+  #histoneProtein = match.arg(histoneProtein)
 
-  H3 <- purrr::pluck(histonePTM::sequenceDB, "H3", "argC_frags")
-  H4 <- purrr::pluck(histonePTM::sequenceDB, "H4", "argC_frags")
-  iRT <- purrr::pluck(histonePTM::sequenceDB, "iRT", "tryp_frags")
+  if(!histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B")){cli::cli_abort(c("Invalid input.",
+                                                                               "x" = "'{histoneProtein}' is not recognized.",
+                                                                               "i" = "Please choose any of: 'All' (default), 'H3', 'H4', 'H2A', 'H2B')"))
+ }else if (histoneProtein == "All"){
 
-  if(histoneProtein == "H3"){
-    df <- df |>
-      dplyr::filter({{seq_col}} %in% c(H3,iRT)) #iRT added
-  }
+   histoneProtein = c("H3", "H4", "H2A", "H2B")
+   protein_extracted <- purrr::map(.x = histoneProtein,
+                                   .f = ~ purrr::pluck(histonePTM::sequenceDB, .x, "argC_frags"))|>
+                                         unlist()
 
-  else if (histoneProtein == "H4") {
-
-    df <- df |>
-      dplyr::filter({{seq_col}} %in% c(H4, iRT)) #iRT added
-
-  }else{
+    iRT <- purrr::pluck(histonePTM::sequenceDB, "iRT", "tryp_frags")
 
     df <- df |>
-      dplyr::filter({{seq_col}} %in% c(H3, H4, iRT))
+      dplyr::filter({{seq_col}} %in% c(protein_extracted, iRT))
 
 
-  }
+ }else{
 
+
+   protein_extracted <- purrr::map(.x = histoneProtein,
+                                   .f = ~ purrr::pluck(histonePTM::sequenceDB, .x, "argC_frags")) |>
+                                       unlist()
+
+   iRT <- purrr::pluck(histonePTM::sequenceDB, "iRT", "tryp_frags")
+
+   df <- df |>
+     dplyr::filter({{seq_col}} %in% c(protein_extracted, iRT))
+
+ }
 
   return(df)
 }
+
 
 
 
