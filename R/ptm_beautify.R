@@ -52,7 +52,7 @@ ptm_beautify <- function(PTM,
 
 
       reversed_ptm <- stringr::str_replace_all(string = {{PTM}},
-                                             c("([a-zA-Z0-9_\\:\\(\\)-]+\\s?[a-zA-Z0-9_\\:\\(\\)-]+?)\\s\\(([A-Z]\\d+)\\)"= "\\2\\1"))
+                                             c("([a-zA-Z0-9_\\:\\(\\)-]+\\s?[a-zA-Z0-9_\\:\\(\\)-]+?)\\s\\(([A-Z]\\d*)\\)"= "\\2\\1"))
 
       renamed_ptm <- stringr::str_replace_all(string = reversed_ptm, {{lookup}})
 
