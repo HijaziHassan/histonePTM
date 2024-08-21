@@ -7,15 +7,14 @@
   stringr::str_match_all(string = mod,
                          pattern = "(?<modif>[a-zA-Z0-9_-]+\\s?[a-zA-Z0-9_-]+?) \\([A-Z](?<index>\\d+)\\)") |>
     data.frame() |>
-    dplyr::mutate(modif = paste0("[",stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
+    dplyr::mutate(modif = paste0("[", stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
 }
 
 #insert ptm in its respective position in the sequence
 .insert_ptm_seq <- function(seq, replace){
 
-  if (nrow(replace) == 0) { #if no modification, return the bare sequence
-    return(seq)
-  }
+  if (nrow(replace) != 0) { #if no modification, return the bare sequence
+
 
   replacement <- as.character(replace$modif)
   position <- as.integer(replace$index)
@@ -32,6 +31,8 @@ for(i in nrow(replace):1){
 
     # update sequence
     seq <- paste0(upstream, replacement[[i]], downstream)
+}
+
   }
   return(seq)
 }
@@ -50,9 +51,9 @@ for(i in nrow(replace):1){
 #'
 #' @return character string
 #'
-#' @import purrr
-#' @import stringr
-#' @import dplyr
+#' @importFrom purrr map map2_chr
+#' @importFrom stringr str_detect str_match_all str_replace_all
+#' @importFrom dplyr mutate
 #' @examples
 #' ptm_toProForma(seq = "KSAPATGGVKKPHR",
 #'                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
@@ -66,17 +67,17 @@ for(i in nrow(replace):1){
 
 ptm_toProForma <- function(seq, mod, Nterm = FALSE){
 
-if(str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)')){
+if(any(stringr::str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)'))){
   Nterm = "[+56.026]"
-}else if(str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)')){
+}else if(any(stringr::str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)'))){
   Nterm = "[+84.057515]"
 }else{Nterm = Nterm}
 
 modified_peptide <- purrr::map2_chr(
 
     .x = seq,
-    .y =  purrr::map(mod, .extract_ptm_indx),
-    .f =~ .insert_ptm_seq(seq = .x, replace = .y),
+    .y = purrr::map(mod, .extract_ptm_indx),
+    .f = ~ .insert_ptm_seq(seq = .x, replace = .y),
     .progress = TRUE)
 
 
