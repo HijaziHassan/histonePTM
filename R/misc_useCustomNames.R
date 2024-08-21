@@ -23,22 +23,22 @@ misc_useCustomNames <- function(raw_df, user_df){
                                    by= "file",
                                    keep = FALSE,
                                    unmatched = "drop") |>
-    mutate(new_name = paste0("abundance_", channel),
+    dplyr::mutate(new_name = paste0("abundance_", channel),
            .keep = "unused")
 
 
-  psmcount_ColNames <- left_join(raw_df,
+  psmcount_ColNames <- dplyr::left_join(raw_df,
                                  user_df ,
                                  by= "file",
                                  keep = FALSE,
                                  unmatched = "drop") |>
-    mutate(SampleName = paste0(SampleName, "_psmCount"),
+    dplyr::mutate(SampleName = paste0(SampleName, "_psmCount"),
            new_name = paste0("psm_count_", channel),
            .keep = "unused")
 
-  ColNames <- bind_rows(abn_ColNames, psmcount_ColNames) %>%
-    select(-c(file, dat, any_of(c('Condition', 'Bioreplicate', 'TechReplicate')))) %>%
-    deframe()
+  ColNames <- dplyr::bind_rows(abn_ColNames, psmcount_ColNames) |>
+    dplyr::select(-c(file, dat, dplyr::any_of(c('Condition', 'condition', 'Bioreplicate', 'BioReplicate', 'TechReplicate')))) %>%
+    tibble::deframe()
 
   return(ColNames)
 
