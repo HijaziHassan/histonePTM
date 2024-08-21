@@ -54,7 +54,7 @@ ptm_flagDupes <- function(df,PTM_col, var_col, select_cols) {
   NotIdentical <- df[!duplicated(df), ]
   ##count the number of duplicate row(s) deleted##
   nrows_ident <- df[duplicated(df), ] |> nrow()
-  cli::cli_alert_info('The number of removed identical rows is {nrows_ident}.')
+  cli::cli_alert_info('Identical rows removed: {nrows_ident}.')
 
 
 
@@ -68,12 +68,15 @@ ptm_flagDupes <- function(df,PTM_col, var_col, select_cols) {
 
   nrows_dup <- nrow(Duplicates)
 
-  cli::cli_alert_info('The number of duplicate intensity rows is {nrows_dup}.')
+  cli::cli_alert_info('Rows with duplicate intensities: {nrows_dup}.')
 
 
   #get the frequence of duplicate counts
 freq_table <- table(Duplicates$n) |> as.data.frame()
+
+if(nrow(freq_table)>0){
 names(freq_table) <- c('dupes_count', 'freq')
+}
 
   #remove duplications where:
   # the intensity value is identical for more than one ID (case of delta = 0)#
@@ -113,15 +116,8 @@ names(freq_table) <- c('dupes_count', 'freq')
 
 
 duration = round(as.numeric(Sys.time() - start_time), 1)
-  cli::cli_alert_success('
-                         {num_marked_ptms} PTMs are marked in {duration} s.
-                        ')
+  cli::cli_alert_success('{num_marked_ptms} PTMs were marked (*) in {duration} s.')
 
-
-cli::cli_alert_warning("\nAttention
-If the abundance values of two redundant identifications aren't exactly the same,
-the redundant row won't be deleted. These rare cases will go unnoticed and won't be reported.
-Please manually review for greater accuracy.")
 
   return(list(unique = uniqueHistoneForms, duplicate = Duplicates, freq_table = freq_table ))
 }
