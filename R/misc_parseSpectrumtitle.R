@@ -1,40 +1,48 @@
-misc_parseSpectrumtitle <- function(df, preprocess = c("MGFBoost", "MascotDistiller"), sheet = sheetName){
 
-  preprocess = match.arg(preprocess)
-  sheet = match.arg(sheet)
+#' Split spectrum_title column into scan and file columns
+#'
+#' @param df dataframe
+#' @param col The column to be fragmented.
+#' @param scan_prefix The pattern the preceeds the scan number (e.g. 'Index:' or "Scan:"). If there is a space before it make sure to include it.
+#' @param file_prefix The pattern the preceeds the file name (e.g. 'raw_file:). If there is a space before it make sure to include it.
+#' @param sep A separator as ";" or ":" (`optional`).
+#' @param ... to add more arguments that could be useful as this function is a wrapper around `separate_wider_regex` function.
+#'
+#' @importFrom tidyr separate_wider_regex
+#' @return two columns: `id_scan` and `id_filename`
+#' @export
+#'
 
-
-  column_of_interest <- "spectrum_title"
-
-  if(!column_of_interest %in% colnames(df)) {
-
-    cli::cli_alert_info("spectrum title column has either been already parsed or doesn't exist!")
-  }
-
-  else if (preprocess == "MGFBoost"){
-    df <- df %>% separate(       #parse spectrum_title column into 3 sparate columns
-      spectrum_title,
-      into = c("cycle1", "cycle2", "scan", "scan_num", "rt_2", "rt_3", "file", "empty"),
-      sep = ";", extra = "drop"
-    ) %>%
-      select(-c(cycle1, cycle2, scan, rt_2, rt_3, empty)) %>%
-      mutate(file = as.character(str_split_i(file, ":", -1)),
-             scan_num = parse_number(scan_num))
+misc_parseSpectrumtitle <- function(df, col,  scan_prefix, file_prefix, sep ="", ...){
 
 
 
-  }
-  else if (preprocess == "MascotDistiller"){
+  if(!{{col}} %in% colnames(df)) {
 
-    df <- df %>% separate(       #parse spectrum_title column into 3 sparate columns
-      spectrum_title,
-      into = c("n", "scan", "scan_num", "rt_2", "file"),
-      sep = " "
-    ) %>%
-      select(-c(n, scan,  rt_2))%>%
-      mutate(file = as.character(str_extract_all(file, "(?=\\w+\\d?+_\\d+).+(?=\\.)")))
+    cli::cli_alert_info("{col} column has either been already parsed or doesn't exist")
+
+    }else{
 
 
-  }
+  regex_any=  '.*?'
+  scan_regex = '\\d+'
+  file_regex = '.+'
+
+  patterns = c(regex_any, scan_prefix, id_scan = scan_regex, regex_any, file_prefix, id_filename = file_regex, paste0(sep, regex_any))
+
+df <- df |>
+  tidyr::separate_wider_regex(cols = {{col}},
+                              patterns = patterns,
+                              cols_remove = TRUE,
+                              too_few = "align_start",
+                              ...)
 
 }
+
+return(df)
+
+
+
+}
+
+
