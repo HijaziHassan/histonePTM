@@ -29,10 +29,10 @@ seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All
          )
 
 
-  if(!histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B")){cli::cli_abort(c("Invalid input.",
+  if(!any(histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B"))){cli::cli_abort(c("Invalid input.",
                                                                                "x" = "'{histoneProtein}' is not recognized.",
                                                                                "i" = "Please choose any of: 'All' (default), 'H3', 'H4', 'H2A', 'H2B')"))
- }else if (histoneProtein == "All"){
+ }else if ("All" %in% histoneProtein){
 
    histoneProtein = c("H3", "H4", "H2A", "H2B")
    protein_extracted <- purrr::map(.x = histoneProtein,
@@ -58,6 +58,8 @@ seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All
      dplyr::filter({{seq_col}} %in% c(protein_extracted, iRT))
 
  }
+
+  cli::cli_inform("{histoneProtein} histone peptides were extracted.")
 
   return(df)
 }

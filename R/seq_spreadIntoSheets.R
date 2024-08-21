@@ -56,7 +56,7 @@ seq_spreadIntoSheets <- function(df,
     split_namesH4 <- split_namesH4[order(match(split_namesH4, purrr::pluck(sequenceDB, "H4", label_type)))]
 
 
-    ##store each split group/varait in its corresponding sheet matching its name##
+    ##store each split group/variant in its corresponding sheet matching its name##
 
     #H3
     split_namesH3 |>
