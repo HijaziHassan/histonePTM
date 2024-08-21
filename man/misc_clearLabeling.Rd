@@ -12,7 +12,7 @@ misc_clearLabeling(ptm_string, rules)
 \item{rules}{A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{"pr" = "un"}.}
 }
 \value{
-unlabled string
+unlabeled string
 }
 \description{
 For final representation it is better to replace chemical labeling with biological state. For example, replace 'propionyl' with 'unmodified'
