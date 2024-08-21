@@ -45,4 +45,3 @@ def extract_scan(mgf_file_path, target_scan):
     # If the loop completes without finding the target scan, print a message
     print(f"Scan {target_scan} is not found in {os.path.basename(mgf_file_path)}.")
     return None  # Return None if the scan is not found
-
