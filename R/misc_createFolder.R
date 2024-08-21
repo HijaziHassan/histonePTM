@@ -1,3 +1,9 @@
+#' Create Folder
+#'
+#' @param foldername
+#'
+#' @return folder
+#' @export
 misc_createFolder <- function(foldername){
 
   foldername= tools::file_path_sans_ext({{foldername}})
@@ -10,3 +16,6 @@ misc_createFolder <- function(foldername){
     foldername = sub(".*/(.+)$", "\\1", foldername)
     cli::cli_alert_info("\nHey, '{foldername}' folder already exists!")}
 }
+
+#' @examples
+#' misc_createFolder('my_folder')
