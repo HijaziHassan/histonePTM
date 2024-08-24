@@ -1,24 +1,34 @@
 ---
-output: github_document
+title: 'HistonePTM <img src="man/figures/logo.png" align="right"/>'
+author: Hassan Hijazi
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
+
+
+
+```{r, include = FALSE, include_graphics = TRUE }
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/logo.png",
   out.width = "100%"
 )
+
 ```
 
-# histonePTM
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-The goal of histonePTM is to make histone PTM analysis less tedious by offering a whole workflow analysis or functions that help build a workflow based on the software output used.
+The goal of histonePTM is to make histone PTM analysis less tedious by offering a whole workflow analysis or functions that help build a workflow based on which software output you are using.
 
 ## Installation
 
@@ -33,23 +43,8 @@ devtools::install_github("HijaziHassan/histonePTM")
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example}
+```{r example, warning=FALSE, message=FALSE}
 library(histonePTM)
 ## basic example code
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
