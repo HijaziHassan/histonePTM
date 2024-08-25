@@ -1,4 +1,5 @@
-HistonePTM <img src="man/figures/logo.png" align="right"/>
+HistonePTM
+<img src="man/figures/logo.png" align="right" width="240" height="277"/>
 ================
 25 August 2024
 
