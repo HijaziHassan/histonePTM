@@ -1,7 +1,6 @@
 HistonePTM <img src="man/figures/logo.png" align="right"/>
 ================
-Hassan Hijazi
-24 August 2024
+25 August 2024
 
 - [Installation](#installation)
 - [Example](#example)

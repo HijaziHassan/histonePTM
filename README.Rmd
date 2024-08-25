@@ -1,6 +1,6 @@
 ---
 title: 'HistonePTM <img src="man/figures/logo.png" align="right"/>'
-author: Hassan Hijazi
+#author: Hassan Hijazi
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: 
   github_document:
