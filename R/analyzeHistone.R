@@ -22,11 +22,12 @@
 
 analyzeHistone <- function(analysisfile,
                 metafile,
-                hist_prot,
+                hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
                 NA_threshold,
                 output_result= c('single', 'multiple')){
 
-
+  output_result = match.arg(output_result)
+  hist_prot = match.arg(hist_prot)
 # Data 1st Check -----------------------------------------------
 
 ## packages -------
