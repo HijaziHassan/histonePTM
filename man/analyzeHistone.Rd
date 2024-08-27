@@ -7,9 +7,10 @@
 analyzeHistone(
   analysisfile,
   metafile,
-  hist_prot,
+  hist_prot = c("All", "H3", "H4", "H2A", "H2B"),
   NA_threshold,
-  output_result = c("single", "multiple")
+  output_result = c("single", "multiple"),
+  df_split = c("no_me1", "no_me1_K37un", "none")
 )
 }
 \arguments{
@@ -17,11 +18,14 @@ analyzeHistone(
 
 \item{metafile}{An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).}
 
-\item{hist_prot}{One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you to analyze them all use "All".}
+\item{hist_prot}{One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".}
 
 \item{NA_threshold}{A filter value below which an identification having this value of missing intensity value(s) or more is discarded.}
 
 \item{output_result}{Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).}
+
+\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none". This impact the resulting file where data is splited by protein and by PTM.
+'no_me1' removes ALL peptides with unlabelled me1 . The second does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not any filtration.}
 }
 \value{
 At least 3 excel files.

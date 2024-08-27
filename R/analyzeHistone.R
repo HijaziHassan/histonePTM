@@ -5,8 +5,10 @@
 #'
 #' @param analysisfile `Proline` output excel file
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
-#' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you to analyze them all use "All".
+#' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".
 #' @param NA_threshold A filter value below which an identification having this value of missing intensity value(s) or more is discarded.
+#' @param df_split Either of 'no_me1', "no_me1_K37un", or "none". This impact the resulting file where data is splited by protein and by PTM.
+#' 'no_me1' removes ALL peptides with unlabelled me1 . The second does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #'
 #' @import dplyr
@@ -24,10 +26,12 @@ analyzeHistone <- function(analysisfile,
                 metafile,
                 hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
                 NA_threshold,
-                output_result= c('single', 'multiple')){
+                output_result= c('single', 'multiple'),
+                df_split = c('no_me1', "no_me1_K37un", "none")){
 
   output_result = match.arg(output_result)
   hist_prot = match.arg(hist_prot)
+  df_split = match.arg(df_split)
 # Data 1st Check -----------------------------------------------
 
 ## packages -------
@@ -268,13 +272,8 @@ SHEET4 <- accepted_Histone
 CompleteHistoneCases <- accepted_Histone |>
   #select iRTs, lysine-free sequences, and completely modified sequences.
   dplyr::filter(fully_modified %in% c("TRUE", "Lysine_free_seq", "iRT")) |>
-  dplyr::mutate(PTM_stripped1 = stringr::str_replace_all(
-    PTM, # rename PTM for simiplicity (remove Nt- and Kxx)
-    c(".+Nt-" = "",
-      ".+Nt" = "Nt_noK",
-      "K\\d+" = "")
-  ),
-  PTM_stripped2 = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'remove'),
+  dplyr::mutate(
+  PTM_stripped = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'remove'),
   .after = PTM
   ) |>
   dplyr::arrange(desc(psm_score))
@@ -308,6 +307,7 @@ SHEET7 <- uniqueHistoneForms <- dupesAnalysis[[1]] #unique-ID dataframe
           #1) values are normalized
           #2) intensity columns are renamed.
           #4) Coef_Var is calculated per condition.
+          #4) new column: PTM_unlabeled
 
 SHEET8 <- uniqueHistoneForms |>
   quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
@@ -317,13 +317,17 @@ SHEET8 <- uniqueHistoneForms |>
                       int_col= dplyr::any_of(rawfilenames$SampleName),
                       seq_col = sequence,
                       ptm_col = PTM,
-                      format = 'wide')
+                      format = 'wide') |>
+  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped), .after= 'PTM')
 
-#####SHEET 9 -----------------------------------------------
+#####SHEET 9 & 10-----------------------------------------------
 
 uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
-  dplyr::filter(!stringr::str_detect(PTM_stripped2, "(?:[:upper:]*\\d*me1)\\b")) |>
-  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped2), .after= 'PTM') |>
+  dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[:upper:]*\\d*me1)\\b"))
+
+
+
+SHEET9 <- uniqueHistoneForms_nome1 |>
   quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
                      grouping_var = sequence) |>
   dplyr::rename(!!!dplyr::any_of(ColNames)) |>
@@ -334,8 +338,18 @@ uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
                       format = 'wide')
 
 
-SHEET9 <- uniqueHistoneForms_nome1
 
+
+SHEET10 <-  uniqueHistoneForms_nome1 |>
+  dplyr::filter(str_detect(sequence, 'KS.P..GGVKKPHR') & str_detect(PTM_unlabeled, '^.*-.*-un$')) |>
+quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
+                     grouping_var = sequence) |>
+  dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+  quant_coefVariation(df= _, df_meta= rawfilenames,
+                      int_col= dplyr::any_of(rawfilenames$SampleName),
+                      seq_col = sequence,
+                      ptm_col = PTM,
+                      format = 'wide')
 
 
 ##names of the sheets where the previous data produced will be saved##
@@ -348,14 +362,15 @@ all_sheets <-
     "isob_coel_pep",
     "unique_IDs",
     "unique_IDs_norm",
-    "unique_IDs_norm_nome1"
+    "unique_IDs_norm_nome1",
+    "unique_IDs_norm_nome1_H3K37un"
   )
 
 
 
 
 
-list_dfs= list(SHEET1, SHEET2, SHEET3, SHEET4, SHEET5, SHEET6, SHEET7, SHEET8, SHEET9)
+list_dfs= list(SHEET1, SHEET2, SHEET3, SHEET4, SHEET5, SHEET6, SHEET7, SHEET8, SHEET9, SHEET10)
 #setNames(list_dfs, all_sheets)
 
 
@@ -448,8 +463,24 @@ cli::cli_alert_success('An excel file containing cleaned and renamed data of {pr
 
 #create a sheet per variant and save the separated data
 #extract_variants(uniqueHistoneForms_normalized, histoneProtein =  histoneProtein)
+#Choose which final dataframe to split the data upon
 
-suppressWarnings({SHEET9 |>
+# df_tobe_splitted <- if (df_split != "none") {
+#   SHEET8
+# } else if (user_arg == "no_me1") {
+#   SHEET9
+# } else if (user_arg == "no_me1_K37un") {
+#   SHEET10
+# }
+
+df_tobe_splitted <- switch(df_split,
+             "none" = SHEET8,
+             "no_me1" = SHEET9,
+             "no_me1_K37un" = SHEET10,
+             stop("Invalid argument provided.")
+)
+
+df_tobe_splitted |>
 
     tidyr::nest(.by = protein) |>
   dplyr::mutate(
@@ -460,7 +491,7 @@ suppressWarnings({SHEET9 |>
                              ~ writexl::write_xlsx(.y, paste0('./analysis/', folderName,"/", .x, ".xlsx")))
   )
 
-})
+
 
 cli::cli_alert_success('An excel file per {prot_to_extract} is created separately.')
 
