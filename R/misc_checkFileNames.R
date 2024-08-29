@@ -1,4 +1,4 @@
-#' Check match betwen two columns
+#' Check match between two columns from two dataframes
 #' @description
 #' Could be used to check for user input file names if they match file names extracted from 'Search settings and infos' sheet of Proline export.
 #'
@@ -8,11 +8,6 @@
 #'
 #' @return error or success message.
 #' @export
-#' @examples
-#' df1 <- data.frame(file= c('HF1_022210', 'HF1_022222'))
-#' df2 <- df1
-#' misc_checkFileNames(df1, df2, common_col = 'file')
-#' #>The provided and actual names match perfectly. Good job!✔
 
 
 

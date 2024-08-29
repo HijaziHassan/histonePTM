@@ -12,7 +12,7 @@
 #' @importFrom dplyr bind_rows lst
 #' @importFrom purrr map map2
 #' @import ggplot2
-#' @import scales
+#' @importFrom scales percent_format
 #' @importFrom tibble tibble
 #'
 #' @return dataframe with 3 columns: name of a sequence, its amino acid residues and their count.

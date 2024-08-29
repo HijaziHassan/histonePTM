@@ -7,18 +7,41 @@
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
 #' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".
 #' @param NA_threshold A filter value below which an identification having this value of missing intensity value(s) or more is discarded.
-#' @param df_split Either of 'no_me1', "no_me1_K37un", or "none". This impact the resulting file where data is splited by protein and by PTM.
-#' 'no_me1' removes ALL peptides with unlabelled me1 . The second does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not any filtration.
+#' @param df_split Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
+#' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #'
 #' @import dplyr
-#' @importFrom stringr str_detect str_split_i str_replace_all str_count
+#' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim
 #' @importFrom tidyr nest drop_na
+#' @importFrom writexl write_xlsx
 #' @importFrom openxlsx writeData read.xlsx createWorkbook getSheetNames saveWorkbook addWorksheet
 #' @importFrom rlang check_installed is_missing set_names
 #' @importFrom purrr map map2 walk2 pluck
 #' @importFrom cli cli_alert_warning cli_alert_success cli_abort cli_h1 cli_h2 cli_h3
-#' @return At least 3 excel files.
+#' @return At least 3 excel files fragmented based on different filters:
+#' \describe{
+#'   \subsection{File1: fPSMs_\code{analysisfile}.xslx}
+#'
+#'      \item{SHEET1: 'meta_data'}{SampleName, file and dat columns (and Condition, Bioreplicate, TechReplicate if available)}
+#'      \item{SHEET2: 'RawData'}{Ithe raw data as is with subset of columns some of which are renamed, and new columns like rt_diff, NA_count, etc ... in addition to the ones parsed from _spectrum_title_ column.}
+#'      \item{SHEET3: 'Nt_IDs'}{All peptides that are sucessfully N-terminally labelled. iRT are always included.}
+#'      \item{SHEET4: '#NA<_`NA_threshold`')}{IDs quantified with missing values less than the specified threshold.}
+#'      \item{SHEET5: 'FullyMod_IDs'}{All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.}
+#'      \item{SHEET6: 'isob_coel_pep'}{Petides spotted by `ptm_flagDupes()` function. Helps see which PTMxsequence combination with zero delta score.}
+#'      \item{SHEET7: 'unique_IDs'}{'unique IDs considered for quantification. Abundances are not normalized}
+#'      \item{SHEET8: 'unique_IDs_norm'}{same as the previous with normalized abundances.}
+#'      \item{SHEET9: 'unique_IDs_norm_nome1'}{same as the previous but normalized while discarding any peptide with non-labelled me1.}
+#'      \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{same as the previous but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
+#'
+#' \subsection{File2: PTMsep_\code{analysisfile}.xlsx}{A file cotantaining a summary of the identified PTMs. Each sheet per identified PTM is created.
+#' This file could be further fragmented into as much protein as present. For this, change argument \code{output_result} to \code{'multiple'}}
+#'
+#' \subsection{File3: \code{hist_prot}_\code{analysisfile}.xlsx}{A file per protein specified in \code{hist_prot}. Each file with the identified peptide families separated into sheets.}
+#'
+#'      }
+#'
+#'
 #' @export
 #'
 
@@ -27,7 +50,7 @@ analyzeHistone <- function(analysisfile,
                 hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
                 NA_threshold,
                 output_result= c('single', 'multiple'),
-                df_split = c('no_me1', "no_me1_K37un", "none")){
+                df_split = c( "none", 'no_me1', "no_me1_K37un")){
 
   output_result = match.arg(output_result)
   hist_prot = match.arg(hist_prot)
@@ -75,8 +98,9 @@ cli::cli({
 # Data 2nd Check -----------------------------------------------
 
 ## read files ---------
-
-rawfilenames <- openxlsx::read.xlsx(xlsxFile = metafile)
+#readxl function seems to remove spaces upon reading, but to avoid loading extra packges, I used openxlsx
+rawfilenames <- openxlsx::read.xlsx(xlsxFile = metafile) |>
+    dplyr::mutate(dplyr::across(.cols = where(is.character), .fns = ~stringr::str_trim(.x)))
 
 proline_output <- openxlsx::read.xlsx(xlsxFile = analysisfile, sheet = sheetName) #read excel file into R
 
@@ -142,7 +166,7 @@ if ("All" %in% hist_prot) {
 }
 
 
-named <- purrr:::map(.x = prot_to_extract,
+named <- purrr::map(.x = prot_to_extract,
              function(x) {rlang::set_names(purrr::pluck(sequenceDB, x, "labelbyK"),
                                            purrr::pluck(sequenceDB, x, "argC_frags")
              )
@@ -166,8 +190,8 @@ Histone <- Histone |>
   dplyr::mutate(seq_stretch= stringr::str_replace_all(sequence, named),
                 #extract Protein name without variants (H3 for H3 and H3.3, H2A for all H2A variants)
                 protein = substr(stringr::str_split_i(seq_stretch, "_", 1), 1, 3) |>
-                  #remove "." from H3.3 and "m" from H3mm7/13
-                  gsub("[[:punct:]]|m", "", x= _)
+                  #remove "." from H3.3, "m" from H3mm7/13 and "t" from "H3t"
+                  gsub("[[:punct:]]|m|t", "", x= _)
   )
 
 
@@ -318,12 +342,20 @@ SHEET8 <- uniqueHistoneForms |>
                       seq_col = sequence,
                       ptm_col = PTM,
                       format = 'wide') |>
-  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped), .after= 'PTM')
+  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped,
+                                                   #default was not used, since unlabeled me1 exist here.
+                                                   rules = c(".+Nt-?" = "", #remove N-terminal Labeling
+                                                                             "pr"="un", #replace propionyl with unmod
+                                                                             "tma" = "un")), #replace TMAyl with unmod
+ .after= 'PTM')
+
 
 #####SHEET 9 & 10-----------------------------------------------
 
 uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
-  dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[:upper:]*\\d*me1)\\b"))
+  dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[:upper:]*\\d*me1)\\b"))|>
+  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped), .after= 'PTM')
+
 
 
 
@@ -341,7 +373,10 @@ SHEET9 <- uniqueHistoneForms_nome1 |>
 
 
 SHEET10 <-  uniqueHistoneForms_nome1 |>
-  dplyr::filter(str_detect(sequence, 'KS.P..GGVKKPHR') & str_detect(PTM_unlabeled, '^.*-.*-un$')) |>
+  dplyr::filter(
+    !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
+      (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$'))
+  ) |>
 quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
                      grouping_var = sequence) |>
   dplyr::rename(!!!dplyr::any_of(ColNames)) |>
@@ -476,8 +511,7 @@ cli::cli_alert_success('An excel file containing cleaned and renamed data of {pr
 df_tobe_splitted <- switch(df_split,
              "none" = SHEET8,
              "no_me1" = SHEET9,
-             "no_me1_K37un" = SHEET10,
-             stop("Invalid argument provided.")
+             "no_me1_K37un" = SHEET10
 )
 
 df_tobe_splitted |>
@@ -487,7 +521,7 @@ df_tobe_splitted |>
     split_data = purrr::map(data, ~ split(.x, .x['seq_stretch'])),
     # named dfs will be saved as sheets with write_xlsx
     save_files = purrr::walk2(.x = protein,
-                             .y = split_data,
+                              .y = split_data,
                              ~ writexl::write_xlsx(.y, paste0('./analysis/', folderName,"/", .x, ".xlsx")))
   )
 
@@ -501,12 +535,12 @@ cli::cli_alert_success('An excel file per {prot_to_extract} is created separatel
 
 
 wb_ptm = openxlsx::createWorkbook()
-ident_ptms <- strsplit(SHEET9$PTM_unlabeled, "-") |> unlist() |> unique()
+ident_ptms <- strsplit(df_tobe_splitted$PTM_unlabeled, "-") |> unlist() |> unique()
 purrr::map(.x = ident_ptms , .f = ~openxlsx::addWorksheet(wb=wb_ptm, sheetName = .x))
 
 for(ptm in ident_ptms){
 
-  SHEET9 |>
+  df_tobe_splitted |>
     dplyr::filter(stringr::str_detect(PTM_unlabeled, ptm)) |>
     openxlsx::writeData(wb = wb_ptm, x = _, sheet = ptm)
 }

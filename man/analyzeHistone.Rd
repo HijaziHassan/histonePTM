@@ -10,7 +10,7 @@ analyzeHistone(
   hist_prot = c("All", "H3", "H4", "H2A", "H2B"),
   NA_threshold,
   output_result = c("single", "multiple"),
-  df_split = c("no_me1", "no_me1_K37un", "none")
+  df_split = c("none", "no_me1", "no_me1_K37un")
 )
 }
 \arguments{
@@ -24,11 +24,31 @@ analyzeHistone(
 
 \item{output_result}{Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).}
 
-\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none". This impact the resulting file where data is splited by protein and by PTM.
-'no_me1' removes ALL peptides with unlabelled me1 . The second does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not any filtration.}
+\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
+'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
 }
 \value{
-At least 3 excel files.
+At least 3 excel files fragmented based on different filters:
+\describe{
+  \subsection{File1: fPSMs_\code{analysisfile}.xslx}
+
+     \item{SHEET1: 'meta_data'}{SampleName, file and dat columns (and Condition, Bioreplicate, TechReplicate if available)}
+     \item{SHEET2: 'RawData'}{Ithe raw data as is with subset of columns some of which are renamed, and new columns like rt_diff, NA_count, etc ... in addition to the ones parsed from _spectrum_title_ column.}
+     \item{SHEET3: 'Nt_IDs'}{All peptides that are sucessfully N-terminally labelled. iRT are always included.}
+     \item{SHEET4: '#NA<_`NA_threshold`')}{IDs quantified with missing values less than the specified threshold.}
+     \item{SHEET5: 'FullyMod_IDs'}{All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.}
+     \item{SHEET6: 'isob_coel_pep'}{Petides spotted by `ptm_flagDupes()` function. Helps see which PTMxsequence combination with zero delta score.}
+     \item{SHEET7: 'unique_IDs'}{'unique IDs considered for quantification. Abundances are not normalized}
+     \item{SHEET8: 'unique_IDs_norm'}{same as the previous with normalized abundances.}
+     \item{SHEET9: 'unique_IDs_norm_nome1'}{same as the previous but normalized while discarding any peptide with non-labelled me1.}
+     \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{same as the previous but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
+
+\subsection{File2: PTMsep_\code{analysisfile}.xlsx}{A file cotantaining a summary of the identified PTMs. Each sheet per identified PTM is created.
+This file could be further fragmented into as much protein as present. For this, change argument \code{output_result} to \code{'multiple'}}
+
+\subsection{File3: \code{hist_prot}_\code{analysisfile}.xlsx}{A file per protein specified in \code{hist_prot}. Each file with the identified peptide families separated into sheets.}
+
+     }
 }
 \description{
 Analyze histone bottom-up proteomics DDA data validated and quantified by `Proline` software.
