@@ -22,7 +22,6 @@
 #' @return At least 3 excel files fragmented based on different filters:
 #' \describe{
 #'   \subsection{File1: fPSMs_\code{analysisfile}.xslx}
-#'
 #'      \item{SHEET1: 'meta_data'}{SampleName, file and dat columns (and Condition, Bioreplicate, TechReplicate if available)}
 #'      \item{SHEET2: 'RawData'}{Ithe raw data as is with subset of columns some of which are renamed, and new columns like rt_diff, NA_count, etc ... in addition to the ones parsed from _spectrum_title_ column.}
 #'      \item{SHEET3: 'Nt_IDs'}{All peptides that are sucessfully N-terminally labelled. iRT are always included.}
@@ -33,7 +32,6 @@
 #'      \item{SHEET8: 'unique_IDs_norm'}{same as the previous with normalized abundances.}
 #'      \item{SHEET9: 'unique_IDs_norm_nome1'}{same as the previous but normalized while discarding any peptide with non-labelled me1.}
 #'      \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{same as the previous but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
-#'
 #' \subsection{File2: PTMsep_\code{analysisfile}.xlsx}{A file cotantaining a summary of the identified PTMs. Each sheet per identified PTM is created.
 #' This file could be further fragmented into as much protein as present. For this, change argument \code{output_result} to \code{'multiple'}}
 #'
@@ -133,15 +131,15 @@ numberofsamples <- sum(grepl("^abundance_", colnames(proline_output)))
 #### Process spectrum_title column------------------------
 
 proline_output <- misc_parseSpectrumtitle(proline_output, col = "spectrum_title",
-                                          scan_prefix = "first_scan:" ,
-                                          file_prefix = "raw_file_identifier:" , sep = ";")
+                                          scan_prefix = "first_scan:|Scan " , #to account for MGFBoost processing or Mascot Distiller
+                                          file_prefix = "raw_file_identifier:|.*\\/" , sep = ";|\\.raw\\]") #here as well
 
 
 
 #### merge real names with meta names and remove channel column ----------------
-meta_names_merge <- dplyr::left_join(rawfilenames, meta_names, by = "file") |>
-  dplyr::select(SampleName, file, dat, any_of(c('Condition', 'Bioreplicate'))) |>
-  tidyr::drop_na()
+meta_names_merge <- dplyr::left_join(meta_names, rawfilenames, by = "file") |>
+  dplyr::select(SampleName, file, dat, dplyr::any_of(c('Condition', 'BioReplicate', 'TechReplicate'))) |>
+  tidyr::drop_na(SampleName, file, dat)
 
 ##### SHEET 1 -----------------------------------------------
 
