@@ -8,16 +8,18 @@ plot_jitterbarIntvsPTM(
   dataset,
   x_axis,
   y_axis,
-  condition = "my sample",
-  id_col = "my sequence",
-  plot_title = "",
+  condition,
+  id_col,
+  plot_title = NULL,
   fun = c("median", "mean"),
-  scale = 100,
+  scale = c(100, 1),
+  cond_order = NULL,
   save_plot = FALSE
 )
 }
 \arguments{
-\item{dataset}{your data loaded as dataframe. Must be in long format.}
+\item{dataset}{A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguemnts below.
+A 5th column can be provided to be the plot title.}
 
 \item{x_axis}{x variable (PTM column)}
 
@@ -27,16 +29,19 @@ plot_jitterbarIntvsPTM(
 
 \item{id_col}{unique ID column such as sequence or sequence label}
 
-\item{fun}{median (default) or mean. This will be the height of the bar.}
+\item{fun}{median (\code{default}) or mean. This will be the height of the bar.}
 
-\item{scale}{100 (default). If you want to keep values as they are use 1.}
+\item{scale}{100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.}
 
-\item{save_plot}{(\code{logical})}
+\item{cond_order}{(optional). A character vector containing conditions according to which bars will be ordered in the plot.}
 
-\item{title_plot}{A plot title (optional)}
+\item{save_plot}{(\code{logical}; \code{optional})}
+
+\item{title_plot}{(\code{optional})A column with values to be the plot_title (optional).}
 }
 \value{
-bar plot with jitter points.
+A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
+(representing either `mean` or `median`) with jitter points (corresponding to individual measurements per `condition`).
 }
 \description{
 Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
