@@ -8,12 +8,12 @@
 #' @param export_mgf \code{logical} Export only scans containing diagnsotic ion(s) into a an mgf file.
 #' @param save_file \code{logical} Save the results as csv file
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
-#' @import dplyr
+#' @importFrom dplyr near
+#' @importFrom tibble tibble
 #' @import Spectra
 #' @importFrom MsBackendMgf MsBackendMgf
-#' @import Spectra
 #' @import cli
-#' @import rlang
+#' @importFrom rlang is_missing
 #' @importFrom BiocManager install
 #'
 #' @export
@@ -62,19 +62,30 @@ for (file in seq_along(mgf_file)){
 file_name = tools::file_path_sans_ext(basename(mgf_file))
 
 ## read mgf -----------------
-  sps <- .mgf_to_sp(mgf_file)
+  sps <- .mgf_to_sp(mgf_file[file])
 
 
-  msg = paste0("Extracting diagnostic ions from ", basename(mgf_file))
+  msg = paste0("Extracting diagnostic ions from ", basename(mgf_file[file]))
   cli::cli_progress_bar(type = "iterator", name = msg )
 
-  final_list = list()
+  num_spectra <- length(Spectra::acquisitionNum(sps))
+
+  # Pre-allocate matrices: one for double values and one for integer values
+  double_matrix <- matrix(NA_real_, nrow = 0, ncol = 4)  # diag_ion, diag_relint, prec_mz, rt
+  int_matrix <- matrix(NA_integer_, nrow = 0, ncol = 2)  # scan, prec_z
+
+  colnames(double_matrix) <- c("diag_ion", "diag_relint", "prec_mz", "rt")
+  colnames(int_matrix) <- c("scan", "prec_z")
+
+  # Pre-allocate vector for file names (character)
+  file_vec <- character()
 
 ### iterate over spectra in mgf -----------------
 
-  for (i in 1:length(Spectra::acquisitionNum(sps))) {
+  for (i in seq_len(num_spectra)) {
 
-    temp_all_diag <- vector(mode = 'list')
+    temp_double <- matrix(NA_real_, nrow = 0, ncol = 4)  # temp matrix for double values
+    temp_int <- matrix(NA_integer_, nrow = 0, ncol = 2)  # temp matrix for integer values
 
 #### iterate over user-defined diag ions -----------------
      for (ion in seq_along(diag_ion)) {
@@ -87,53 +98,57 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
           if (any(isIonhere, na.rm = TRUE)) {
             indices =   which(isIonhere) #find its/their index/indices
 
-            temp_one_diag <- list() # to account for two values too close to each other.
+            # Allocate temp matrices for this spectrum/ion
+            temp_double_ion <- matrix(NA_real_, nrow = length(indices), ncol = 4)
+            temp_int_ion <- matrix(NA_integer_, nrow = length(indices), ncol = 2)
 
               for (indx in seq_along(indices)) {
 ###### fill in data with some manipulations -----------------
 
-                  temp_one_diag[[indx]] <- list(
-                    file         = file_name,
-                    diag_ion     = round(Spectra::mz(sps)[[i]][indices[indx]], 4),
-                    diag_relint  = round(Spectra::intensity(sps)[[i]][indices[indx]] / max(Spectra::intensity(sps)[[i]]),3),
-                    #scan         = Spectra::acquisitionNum(sps)[[i]],
-                    scan         = .found_replace_scan(sps, i),
-                    prec_mz      = round(Spectra::precursorMz(sps)[[i]], 4),
-                    prec_z       = Spectra::precursorCharge(sps)[[i]],
-                    rt           = round(Spectra::rtime(sps)[[i]] / 60, 2) #sec to min
+                  temp_double_ion[indx, ] <- c(
+                    round(Spectra::mz(sps)[[i]][indices[indx]], 4),
+                    round(Spectra::intensity(sps)[[i]][indices[indx]] / max(Spectra::intensity(sps)[[i]]),3),
+                    round(Spectra::precursorMz(sps)[[i]], 4),
+                    round(Spectra::rtime(sps)[[i]] / 60, 2) #sec to min
                   )
 
-
-
+                  temp_int_ion[indx, ] <- c(
+                    .found_replace_scan(sps, i),  # scan number
+                    Spectra::precursorCharge(sps)[[i]]  # precursor charge
+                  )
 
               }
 
-            cli::cli_progress_update()
+            # Bind rows to temp matrices
+            temp_double <- rbind(temp_double, temp_double_ion)
+            temp_int <- rbind(temp_int, temp_int_ion)
+          }
+     }
 
-        # Update the combined list
-        temp_all_diag[[ion]] <- temp_one_diag
+    # Append the current spectrum's diagnostic ions to the main matrices
+    double_matrix <- rbind(double_matrix, temp_double)
+    int_matrix <- rbind(int_matrix, temp_int)
 
-
-      }
-
-
+    # Add the file name corresponding to this spectrum
+    if (nrow(temp_double) > 0) {
+      file_vec <- c(file_vec, rep(file_name, nrow(temp_double)))
     }
 
-
-    final_list[[i]] <- dplyr::bind_rows(temp_all_diag)
-
-
+    cli::cli_progress_update()
   }
 
+  if(nrow(double_matrix) == 0L){cli::cli_alert_info("No diagnostic ion was found.")}else{
 
-  final_df <- dplyr::bind_rows(final_list)
-
-  if(nrow( final_df) == 0L){cli::cli_alert_info("No diagnostic ion was found.")}else{
-
-    final_df <- final_df |>
-    dplyr::mutate(
-      dplyr::across(dplyr::all_of(c("diag_ion", "diag_relint", "prec_mz", "rt")), as.double),
-      dplyr::across(dplyr::all_of(c("scan", "prec_z")), as.integer)
+    # Combine the matrices and vector into a data frame
+    final_df <- tibble::tibble(
+      file = file_vec,
+      diag_ion = double_matrix[, "diag_ion"],
+      diag_relint = double_matrix[, "diag_relint"],
+      prec_mz = double_matrix[, "prec_mz"],
+      rt = double_matrix[, "rt"],
+      scan = int_matrix[, "scan"],
+      prec_z = int_matrix[, "prec_z"],
+      stringsAsFactors = FALSE
     )
 
     cli::cli_progress_done()
@@ -141,7 +156,7 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
 
 
 
-#no need to save a file if no diagnsitic ion was found.
+#no need to save a file if no diagnostic ion was found.
   if(save_file && nrow(final_df) != 0L){
     diagnostic_ions <- paste(as.integer(diag_ion), collapse = "_")
     file_csv = paste0("diagIons_",diagnostic_ions, "_", file_name, ".csv")
@@ -151,12 +166,12 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
   }
 
 
-  # Export scans as containing specific scans ----------------------
+  # Export scans as containing specific diag ions ----------------------
 
-    if (export_mgf)
+  if (export_mgf)
   #no scans at all
 
-    if (nrow(final_df) == 0L) {
+     if(nrow(final_df) == 0L) {
     cli::cli_alert_info("No scan number was found.")
   } else {
 
@@ -196,9 +211,11 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
 #add a space between messages and output df
 cat("\n")
 
-if(nrow( final_df) != 0L) return(final_df)
+if(nrow( final_df) != 0L) {return(final_df)
 
-  }
+}
+invisible(NULL)  # Return NULL if no results
+}
 
 
 
@@ -229,7 +246,7 @@ return(mgftospec)
 
 .found_replace_scan = function(spec_obj, scan_i){
 
-  dplyr::if_else(!is.na(spec_obj$acquisitionNum[scan_i]),
+  ifelse(!is.na(spec_obj$acquisitionNum[scan_i]),
          spec_obj$acquisitionNum[scan_i], #return the scan
          {
            #otherwise extract the scan number from the title
