@@ -2,16 +2,19 @@
 % Please edit documentation in R/litRicher.R
 \name{litRicher}
 \alias{litRicher}
-\title{Quotes from literature about histones}
+\title{Quotes from the histone literature}
 \usage{
 litRicher(quotes_num = 1)
 }
 \arguments{
-\item{quotes_num}{Number of quotes to print out (\code{integer}. To read all quotes, use "All".)}
+\item{quotes_num}{Number of quotes to print out (\code{integer}). To read all the quotes, use "All".)}
 }
 \value{
 A character string containing a quote about histones and histone PTMs.
 }
 \description{
-Print a quote(s) from cherry-picked from histone literature.
+Print quote(s) cherry-picked from the histone literature.
+}
+\examples{
+litRicher()
 }

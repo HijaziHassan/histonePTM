@@ -1,11 +1,12 @@
-#' Quotes from literature about histones
+#' Quotes from the histone literature
 #' @description
-#' Print a quote(s) from cherry-picked from histone literature.
+#' Print quote(s) cherry-picked from the histone literature.
 #'
 #'
-#' @param quotes_num Number of quotes to print out (\code{integer}. To read all quotes, use "All".)
+#' @param quotes_num Number of quotes to print out (\code{integer}). To read all the quotes, use "All".)
 #'
 #' @return A character string containing a quote about histones and histone PTMs.
+#' @examples litRicher()
 #' @export
 
 litRicher <- function(quotes_num = 1){
@@ -102,5 +103,4 @@ litRicher <- function(quotes_num = 1){
 
 }
 
-#' @examples
-#' litRicher()
+
