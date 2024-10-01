@@ -4,6 +4,5 @@
 .Ruserdata
 *.xlsx
 *.mgf
-*.png
 *.svg
 *.pdf
