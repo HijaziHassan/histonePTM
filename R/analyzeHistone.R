@@ -524,8 +524,9 @@ df_tobe_splitted |>
   )
 
 
-
-cli::cli_alert_success('An excel file per {prot_to_extract} is created separately.')
+for(protein in prot_to_extract){
+cli::cli_alert_success('{protein}.xlsx is saved.')
+}
 
 ##### --------- output file 3: PTMs---------#######
 #create a sheet per PTM#
@@ -549,7 +550,7 @@ openxlsx::saveWorkbook(wb=wb_ptm,
              overwrite = TRUE)
 
 
-cli::cli_alert_success('An excel file summarizing ids per each {ident_ptms} is created.')
+cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.')
 
 
 cat("\n", date(), "\n")
