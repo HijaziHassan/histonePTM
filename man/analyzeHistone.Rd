@@ -41,12 +41,10 @@ At least 3 excel files fragmented based on different filters:
      \item{SHEET8:'unique_IDs_norm'}{same as the previous with normalized abundances.}
      \item{SHEET9:'unique_IDs_norm_nome1'}{same as the previous but normalized while discarding any peptide with non-labelled me1.}
      \item{SHEET10:'unique_IDs_norm_nome1_H3K37un'}{same as the previous but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
-\subsection{File2:PTMsep_analysisfile.xlsx}{A file containing a summary of the identified PTMs. Each sheet per identified PTM is created.
-This file could be further fragmented into as much protein as present. For this, change argument output_result to 'multiple'}
+     }
+\subsection{File2:PTMsep_analysisfile.xlsx}{A file containing a summary of the identified PTMs. Each sheet per identified PTM is created.This file could be further fragmented into as much protein as present. For this, change argument output_result to 'multiple'}
 
 \subsection{File3:hist_prot_analysisfile.xlsx}{A file per protein specified in hist_prot. Each file with the identified peptide families separated into sheets.}
-
-     }
 }
 \description{
 Analyze histone bottom-up proteomics DDA data validated and quantified by `Proline` software.
