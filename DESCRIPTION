@@ -13,10 +13,13 @@ Depends:
     R (>= 4.0.0)
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, tidytable, rlang,  cli, 
-     Spectra, MsBackendMgf, BiocParallel, BiocManager, reticulate, 
+     BiocManager, reticulate, 
      ggplot2, ggtext, scales, ggridges,
      rentrez, DBI, RSQLite, httr2, 
      readxl, openxlsx, writexl
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    Spectra,
+    MsBackendMgf,
+    BiocParallel
 Config/testthat/edition: 3
