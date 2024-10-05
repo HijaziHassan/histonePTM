@@ -22,6 +22,7 @@
 #' @return At least 3 excel files fragmented based on different filters:
 #' \describe{
 #'   \subsection{File1: fPSMs_analysisfile.xslx}{
+#'   \itemize{
 #'     \item{SHEET1: 'meta_data'}{SampleName, file and data columns (and Condition, Bioreplicate, TechReplicate if available)}
 #'     \item{SHEET2: 'RawData'}{The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.}
 #'     \item{SHEET3: 'Nt_IDs'}{All peptides that are successfully N-terminally labelled. iRT are always included.}
@@ -32,7 +33,7 @@
 #'     \item{SHEET8: 'unique_IDs_norm'}{Same as the previous sheet but with normalized abundances.}
 #'     \item{SHEET9: 'unique_IDs_norm_nome1'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1.}
 #'     \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
-#'   }
+#'   }}
 #'   \subsection{File2: PTMsep_analysisfile.xlsx}{A file containing a summary of the identified PTMs. Each sheet per identified PTM is created. This file could be further fragmented into as many proteins as are present. To do this, change the argument `output_result` to 'multiple'.}
 #'   \subsection{File3: hist_prot_analysisfile.xlsx}{A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.}
 #' }
