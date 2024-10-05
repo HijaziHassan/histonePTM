@@ -19,6 +19,7 @@
 #' @importFrom ggtext element_markdown
 #' @importFrom readxl read_excel
 #' @importFrom cli cli_abort
+#' @importFrom utils read.table
 #'
 #' @return A mirror plot.
 #' @export

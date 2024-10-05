@@ -16,6 +16,7 @@
 #' @importFrom cli cli_alert_info cli_alert_success cli_abort
 #' @importFrom tidyr unnest_wider unnest_longer
 #' @importFrom purrr pluck map_dfr
+#' @importFrom utils write.csv
 #'
 #'
 #' @return A \code{tibble} and \code{.csv} file.

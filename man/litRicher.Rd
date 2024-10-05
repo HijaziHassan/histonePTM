@@ -7,7 +7,7 @@
 litRicher(quotes_num = 1)
 }
 \arguments{
-\item{quotes_num}{Number of quotes to print out (\code{integer}). To read all the quotes, use "All".)}
+\item{quotes_num}{Number of quotes to print out (\code{integer}). To read all the quotes, use "All".}
 }
 \value{
 A character string containing a quote about histones and histone PTMs.

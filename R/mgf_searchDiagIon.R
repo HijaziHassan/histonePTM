@@ -15,6 +15,7 @@
 #' @importFrom cli cli_abort cli_progress_bar cli_progress_update cli_progress_done cli_inform cli_alert_info cli_alert_success
 #' @importFrom rlang is_missing
 #' @importFrom BiocManager install
+#' @importFrom utils install.packages write.csv
 #'
 #' @export
 mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALSE, save_file = FALSE){
@@ -36,22 +37,18 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALS
 
 # check dependencies availability -----------------------
 
-libraries <- c("BiocParallel", "Spectra", "MsBackendMgf")
-
 if (!requireNamespace("BiocManager")) install.packages("BiocManager")
 
-#Checking if the package belongs to CRAN or to Bioconductor and installing them accordingly.
+  if (!requireNamespace("Spectra", quietly = TRUE))
+    BiocManager::install("Spectra")
 
-for(lib in libraries){
-  if(!lib %in% installed.packages()){
-    if(lib %in% available.packages()[,1]){
-      install.packages(lib,dependencies=TRUE)
-    }else {(BiocManager::install(lib))
-    }}
-}
+  if (!requireNamespace("MsBackendMgf", quietly = TRUE))
+    BiocManager::install("MsBackendMgf")
 
-  #Loading the libraries
-  sapply(libraries, requireNamespace, character=TRUE)
+  if (!requireNamespace("BiocParallel", quietly = TRUE))
+    BiocManager::install("BiocParallel")
+
+
 
 ####---
 

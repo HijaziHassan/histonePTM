@@ -20,6 +20,7 @@
 #' @importFrom stringr str_detect str_replace_all
 #' @importFrom cli cli_alert_warning cli_alert_warning col_red cli_abort
 #' @importFrom tidyr pivot_longer drop_na
+#' @importFrom grDevices dev.off pdf
 #' @return Boxplot with jittered point to assess me1 labeling when using anhydrides to label lysines.
 #' @export
 #'

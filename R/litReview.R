@@ -16,6 +16,7 @@
 #' @importFrom purrr map
 #' @importFrom dplyr mutate select summarize filter group_by across
 #' @importFrom tidyr tibble unnest
+#' @importFrom utils write.csv
 #'
 #' @return A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year.
 #' @examples

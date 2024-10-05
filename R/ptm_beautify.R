@@ -22,7 +22,7 @@
 #' software = "Skyline", residue = 'keep')
 #'
 #' @importFrom stringr str_replace_all str_remove_all str_extract_all str_c str_remove str_extract str_detect
-#'
+#' @importFrom stats setNames
 
 
 #function to round ptm masses. !!! this will remove (+) sign but keep (-) if exists

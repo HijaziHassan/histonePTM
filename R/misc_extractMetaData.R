@@ -10,6 +10,7 @@
 #' @importFrom stringr str_remove
 #' @importFrom readxl read_excel
 #' @importFrom openxlsx write.xlsx
+#' @importFrom utils write.csv
 #'
 #' @return \code{.csv} file with 3 columns: \code{file}, \code{channel}, and \code{dat}.
 #' @export

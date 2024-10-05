@@ -19,6 +19,7 @@
 #' @importFrom rlang is_missing is_empty sym
 #' @importFrom dplyr select summarise filter group_by arrange left_join
 #' @importFrom cli cli_abort
+#' @importFrom stats sd
 #' @return The input dataframe plus 3 columns per condition: `sd_condition`, `avg_condition` and `CV_condition`.
 #' @export
 
@@ -49,7 +50,7 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
 
     #store intensity columns' names
     int_cols <- df |>
-      dplyr::select({{int_col}}) %>%
+      dplyr::select({{int_col}})  |>
       names()
 
 

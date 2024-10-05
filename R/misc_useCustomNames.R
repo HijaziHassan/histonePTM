@@ -38,7 +38,7 @@ misc_useCustomNames <- function(raw_df, user_df){
            .keep = "unused")
 
   ColNames <- dplyr::bind_rows(abn_ColNames, psmcount_ColNames) |>
-    dplyr::select(-c(file, dat, dplyr::any_of(c('Condition', 'condition', 'Bioreplicate', 'BioReplicate', 'TechReplicate')))) %>%
+    dplyr::select(-c(file, dat, dplyr::any_of(c('Condition', 'condition', 'Bioreplicate', 'BioReplicate', 'TechReplicate'))))  |>
     tibble::deframe()
 
   return(ColNames)

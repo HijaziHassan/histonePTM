@@ -14,15 +14,20 @@
 #'
 #' @return \code{dataframe} containing 4 columns: _mz_, _intensity_, _scan_, and _file_.
 #'
-#' @import Spectra
-#' @import MsBackendMgf
-#' @import BiocParallel
-#' @import cli
-#' @import stringr
+#' @importFrom Spectra Spectra spectraVariableMapping export
+#' @importFrom MsBackendMgf MsBackendMgf
+#' @importFrom cli cli_abort cli_inform cli_alert_success
+#' @importFrom stringr str_remove str_extract
+#' @importFrom utils write.csv
 #'
 #'
 #'@export
 mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
+  if (!requireNamespace("Spectra", quietly = TRUE))
+    BiocManager::install("Spectra")
+
+  if (!requireNamespace("MsBackendMgf", quietly = TRUE))
+    BiocManager::install("MsBackendMgf")
 
 
   if(rlang::is_missing(mgf_file)) cli::cli_abort(c("Error:",
