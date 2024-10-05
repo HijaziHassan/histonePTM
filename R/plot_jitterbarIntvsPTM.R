@@ -8,20 +8,20 @@
 #' @param y_axis y variable (intensity column). If already values are percentage, set \code{scale} to 1.
 #' @param condition The condition column (WT vs disease, concentration, ...)
 #' @param id_col unique ID column such as sequence or sequence label
-#' @param title_plot (\code{optional})A column with values to be the plot_title (optional).
+#' @param plot_title (\code{optional})A column with values to be the plot_title (optional).
 #' @param fun median (\code{default}) or mean. This will be the height of the bar.
 #' @param scale 100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.
 #' @param cond_order (optional). A character vector containing conditions according to which bars will be ordered in the plot.
 #' @param save_plot (\code{logical}; \code{optional})
 #'
-#' @import dplyr
+#' @importFrom dplyr select pull n_distinct mutate
 #' @importFrom stats reorder
 #' @importFrom scales label_percent
 #' @importFrom rlang is_empty quo_name enquo
 #' @importFrom stringr str_glue
 #' @importFrom cli cli_abort cli_inform
 #' @importFrom tidyr nest
-#' @importFrom purrr map map2
+#' @importFrom purrr map walk2
 #' @import ggplot2
 #'
 #' @return A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
@@ -35,29 +35,73 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              id_col,  #could be sequence or sequence label
                              plot_title= NULL, #optional: sould be stripped sequence
                              fun = c("median", "mean"),
-                             scale = c(100, 1),
+                             scale = 100,
                              cond_order= NULL,
                              save_plot = FALSE
 ){
 
+
+
 # Check inputs------------
   fun <- match.arg(fun)
+ if(!is.symbol(substitute(x_axis))){cli::cli_abort('remove the quotation around "x_axis" argument: {x_axis}.')}
+ if(!is_symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
   if(missing(condition)){cli::cli_abort('`Condition` column is missing')}
   if(missing(id_col)){cli::cli_abort('`id_col` column is missing')}
+  #If PTM column used in grouping, it will no more be available in the nested dataframe
+      # ==> Check if x_axis and plot_title arguments are not identical
+
+  xaxis_expr <- substitute(x_axis)
+  plottitle_expr <- substitute(plot_title)
+
+  # No problem if one is string and the other is closure
+  if (is.symbol(xaxis_expr) && is.symbol(plottitle_expr)) {
+
+    if(identical(deparse(xaxis_expr), deparse(plottitle_expr))){
+      cli::cli_abort(
+      '`x_axis and `plot_title` arguments should not be identical')}}
+
+
 
   # prepare the dataset ------------
 
+
   dataset <- dataset |>
-    dplyr::mutate({{condition}} := factor({{condition}}, levels = assort_cond(dataset,
-                                                                                    condition_col = {{condition}},
-                                                                                    cond_order = cond_order))) |>
-    tidyr::nest(data = -c({{id_col}}, {{plot_title}})) |>
-    dplyr::mutate(data = purrr::map(data, ~ .x %>%
-                               dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
+    dplyr::mutate({{condition}} := factor({{condition}},
+                                          levels = assort_cond(dataset,
+                                                               condition_col = {{condition}},
+                                                               cond_order = cond_order)))
 
 
-                               )) |>
+  id_col <- rlang::enquo(id_col)
+  plot_title <- rlang::enquo(plot_title)
+  plot_title_label <- rlang::as_label(plot_title)
+
+  # Check if plot_title is NULL or provided as a string (quoted)
+  if (rlang::quo_is_null(plot_title) || plot_title_label %in% names(dataset)) {
+
+        dataset <- dataset |>
+      tidyr::nest(data = -c(!!id_col, !!plot_title)) |>
+          dplyr::mutate(data = purrr::map(data, ~ .x |>
+                                     dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
+
+          ))
+
+        print(dataset)
+  } else {
+
+    dataset <- dataset |>
+      tidyr::nest(data = -!!id_col) |>
+    dplyr::mutate(data = purrr::map(data, ~ .x |>
+                                      dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
+
+    ))
+  }
+
+
+
+  dataset <- dataset |>
     dplyr::mutate(plots = purrr::walk2(.x= {{id_col}},
                         .y= data,
                         .f = ~ plotjit(id_col= .x,
@@ -67,11 +111,11 @@ plot_jitterbarIntvsPTM <- function(dataset,
                                        condition = {{condition}},
                                        plot_title = {{plot_title}},
                                        fun= fun,
-                                       scale= scale,
+                                       scale=  scale,
                                        save_plot = save_plot)))
 
-}
 
+}
 
 #' @noRd
 
@@ -80,7 +124,7 @@ plotjit <- function(dataset,
                       y_axis, #Intensity
                       condition,  #variable on which comparison is done
                       id_col,  #could be sequence or sequence label
-                      plot_title= NULL, #optional: sould be stripped sequence
+                      plot_title= NULL, #optional: should be stripped sequence
                       fun = c("median", "mean"),
                       scale,
                       save_plot){
@@ -103,9 +147,9 @@ p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axi
                          jitter.width = 0.1),
                          shape= 21, color = "black", size = ifelse(unique(dataset[['size']]> 10),
                                                                           unique(dataset[['size']]/10),
-                                                                                 3), alpha = 1 ) +
+                                                                                 2.75), alpha = 1 ) +
 
-    ggplot2::scale_y_continuous(labels = scales::label_percent(scale = scale)) +
+    ggplot2::scale_y_continuous(labels = scales::label_percent(scale= scale)) +
     ggplot2::scale_colour_brewer(palette = "Set1") +
     ggplot2::scale_fill_brewer(palette = "Set1") +
 
@@ -175,15 +219,16 @@ assort_cond <- function(data, condition_col,  cond_order) {
   conditions <- data |> dplyr::select({{condition_col}}) |> dplyr::pull()
 
   if (!is.null(cond_order)) {
-    check_diff = base::setdiff(cond_order,unique(conditions)) #the same function found in tidyverse (lubridate or dplyr)
+    check_diff = base::setdiff(cond_order, unique(conditions))
 
     if(!rlang::is_empty(check_diff)){
-      cli::cli_abort(c( 'x' = 'The provided condition in `cond_order` does not match the ones in your dataset.',
+      cli::cli_abort(c( 'x' = 'The provided conditions in `cond_order` do not match the ones in your dataset.',
                         'i' = 'Check the following condition(s): {check_diff}'))}else{
     sorted_levels <-  cond_order
                                                }
   } else {
 
+    #to order conditions based on the numeric values (so 12 mM does not come before 5 mM for e.g.)
     unique_levels <- unique(conditions)
 
     numeric_values <- as.numeric(gsub("[^0-9.]", "", unique_levels))
@@ -195,10 +240,15 @@ assort_cond <- function(data, condition_col,  cond_order) {
     } else {
 
     sorted_levels <- sort(unique_levels)
+
     }
   }
 
 return(sorted_levels)
+
 }
+
+
+
 
 
