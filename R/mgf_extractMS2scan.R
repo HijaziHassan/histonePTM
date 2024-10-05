@@ -28,11 +28,11 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
   }
 
   if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
-    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('Spectra').")
+    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('MsBackendMgf').")
   }
 
   if (!requireNamespace("BiocParallel", quietly = TRUE)) {
-    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('Spectra').")
+    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('BiocParallel').")
   }
 
 

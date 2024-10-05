@@ -41,11 +41,11 @@ if (!requireNamespace("BiocManager")) install.packages("BiocManager")
   }
 
   if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
-    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('Spectra').")
+    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('MsBackendMgf').")
   }
 
   if (!requireNamespace("BiocParallel", quietly = TRUE)) {
-    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('Spectra').")
+    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('BiocParallel').")
   }
 
 
@@ -145,8 +145,7 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
       prec_mz = double_matrix[, "prec_mz"],
       rt = double_matrix[, "rt"],
       scan = int_matrix[, "scan"],
-      prec_z = int_matrix[, "prec_z"],
-      stringsAsFactors = FALSE
+      prec_z = int_matrix[, "prec_z"]
     )
 
     cli::cli_progress_done()
