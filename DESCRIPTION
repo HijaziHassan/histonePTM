@@ -2,7 +2,12 @@ Package: histonePTM
 Type: Package
 Title: A toolset to analyze histone PTMs proteomics data
 Version: 0.1.0
-Author: Hassan M. Hijazi
+Authors@R: 
+  c(person(given = "Hassan", 
+          family = "Hijazi", 
+          email = "hejaziihassan@gmail.com", 
+          role = c("cre", "aut"),
+          comment = c(ORCID="0000-0001-6408-1768")))
 Maintainer: The package maintainer <hejaziihassan@gmail.com>
 Description: Useful function to organize, analyse, and visualize histone PTMs proteomics data
 License: CC0
