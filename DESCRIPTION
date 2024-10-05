@@ -10,16 +10,13 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
 Depends: 
-    R (>= 4.0.0)
+    R (>= 3.5.0)
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, tidytable, rlang,  cli, 
-     BiocManager, reticulate, 
+     BiocManager, reticulate, Spectra, MsBackendMgf, BiocParallel,
      ggplot2, ggtext, scales, ggridges,
      rentrez, DBI, RSQLite, httr2, 
      readxl, openxlsx, writexl
 Suggests: 
-    testthat (>= 3.0.0),
-    Spectra,
-    MsBackendMgf,
-    BiocParallel
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
