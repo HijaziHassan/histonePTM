@@ -26,7 +26,5 @@ Suggests:
     RSQLite,
     httr2,
     reticulate
-    
-    
 BiocViews: MassSpectrometry, Software, Infrastructure
 Config/testthat/edition: 3

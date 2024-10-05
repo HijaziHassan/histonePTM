@@ -14,8 +14,6 @@
 #'
 #' @return \code{dataframe} containing 4 columns: _mz_, _intensity_, _scan_, and _file_.
 #'
-#' @importFrom Spectra Spectra spectraVariableMapping export
-#' @importFrom MsBackendMgf MsBackendMgf
 #' @importFrom cli cli_abort cli_inform cli_alert_success
 #' @importFrom stringr str_remove str_extract
 #' @importFrom utils write.csv
@@ -23,11 +21,19 @@
 #'
 #'@export
 mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
-  if (!requireNamespace("Spectra", quietly = TRUE))
-    BiocManager::install("Spectra")
+  if (!requireNamespace("BiocManager")) install.packages("BiocManager")
 
-  if (!requireNamespace("MsBackendMgf", quietly = TRUE))
-    BiocManager::install("MsBackendMgf")
+  if (!requireNamespace("Spectra", quietly = TRUE)) {
+    cli::cli_abort("Package 'Spectra' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
+
+  if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
+    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
+
+  if (!requireNamespace("BiocParallel", quietly = TRUE)) {
+    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
 
 
   if(rlang::is_missing(mgf_file)) cli::cli_abort(c("Error:",
@@ -119,7 +125,7 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
 #function to read mgf file
 .mgf_to_sp <- function(mgf_file){
   cli::cli_inform(message = "Converting {mgf_file} file into Spectra object")
-
+  BiocParallel::register(BPPARAM = BiocParallel::SerialParam())
   Spectra::Spectra(object = {{mgf_file}}, source = MsBackendMgf::MsBackendMgf())
 
 }

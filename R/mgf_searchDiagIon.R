@@ -10,8 +10,6 @@
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @importFrom dplyr near
 #' @importFrom tibble tibble
-#' @import Spectra
-#' @importFrom MsBackendMgf MsBackendMgf
 #' @importFrom cli cli_abort cli_progress_bar cli_progress_update cli_progress_done cli_inform cli_alert_info cli_alert_success
 #' @importFrom rlang is_missing
 #' @importFrom BiocManager install
@@ -39,14 +37,18 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALS
 
 if (!requireNamespace("BiocManager")) install.packages("BiocManager")
 
-  if (!requireNamespace("Spectra", quietly = TRUE))
-    BiocManager::install("Spectra")
+  if (!requireNamespace("Spectra", quietly = TRUE)) {
+    cli::cli_abort("Package 'Spectra' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
 
-  if (!requireNamespace("MsBackendMgf", quietly = TRUE))
-    BiocManager::install("MsBackendMgf")
+  if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
+    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
 
-  if (!requireNamespace("BiocParallel", quietly = TRUE))
-    BiocManager::install("BiocParallel")
+  if (!requireNamespace("BiocParallel", quietly = TRUE)) {
+    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('Spectra').")
+  }
+
 
 
 
