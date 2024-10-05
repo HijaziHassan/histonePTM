@@ -19,4 +19,5 @@ Imports:
      readxl, openxlsx, writexl
 Suggests: 
     testthat (>= 3.0.0)
+BiocViews: MassSpectrometry, Software
 Config/testthat/edition: 3
