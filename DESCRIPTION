@@ -13,11 +13,20 @@ Depends:
     R (>= 3.5.0)
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, tidytable, rlang,  cli, 
-     BiocManager, reticulate, Spectra, MsBackendMgf, BiocParallel,
      ggplot2, ggtext, scales, ggridges,
-     rentrez, DBI, RSQLite, httr2, 
      readxl, openxlsx, writexl
 Suggests: 
-    testthat (>= 3.0.0)
-BiocViews: MassSpectrometry, Software
+    testthat (>= 3.0.0),
+    BiocManager, 
+    Spectra,
+    MsBackendMgf,
+    BiocParallel,
+    rentrez,
+    DBI,
+    RSQLite,
+    httr2,
+    reticulate
+    
+    
+BiocViews: MassSpectrometry, Software, Infrastructure
 Config/testthat/edition: 3
