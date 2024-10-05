@@ -19,9 +19,7 @@
 #' chromatogram window of each sample in Skyline interface).
 #' Also accepts character vector.
 #'
-#' @importFrom DBI dbConnect dbWriteTable dbWriteTable dbExecute
 #' @importFrom dplyr select filter mutate collect tbl case_when left_join join_by pull
-#' @importFrom RSQLite SQLite
 #' @importFrom cli cli_abort cli_alert_warning
 #' @importFrom purrr pmap
 #'
@@ -31,7 +29,12 @@
 
 blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=""){
 
-
+  if (!requireNamespace("DBI", quietly = TRUE)) {
+    cli::cli_abort("Package 'DBI' is required but not installed.")
+  }
+  if (!requireNamespace("RSQLite", quietly = TRUE)) {
+    cli::cli_abort("Package 'RSQLite' is required but not installed.")
+  }
 
   #databases are super-assigned to be used by all underlying functions.
   conn_redun   <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)

@@ -12,7 +12,6 @@
 #' @importFrom tibble tibble
 #' @importFrom cli cli_abort cli_progress_bar cli_progress_update cli_progress_done cli_inform cli_alert_info cli_alert_success
 #' @importFrom rlang is_missing
-#' @importFrom BiocManager install
 #' @importFrom utils install.packages write.csv
 #'
 #' @export

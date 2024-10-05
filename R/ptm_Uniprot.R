@@ -12,7 +12,6 @@
 #' @param Uniprot_accession Uniprot protein-specific accession code.
 #' @param save_file \code{logical}. save results as a \code{.csv} file (optional).
 #'
-#' @importFrom httr2 resp_body_json req_perform req_error request req_url_path_append req_url_path_append resp_status
 #' @importFrom cli cli_alert_info cli_alert_success cli_abort
 #' @importFrom tidyr unnest_wider unnest_longer
 #' @importFrom purrr pluck map_dfr
@@ -28,6 +27,10 @@
 #' @export
 
 ptm_Uniprot <- function(Uniprot_accession, save_file= FALSE){
+
+  if (!requireNamespace("httr2", quietly = TRUE)) {
+    cli::cli_abort("Package 'httr2' is required but not installed.")
+  }
 
 resp <- get_url(accession = {{Uniprot_accession}})
 

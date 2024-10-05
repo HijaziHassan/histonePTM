@@ -13,7 +13,6 @@
 #' @param intensity \code{numeric} vector containing intensity values
 #' @param title title of the annotate MS/MS plot
 #' @param output_plot_name Name of the plot in case you want to save it
-#' @importFrom reticulate source_python
 #'
 #' @return Annotate MS/MS plot
 #' @export
@@ -23,6 +22,10 @@ plot_annotateSpectrum <- function(Profrma_peptide,
                                   title= "",
                                   output_plot_name= ""){
 
+
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Package 'reticulate' is required but not installed.")
+  }
 
 reticulate::source_python("./inst/python/plot_annotateSpectra.py")
 

@@ -5,7 +5,6 @@
 #' @param mgf_file mgf file (path) name
 #' @param scan \code{numeric}. scan number
 #'
-#' @import reticulate
 #' @importFrom dplyr bind_rows
 #' @importFrom tibble as_tibble
 #'
@@ -14,6 +13,9 @@
 
 mgf_extractScan <- function(mgf_file, scan){
 
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Package 'reticulate' is required but not installed.")
+  }
 
   My_Package_Name_path <- system.file("python", package = "histonePTM")
   reticulate::py_run_string(paste0("import sys; sys.path.append('", My_Package_Name_path, "')"))

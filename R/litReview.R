@@ -11,12 +11,12 @@
 #' for an exhaustive list.
 #' @param db database to searhc in. defaults is "pubmed". check \code{entrez_dbs()} for all options.
 #' @param save_file \code{logical}. If `TRUE` results will be saved as `.csv` files.
-#' @import rentrez
 #' @importFrom stringr str_glue
-#' @importFrom purrr map
+#' @importFrom purrr map map_chr map_dbl
 #' @importFrom dplyr mutate select summarize filter group_by across
 #' @importFrom tidyr tibble unnest
 #' @importFrom utils write.csv
+#' @importFrom cli cli_abort cli_alert_info
 #'
 #' @return A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year.
 #' @examples
@@ -28,6 +28,10 @@
 #' @export
 
 litReview <- function(start, end, term, db= "pubmed", save_file= FALSE){
+
+  if (!requireNamespace("rentrez", quietly = TRUE)) {
+    cli::cli_abort("Package 'rentrez' is required but not installed.")
+  }
 
   # Years into which to look for publications
   year <- {{start}}:{{end}}
