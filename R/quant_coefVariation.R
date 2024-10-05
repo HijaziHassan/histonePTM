@@ -16,6 +16,9 @@
 #' @param format  'wide' or 'long'
 #' @param ... to add any other columns
 #'
+#' @importFrom rlang is_missing is_empty sym
+#' @importFrom dplyr select summarise filter group_by arrange left_join
+#' @importFrom cli cli_abort
 #' @return The input dataframe plus 3 columns per condition: `sd_condition`, `avg_condition` and `CV_condition`.
 #' @export
 
@@ -46,7 +49,7 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
 
     #store intensity columns' names
     int_cols <- df |>
-      select({{int_col}}) %>%
+      dplyr::select({{int_col}}) %>%
       names()
 
 
@@ -92,7 +95,7 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
       if("Condition" %in% colnames(df)){
 
         df |>
-          select({{seq_col}}, {{ptm_col}}, {{int_col}}, ...) |>
+          dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}, ...) |>
           dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...) |>
           dplyr::summarise(CV = sd({{int_col}}, na.rm= TRUE)/mean({{int_col}}, na.rm = TRUE), .groups = "drop") |>
           dplyr::arrange(CV) -> df_cv

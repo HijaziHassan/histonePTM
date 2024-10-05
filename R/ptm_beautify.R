@@ -21,7 +21,7 @@
 #' lookup = shorthistptm_mass,
 #' software = "Skyline", residue = 'keep')
 #'
-#' @import stringr
+#' @importFrom stringr str_replace_all str_remove_all str_extract_all str_c str_remove str_extract str_detect
 #'
 
 

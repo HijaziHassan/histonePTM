@@ -11,7 +11,7 @@
 #' @param seq_ptm_col column name containing sequnce information
 #' @param int_col column name containing peptide intensity values.
 #'
-#' @import dplyr
+#' @importFrom dplyr select distinct filter across summarise mutate
 #' @import ggplot2
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom ggtext element_markdown

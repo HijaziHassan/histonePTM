@@ -8,8 +8,9 @@
 #'
 #' @param ... Protein sequence as a character string.
 #' @param plot A \code{logical} argument to decide whether to plot or not the resuls.
-#' @import stringr
+#' @importFrom stringr str_remove_all str_split_1 str_count str_unique
 #' @importFrom dplyr bind_rows lst
+#' @importFrom tibble tibble
 #' @importFrom purrr map map2
 #' @import ggplot2
 #' @importFrom scales percent_format

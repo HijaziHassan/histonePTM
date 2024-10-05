@@ -16,6 +16,10 @@
 #' `SampleNames` MUST match exactly the names of the `int_col`columns.
 #' @param save_plot (`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown on Plots pane.)
 #'
+#' @importFrom dplyr select left_join filter mutate inner_join right_join pull bind_rows
+#' @importFrom stringr str_detect str_replace_all
+#' @importFrom cli cli_alert_warning cli_alert_warning col_red cli_abort
+#' @importFrom tidyr pivot_longer drop_na
 #' @return Boxplot with jittered point to assess me1 labeling when using anhydrides to label lysines.
 #' @export
 #'

@@ -7,11 +7,11 @@
 misc_createFolder(foldername)
 }
 \arguments{
-\item{foldername}{}
+\item{foldername}{name of the folder with or without forward-slash (/). Only the name after the last slash will be used. Any extension will be removed.}
 }
 \value{
 folder
 }
 \description{
-Create Folder
+Create a folder carrying the name of the analyzed file (.csv or .xlsx). If a path is provided, only what after the last slash is considered.
 }

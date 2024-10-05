@@ -2,8 +2,7 @@
 % Please edit documentation in R/quant_relIntensity.R
 \name{quant_relIntensity}
 \alias{quant_relIntensity}
-\title{A function to normalize intensities of peptidoforms by dividing an intensity value by the
-sum of all intensities other peptidoforms of the same sequence.}
+\title{Normalize Intensity values}
 \usage{
 quant_relIntensity(df, select_cols, grouping_var)
 }
@@ -18,7 +17,7 @@ quant_relIntensity(df, select_cols, grouping_var)
 }
 \value{
 The provided \code{dataframe} is returned with relative instead of absolute
-intensities values of the abundance/intensity columns passed to the function.
+intensity values of the abundance/intensity columns passed to the function.
 
 \deqn{\text{Relative Intensity} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}
 }

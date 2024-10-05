@@ -5,7 +5,8 @@
 #'
 #' @param raw_df Dataframe extracted using \code{misc_extractMetaData} function.
 #' @param user_df Dataframe containing "SampleName" and file" columns (could also contain 'Condition', 'Bioreplicate' or 'TechReplicate' columns).
-#'
+#' @importFrom dplyr left_join mutate any_of select bind_rows
+#' @importFrom tibble deframe
 #' @return named vector
 #' @export
 #'

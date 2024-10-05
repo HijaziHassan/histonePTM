@@ -9,6 +9,7 @@
 #' @param ... to add more arguments that could be useful as this function is a wrapper around `separate_wider_regex` function.
 #'
 #' @importFrom tidyr separate_wider_regex
+#' @importFrom cli cli_alert_info
 #' @return two columns: `id_scan` and `id_filename`
 #' @export
 #'

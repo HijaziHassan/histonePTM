@@ -11,10 +11,12 @@
 #'
 #' @return A list of \code{Workbook} object(s), each with multiple excel worksheets.
 #' @export
-#' @import openxlsx
+#' @importFrom openxlsx createWorkbook saveWorkbook addWorksheet writeData
 #' @importFrom tidytable group_split
 #' @importFrom dplyr filter
 #' @importFrom purrr walk walk2 pluck
+#' @importFrom cli cli_alert_success
+#'
 #'
 seq_spreadIntoSheets <- function(df,
                                  split_by= "variant",

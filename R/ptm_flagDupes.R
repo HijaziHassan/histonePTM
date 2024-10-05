@@ -16,10 +16,10 @@
 #' (e.g. \code{starts_with("WT_")}) or a vector \code{c()} containing the names of
 #'  intensity/abundance columns to check for duplication.
 #'
-#' @import stringr
-#' @import dplyr
-#' @import rlang
-#' @import cli
+#' @importFrom stringr str_detect
+#' @importFrom dplyr distinct add_count filter across
+#' @importFrom rlang enexpr eval_tidy
+#' @importFrom cli cli_alert_info cli_alert_success
 #'
 #' @return A named \code{list} of two \code{tibbles}.
 #'

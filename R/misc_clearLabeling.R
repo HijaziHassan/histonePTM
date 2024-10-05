@@ -9,7 +9,8 @@
 #'
 #' @param ptm_string PTM-containing string
 #' @param rules A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{"pr" = "un"}.
-#'
+#' @importFrom stringr str_detect str_replace_all
+#' @importFrom cli cli_abort
 #' @return unlabeled string
 #' @export
 #'

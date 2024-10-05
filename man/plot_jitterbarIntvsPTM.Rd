@@ -12,7 +12,7 @@ plot_jitterbarIntvsPTM(
   id_col,
   plot_title = NULL,
   fun = c("median", "mean"),
-  scale = c(100, 1),
+  scale = 100,
   cond_order = NULL,
   save_plot = FALSE
 )
@@ -29,6 +29,8 @@ A 5th column can be provided to be the plot title.}
 
 \item{id_col}{unique ID column such as sequence or sequence label}
 
+\item{plot_title}{(\code{optional})A column with values to be the plot_title (optional).}
+
 \item{fun}{median (\code{default}) or mean. This will be the height of the bar.}
 
 \item{scale}{100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.}
@@ -36,8 +38,6 @@ A 5th column can be provided to be the plot title.}
 \item{cond_order}{(optional). A character vector containing conditions according to which bars will be ordered in the plot.}
 
 \item{save_plot}{(\code{logical}; \code{optional})}
-
-\item{title_plot}{(\code{optional})A column with values to be the plot_title (optional).}
 }
 \value{
 A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots

@@ -1,45 +1,6 @@
 
 
 
-#extract ptm and its index
-.extract_ptm_indx <- function(mod){
-
-  stringr::str_match_all(string = mod,
-                         pattern = "(?<modif>[a-zA-Z0-9_-]+\\s?[a-zA-Z0-9_-]+?) \\([A-Z](?<index>\\d+)\\)") |>
-    data.frame() |>
-    dplyr::mutate(modif = paste0("[", stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
-}
-
-#insert ptm in its respective position in the sequence
-.insert_ptm_seq <- function(seq, replace){
-
-  if (nrow(replace) != 0) { #if no modification, return the bare sequence
-
-
-  replacement <- as.character(replace$modif)
-  position <- as.integer(replace$index)
-
-#move backward
-for(i in nrow(replace):1){
-    upstream <- substr(seq,
-                       start = 1L,
-                       stop = position[[i]])
-
-    downstream <- substr(seq,
-                         start = position[[i]] + 1L,
-                         stop = nchar(seq))
-
-    # update sequence
-    seq <- paste0(upstream, replacement[[i]], downstream)
-}
-
-  }
-  return(seq)
-}
-
-
-
-
 #' Convert sequence-PTM to ProForma notation.
 #' @description
 #' Convert Proline modification string to ProForma notation.
@@ -88,6 +49,44 @@ return(noquote(paste0(Nterm,"-", modified_peptide)))
 
 }
 
+
+#' @noRd
+#extract ptm and its index
+.extract_ptm_indx <- function(mod){
+
+  stringr::str_match_all(string = mod,
+                         pattern = "(?<modif>[a-zA-Z0-9_-]+\\s?[a-zA-Z0-9_-]+?) \\([A-Z](?<index>\\d+)\\)") |>
+    data.frame() |>
+    dplyr::mutate(modif = paste0("[", stringr::str_replace_all(modif, histonePTM::histptm_mass), "]"))
+}
+
+#' @noRd
+#insert ptm in its respective position in the sequence
+.insert_ptm_seq <- function(seq, replace){
+
+  if (nrow(replace) != 0) { #if no modification, return the bare sequence
+
+
+    replacement <- as.character(replace$modif)
+    position <- as.integer(replace$index)
+
+    #move backward
+    for(i in nrow(replace):1){
+      upstream <- substr(seq,
+                         start = 1L,
+                         stop = position[[i]])
+
+      downstream <- substr(seq,
+                           start = position[[i]] + 1L,
+                           stop = nchar(seq))
+
+      # update sequence
+      seq <- paste0(upstream, replacement[[i]], downstream)
+    }
+
+  }
+  return(seq)
+}
 
 
 

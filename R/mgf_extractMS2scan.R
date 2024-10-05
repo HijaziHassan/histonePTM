@@ -16,7 +16,6 @@
 #'
 #' @import Spectra
 #' @import MsBackendMgf
-#' @import purrr
 #' @import BiocParallel
 #' @import cli
 #' @import stringr

@@ -9,7 +9,9 @@ plot_intDensity(df, int_col, save_plot = "")
 \arguments{
 \item{df}{Dataset in wide format.}
 
-\item{int_col}{The intensity columns. Either a vector `c('column1', 'column2', ...)` or using tidyselect functions
+\item{int_col}{The intensity columns. Either a vector `c('column1', 'column2', ...)` or using tidyselect functions}
+
+\item{save_plot}{plot_name.(png, svg, ...)
 like `starts_with('abundant_')` or `contains('intensity_')`}
 }
 \value{

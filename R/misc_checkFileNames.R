@@ -5,7 +5,7 @@
 #' @param raw_df Dataframe containing acolumn of correct file names
 #' @param user_df Dataframe containing a column of file names provided by the user to which another custom name are assigned
 #' @param common_col column of file names in both dataframes (should be the same name in both).
-#'
+#' @importFrom cli cli_abort cli_alert_warning cli_alert_success
 #' @return error or success message.
 #' @export
 

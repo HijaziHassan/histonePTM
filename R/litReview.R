@@ -12,10 +12,10 @@
 #' @param db database to searhc in. defaults is "pubmed". check \code{entrez_dbs()} for all options.
 #' @param save_file \code{logical}. If `TRUE` results will be saved as `.csv` files.
 #' @import rentrez
-#' @import stringr
-#' @import purrr
-#' @import dplyr
-#' @import tidyr
+#' @importFrom stringr str_glue
+#' @importFrom purrr map
+#' @importFrom dplyr mutate select summarize filter group_by across
+#' @importFrom tidyr tibble unnest
 #'
 #' @return A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year.
 #' @examples

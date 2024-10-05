@@ -15,7 +15,7 @@
 #' @param plot_title A title for the plot
 #' @importFrom stringr str_detect str_count str_remove
 #' @importFrom tidyr pivot_longer
-#' @import dplyr
+#' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows
 #' @import ggplot2
 #'
 #' @return list of two dataframes (raw and normalized values) and a bar plot.

@@ -7,12 +7,12 @@
 #'
 #' @param df Dataset in wide format.
 #' @param int_col The intensity columns. Either a vector `c('column1', 'column2', ...)` or using tidyselect functions
+#' @param save_plot plot_name.(png, svg, ...)
 #' like `starts_with('abundant_')` or `contains('intensity_')`
 #' @importFrom ggridges geom_density_ridges_gradient
 #' @import ggplot2
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom dplyr select distinct mutate everything any_of
-#' @import ggplot2
 #'
 #' @return ridgeline plot
 #' @export

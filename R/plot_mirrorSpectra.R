@@ -1,30 +1,4 @@
 
-
-
-
-
-.read_any_format <- function(file) {
-  # Check file extension
-  file_ext <- tolower(tools::file_ext(file))
-
-  if (file_ext %in% c("csv", "txt")) {
-
-    data <- read.table(file, header = TRUE, sep = ",")
-  } else if (file_ext %in% c("xls", "xlsx")) {
-
-    data <- readxl::read_excel(file)
-  } else {
-
-    cli::cli_abort(c("Unsupported file format.",
-                     "i"= "The {file_ext} cannot be read properly." ,
-                     "x"= "Please provide a csv, txt, or excel file."))
-  }
-
-  return(data)
-}
-
-
-
 #' Mirror Plot
 #'
 #' @param data A \code{dataframe} or a comma-separated (txt, csv) or excel (.xls, xlsx) file.
@@ -38,13 +12,13 @@
 #' @param readfromfile \code{logical}. If \code{FALSE} (default), it means that the \code{data} argument is  a \code{dataframe} and
 #' not a file name (\code{.csv}, \code{txt}, \code{xls} or \code{xlsx}.
 #'
-#' @import stringr
-#' @import tibble
-#' @import dplyr
+#' @importFrom stringr str_glue
+#' @importFrom tibble as_tibble
+#' @importFrom dplyr mutate filter
 #' @import ggplot2
-#' @import ggtext
-#' @import readxl
-#' @import cli
+#' @importFrom ggtext element_markdown
+#' @importFrom readxl read_excel
+#' @importFrom cli cli_abort
 #'
 #' @return A mirror plot.
 #' @export
@@ -116,6 +90,27 @@ return(mirroplot)
 
 
 
+#' @noRd
+
+.read_any_format <- function(file) {
+  # Check file extension
+  file_ext <- tolower(tools::file_ext(file))
+
+  if (file_ext %in% c("csv", "txt")) {
+
+    data <- read.table(file, header = TRUE, sep = ",")
+  } else if (file_ext %in% c("xls", "xlsx")) {
+
+    data <- readxl::read_excel(file)
+  } else {
+
+    cli::cli_abort(c("Unsupported file format.",
+                     "i"= "The {file_ext} cannot be read properly." ,
+                     "x"= "Please provide a csv, txt, or excel file."))
+  }
+
+  return(data)
+}
 
 
 

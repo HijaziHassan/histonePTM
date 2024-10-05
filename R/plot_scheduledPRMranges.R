@@ -11,7 +11,7 @@
 #'
 #' @return plot with ranges representing intervals when each precursor m/z is monitored.
 #' @import ggplot2
-#' @import cli
+#' @importFrom cli cli_alert_success
 #'
 #' @export
 plot_schdueldPRMranges <- function(df,tr_start, tr_end, y_axis,label, save_plot = FALSE, ...){

@@ -12,13 +12,13 @@
 #' @param peak_width The width of the elution peak in min (Default is 0.3).
 #' @param save_plot a \code{logical} value to either save \code{TRUE} or to only view the plot \code{FALSE}.
 #'  default value is \code{TRUE}.
-#' @import rlang
-#' @import dplyr
-#' @import purrr
+#' @importFrom dplyr summarise mutate select summarise_all ungroup between group_by
+#' @importFrom purrr pluck map_dfr
 #' @import ggplot2
-#' @import grid
-#' @import tidyr
-#' @import cli
+#' @importFrom grid unit
+#' @importFrom tidyr crossing pivot_wider
+#' @importFrom cli cli_alert_success
+#' @importFrom tibble as_tibble
 #'
 #' @examples
 #' plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = TRUE)

@@ -19,10 +19,10 @@
 #' chromatogram window of each sample in Skyline interface).
 #' Also accepts character vector.
 #'
-#' @import DBI
-#' @import dplyr
-#' @import RSQLite
-#' @import cli
+#' @importFrom DBI dbConnect dbWriteTable dbWriteTable dbExecute
+#' @importFrom dplyr select filter mutate collect tbl case_when left_join join_by pull
+#' @importFrom RSQLite SQLite
+#' @importFrom cli cli_abort cli_alert_warning
 #' @importFrom purrr pmap
 #'
 #' @return The same library but overwritten with the new values.

@@ -1,7 +1,10 @@
 #' Create Folder
 #'
-#' @param foldername
+#' @description
+#' Create a folder carrying the name of the analyzed file (.csv or .xlsx). If a path is provided, only what after the last slash is considered.
 #'
+#' @param foldername name of the folder with or without forward-slash (/). Only the name after the last slash will be used. Any extension will be removed.
+#' @importFrom cli cli_alert_info
 #' @return folder
 #' @export
 misc_createFolder <- function(foldername){
