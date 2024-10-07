@@ -4,12 +4,14 @@
 \alias{misc_clearLabeling}
 \title{Reverse PTM Labeling}
 \usage{
-misc_clearLabeling(ptm_string, rules)
+misc_clearLabeling(ptm_string, rules, residue = "keep")
 }
 \arguments{
 \item{ptm_string}{PTM-containing string}
 
 \item{rules}{A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{"pr" = "un"}.}
+
+\item{residue}{Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.}
 }
 \value{
 unlabeled string

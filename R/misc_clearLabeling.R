@@ -9,13 +9,14 @@
 #'
 #' @param ptm_string PTM-containing string
 #' @param rules A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{"pr" = "un"}.
+#' @param residue Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.
 #' @importFrom stringr str_detect str_replace_all
 #' @importFrom cli cli_abort
 #' @return unlabeled string
 #' @export
 #'
 
-misc_clearLabeling <- function(ptm_string, rules){
+misc_clearLabeling <- function(ptm_string, rules, residue = 'keep'){
 
   if(is_missing(rules)){
   rules = c(".+Nt-?" = "", #remove N-terminal Labeling
@@ -32,8 +33,16 @@ misc_clearLabeling <- function(ptm_string, rules){
 
   }
 
+unlabeld_string = stringr::str_replace_all(ptm_string, rules)
 
-    stringr::str_replace_all(ptm_string, rules)
+  if(residue == 'keep'){
+
+  return(unlabeld_string)
+} else if(residue == 'remove'){
+
+stringr::str_remove_all(unlabeld_string, '[:upper:]\\d+')
+    }
+
 
 }
 
