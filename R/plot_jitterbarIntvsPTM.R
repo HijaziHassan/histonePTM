@@ -45,7 +45,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
 # Check inputs------------
   fun <- match.arg(fun)
  if(!is.symbol(substitute(x_axis))){cli::cli_abort('remove the quotation around "x_axis" argument: {x_axis}.')}
- if(!is_symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
+ if(!is.symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
   if(missing(condition)){cli::cli_abort('`Condition` column is missing')}
   if(missing(id_col)){cli::cli_abort('`id_col` column is missing')}
