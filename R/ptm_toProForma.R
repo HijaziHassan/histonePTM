@@ -32,6 +32,8 @@ if(any(stringr::str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)'))){
   Nterm = "[+56.026]"
 }else if(any(stringr::str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)'))){
   Nterm = "[+84.057515]"
+}else if(any(stringr::str_detect(mod, pattern = 'Phenylisocyanate \\(Any N-term\\)'))){
+  Nterm = "[+119.037114]"
 }else{Nterm = Nterm}
 
 modified_peptide <- purrr::map2_chr(

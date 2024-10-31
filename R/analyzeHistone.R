@@ -6,6 +6,7 @@
 #' @param analysisfile `Proline` output excel file
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
 #' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".
+#' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'.
 #' @param NA_threshold A filter value below which an identification having this value of missing intensity value(s) or more is discarded.
 #' @param df_split Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
@@ -47,12 +48,14 @@
 analyzeHistone <- function(analysisfile,
                 metafile,
                 hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
+                labeling = c('PA', 'TMA', 'PIC_PA', "none"),
                 NA_threshold,
                 output_result= c('single', 'multiple'),
                 df_split = c( "none", 'no_me1', "no_me1_K37un")){
 
   output_result = match.arg(output_result)
   hist_prot = match.arg(hist_prot)
+  labeling = match.arg(labeling)
   df_split = match.arg(df_split)
 # Data 1st Check -----------------------------------------------
 
@@ -342,10 +345,7 @@ SHEET8 <- uniqueHistoneForms |>
                       ptm_col = PTM,
                       format = 'wide') |>
   dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped,
-                                                   #default was not used, since unlabeled me1 exist here.
-                                                   rules = c(".+Nt-?" = "", #remove N-terminal Labeling
-                                                                             "pr"="un", #replace propionyl with unmod
-                                                                             "tma" = "un")), #replace TMAyl with unmod
+                                                   labeling = labeling),
  .after= 'PTM')
 
 
@@ -353,7 +353,7 @@ SHEET8 <- uniqueHistoneForms |>
 
 uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
   dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[:upper:]*\\d*me1)\\b"))|>
-  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped), .after= 'PTM')
+  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM')
 
 
 
@@ -370,7 +370,7 @@ SHEET9 <- uniqueHistoneForms_nome1 |>
 
 
 
-
+#This sheet is made to filter out H3K27_R40 sequences modified at K37.
 SHEET10 <-  uniqueHistoneForms_nome1 |>
   dplyr::filter(
     !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
@@ -492,20 +492,7 @@ cli::cli_alert_success('An excel file containing cleaned and renamed data of {pr
 
 ##### --------- output file 2: peptides ---------#######
 
-# print(prot_to_extract)
-# seq_spreadIntoSheets()
-
-#create a sheet per variant and save the separated data
-#extract_variants(uniqueHistoneForms_normalized, histoneProtein =  histoneProtein)
-#Choose which final dataframe to split the data upon
-
-# df_tobe_splitted <- if (df_split != "none") {
-#   SHEET8
-# } else if (user_arg == "no_me1") {
-#   SHEET9
-# } else if (user_arg == "no_me1_K37un") {
-#   SHEET10
-# }
+#determine the sheet which will be used for the ptm-centered and peptide-centered excel files to be generated.
 
 df_tobe_splitted <- switch(df_split,
              "none" = SHEET8,

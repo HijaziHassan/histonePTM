@@ -8,6 +8,7 @@ analyzeHistone(
   analysisfile,
   metafile,
   hist_prot = c("All", "H3", "H4", "H2A", "H2B"),
+  labeling = c("PA", "TMA", "PIC_PA", "none"),
   NA_threshold,
   output_result = c("single", "multiple"),
   df_split = c("none", "no_me1", "no_me1_K37un")
@@ -19,6 +20,8 @@ analyzeHistone(
 \item{metafile}{An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).}
 
 \item{hist_prot}{One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".}
+
+\item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'.}
 
 \item{NA_threshold}{A filter value below which an identification having this value of missing intensity value(s) or more is discarded.}
 

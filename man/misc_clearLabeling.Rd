@@ -4,17 +4,20 @@
 \alias{misc_clearLabeling}
 \title{Reverse PTM Labeling}
 \usage{
-misc_clearLabeling(ptm_string, rules, residue = "keep")
+misc_clearLabeling(ptm_string, rules = NULL, labeling = NULL, residue = "keep")
 }
 \arguments{
 \item{ptm_string}{PTM-containing string}
 
-\item{rules}{A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{"pr" = "un"}.}
+\item{rules}{A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{c("pr" = "un")}.}
+
+\item{labeling}{The labeling agent used. Use `PA` (propionic anhydride), `TMA` ( trimethylacetic anhydride), or `PIC_PA` (phenylisocynate + PA).
+There are embedded rules for those reagents. If those don't match your case, define your own rules and `labeling`must not be `none`.}
 
 \item{residue}{Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.}
 }
 \value{
-unlabeled string
+unlabeled string or the same string if labeling is `none`.
 }
 \description{
 For final representation it is better to replace chemical labeling with biological state. For example, replace 'propionyl' with 'unmodified'
