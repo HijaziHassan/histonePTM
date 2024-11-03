@@ -9,7 +9,7 @@
 #' (e.g. \code{starts_with("WT_")}) or a vector \code{c()}containing the names of
 #'  intensity/abundance columns to be normalized.
 #' @param grouping_var A unqiue variable to group by like 'peptide sequence' or so. This mandatory if `norm_method` is 'peptide_family".
-#' @param norm_method Normalization method. Either by peptide family or by total intensity of all (histone) peptides in the sample. The latter depends on what is in your dataset and if you have prefiltered it or not.
+#' @param norm_method Normalization method. Either by 'peptide_family' or by 'peptide_total' intensity. The latter depends on what is in your dataset and if you have prefiltered it or not.
 #'
 #' @return The provided \code{dataframe} is returned with relative instead of absolute
 #' intensity values of the abundance/intensity columns passed to the function.
@@ -26,7 +26,7 @@
 #'
 #' @export
 
-quant_relIntensity <- function(df, select_cols, grouping_var, norm_method = c('peptide_family', "total_histone")){
+quant_relIntensity <- function(df, select_cols, grouping_var, norm_method = c('peptide_family', "peptide_total")){
 
   norm_by = match.arg(norm_method)
 
@@ -38,7 +38,7 @@ quant_relIntensity <- function(df, select_cols, grouping_var, norm_method = c('p
                    .by = {{grouping_var}}
     )
 
-  }else if(norm_by =="total_histone" ){
+  }else if(norm_by =="peptide_total" ){
 
     df_norm <- df |>
       dplyr::mutate(dplyr::across({{select_cols}}, ~ .normalize_vec(x=.)))
