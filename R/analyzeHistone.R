@@ -9,6 +9,7 @@
 #' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'.
 #' @param NA_threshold A filter value below which an identification having this value of missing intensity value(s) or more is discarded.
 #' @param df_split Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
+#' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #'
@@ -50,12 +51,15 @@ analyzeHistone <- function(analysisfile,
                 hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
                 labeling = c('PA', 'TMA', 'PIC_PA', "none"),
                 NA_threshold,
+                norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
                 df_split = c( "none", 'no_me1', "no_me1_K37un")){
+
 
   output_result = match.arg(output_result)
   hist_prot = match.arg(hist_prot)
   labeling = match.arg(labeling)
+  norm_method = match.arg(norm_method)
   df_split = match.arg(df_split)
 # Data 1st Check -----------------------------------------------
 
@@ -337,7 +341,8 @@ SHEET7 <- uniqueHistoneForms <- dupesAnalysis[[1]] #unique-ID dataframe
 
 SHEET8 <- uniqueHistoneForms |>
   quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                     grouping_var = sequence) |>
+                     grouping_var = sequence,
+                     norm_method = norm_method) |>
   dplyr::rename(!!!dplyr::any_of(ColNames)) |>
   quant_coefVariation(df= _, df_meta= rawfilenames,
                       int_col= dplyr::any_of(rawfilenames$SampleName),

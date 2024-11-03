@@ -8,7 +8,7 @@ quant_relIntensity(
   df,
   select_cols,
   grouping_var,
-  norm_method = c("peptide_family", "total_histone")
+  norm_method = c("peptide_family", "peptide_total")
 )
 }
 \arguments{
@@ -20,7 +20,7 @@ quant_relIntensity(
 
 \item{grouping_var}{A unqiue variable to group by like 'peptide sequence' or so. This mandatory if `norm_method` is 'peptide_family".}
 
-\item{norm_method}{Normalization method. Either by peptide family or by total intensity of all (histone) peptides in the sample. The latter depends on what is in your dataset and if you have prefiltered it or not.}
+\item{norm_method}{Normalization method. Either by 'peptide_family' or by 'peptide_total' intensity. The latter depends on what is in your dataset and if you have prefiltered it or not.}
 }
 \value{
 The provided \code{dataframe} is returned with relative instead of absolute

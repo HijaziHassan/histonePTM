@@ -10,6 +10,7 @@ analyzeHistone(
   hist_prot = c("All", "H3", "H4", "H2A", "H2B"),
   labeling = c("PA", "TMA", "PIC_PA", "none"),
   NA_threshold,
+  norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
   df_split = c("none", "no_me1", "no_me1_K37un")
 )
@@ -25,10 +26,12 @@ analyzeHistone(
 
 \item{NA_threshold}{A filter value below which an identification having this value of missing intensity value(s) or more is discarded.}
 
+\item{norm_method}{Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
+'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
+
 \item{output_result}{Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).}
 
-\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
-'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
+\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.}
 }
 \value{
 At least 3 excel files fragmented based on different filters:
