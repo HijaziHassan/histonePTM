@@ -11,14 +11,15 @@
 #' @param grouping_var A unqiue variable to group by like 'peptide sequence' or so. This mandatory if `norm_method` is 'peptide_family".
 #' @param norm_method Normalization method. Either by 'peptide_family' or by 'peptide_total' intensity. The latter depends on what is in your dataset and if you have prefiltered it or not.
 #'
-#' @return The provided \code{dataframe} is returned with relative instead of absolute
+#' @return The provided \code{tibble} or \code{dataframe} is returned with relative instead of absolute
 #' intensity values of the abundance/intensity columns passed to the function.
 #'
-#' \deqn{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}
-#' \deqn{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides in the sample}}}}
+#' \deqn{\text{norm\_peptide\_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}
+#' \deqn{\text{norm\_peptide\_total} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all filtered histone peptides in the sample}}}}{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides in the sample}}}}
 #'
 #'
 #' @examples
+#' #dummy examples
 #' quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
 #' quant_relIntensity(iris, starts_with("Sepal"), grouping_var = "Species")
 #'
