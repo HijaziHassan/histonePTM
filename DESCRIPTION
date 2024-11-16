@@ -19,7 +19,7 @@ Depends:
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, tidytable, rlang,  cli, 
      ggplot2, ggtext, scales, ggridges,
-     readxl, openxlsx, writexl
+     readxl, openxlsx, writexl, DBI, RSQLite
 Suggests: 
     testthat (>= 3.0.0),
     BiocManager, 
@@ -27,8 +27,6 @@ Suggests:
     MsBackendMgf,
     BiocParallel,
     rentrez,
-    DBI,
-    RSQLite,
     httr2,
     reticulate
 Config/testthat/edition: 3
