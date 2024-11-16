@@ -3,74 +3,76 @@
 
 #' Convert sequence-PTM to ProForma notation.
 #' @description
-#' Convert Proline modification string to ProForma notation.
+#' Convert modified peptide sequence to ProForma format.
 #'
 #'
-#' @param seq The sequence to be modified.
-#' @param mod The modifications with their positions on the *peptide*.
-#' @param annot Type of annotation to replace the modification. Either by 'monoisotopic_mass' or 'unimod_acc'-ession number.
-#' @param Nterm N-terminal modification
+#' @param seq The stripped sequence to be modified (if modification are already embeded in the sequence, set `replace_only` to `TRUE` and no need to provide `mod`.
+#' @param mod The modifications with their positions on the *peptide* (as represented in `Proline` software)
+#' @param lookup A named vector contaning PTMs and their replacment values (such as `histptm_mass` or `histptm_unimod` (`default`) or any custom vector). DON'T use names as "GG" as modifications. This will replace also "GG" residues if found in the modified sequence provided in `mod`.
+#' @param replace_only (\code{Optional}). If `TRUE`, it assumes that no need for a `seq` argument. It only replaces values in \code{mod} according to the provided `lookup` vector.
+#' @param Nterm N-terminal modification. Add systematically custom "Nterm" modification to all the sequences.
 #'
 #' @return character string
 #'
 #' @importFrom purrr map map2_chr
-#' @importFrom stringr str_detect str_match_all str_replace_all
+#' @importFrom stringr str_detect str_match_all str_replace_all str_extract
 #' @importFrom dplyr mutate
 #' @examples
 #' ptm_toProForma(seq = "KSAPATGGVKKPHR",
-#'                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
+#'                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)"
+#'                )
 #'
 #' @examples
-#' ptm_toProForma(  seq = "KQLATKVAR",
-#'                  mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
-#'                Nterm = "[+56.026]")
+#' ptm_toProForma(seq = "KQLATKVAR",
+#'                mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
+#'                lookup = histptm_mass
+#'                )
+#' @examples
+#' ptm_toProForma(seq = 'KacSAPATGGVKprKprPHR',
+#'               lookup = c(ac = 'UNIMOD:1', pr= 'UNIMOD:58'),
+#'               replace_only = TRUE
+#'               )
 #'
 #' @export
 
-ptm_toProForma <- function(seq, mod, annot = c('monoisotopic_mass', 'unimod_acc'), Nterm = FALSE){
-annotation = match.arg(annot)
+ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm = ""){
 
-if(annotation == 'monoisotopic_mass'){
 
-if(any(stringr::str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)'))){
-  Nterm = "[+56.026]"
-}else if(any(stringr::str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)'))){
-  Nterm = "[+84.057515]"
-}else if(any(stringr::str_detect(mod, pattern = 'Phenylisocyanate \\(Any N-term\\)'))){
-  Nterm = "[+119.037114]"
-}else{Nterm = Nterm}
+if(replace_only == TRUE){
 
-modified_peptide <- purrr::map2_chr(
+  if(is.null(lookup)) lookup = setNames(names(shorthistptm_mass), shorthistptm_mass)
+  #add square brackets for any vector used for replacement  if the values are not already in between []
+  if(any(grepl('\\[', lookup)) == FALSE){
 
-    .x = seq,
-    .y = purrr::map(.x = mod, .f = ~.extract_ptm_indx(.x,lookup = histptm_mass)),
-    .f = ~ .insert_ptm_seq(seq = .x, replace = .y),
-    .progress = TRUE)
+  lookup = sapply(X = lookup, \(X) paste0("[", X, "]"))}
 
-}else if(annotation == 'unimod_acc'){
+  modified_peptide =  stringr::str_replace_all(seq, lookup)
 
-  if(any(stringr::str_detect(mod, pattern = 'Propionyl \\(Any N-term\\)'))){
-    Nterm = "[UNIMOD:58]"
-  }else if(any(stringr::str_detect(mod, pattern = 'TMAyl_correct \\(Any N-term\\)'))){
-    Nterm = "[+84.057515]" #no unimod accession found
-  }else if(any(stringr::str_detect(mod, pattern = 'Phenylisocyanate \\(Any N-term\\)'))){
-    Nterm = "[UNIMOD:411]"
-  }else{Nterm = Nterm}
+}else{
+
+  if(is.null(lookup)) lookup = histptm_unimod
 
   modified_peptide <- purrr::map2_chr(
 
     .x = seq,
-    .y = purrr::map(.x = mod, .f = ~.extract_ptm_indx(.x, lookup = histptm_unimod)),
+    .y = purrr::map(.x = mod, .f = ~.extract_ptm_indx(.x, lookup = lookup)),
     .f = ~ .insert_ptm_seq(seq = .x, replace = .y),
     .progress = TRUE)
 
+  nterm <- .extract_nterm(mod)
 
-}
+  if(!is.na(nterm)){
 
-if(Nterm == FALSE){
-return(noquote(modified_peptide))}else{
-return(noquote(paste0(Nterm,"-", modified_peptide)))
-}
+    nterm = stringr::str_replace_all(nterm, lookup)
+
+    modified_peptide <- paste0("[", nterm, "]-", modified_peptide)
+  }else if(Nterm != ""){
+    modified_peptide <- paste0(Nterm,"-", modified_peptide)
+  }
+
+      }
+
+  modified_peptide
 
 }
 
@@ -113,5 +115,10 @@ return(noquote(paste0(Nterm,"-", modified_peptide)))
   return(seq)
 }
 
+#' @noRd
+.extract_nterm <- function(mod){
 
+  stringr::str_extract(string = mod,
+                       pattern = '(.+)\\s\\(Any N-term\\)', group = 1)
+}
 

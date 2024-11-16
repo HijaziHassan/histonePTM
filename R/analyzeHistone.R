@@ -233,7 +233,7 @@ Histone <- Histone |>
 #rename_PTMs
 Histone <- Histone |>
   dplyr::mutate(
-    PTM_proforma = ptm_toProForma(seq = sequence, mod= modifications),
+    PTM_proforma = ptm_toProForma(seq = sequence, mod= modifications, lookup = histptm_mass),
     PTM = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup), .after = PTM) |>
   dplyr::select(-modifications) #no need for this column anymore.
 

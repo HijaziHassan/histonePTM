@@ -4,27 +4,37 @@
 \alias{ptm_toProForma}
 \title{Convert sequence-PTM to ProForma notation.}
 \usage{
-ptm_toProForma(seq, mod, Nterm = FALSE)
+ptm_toProForma(seq, mod, lookup = NULL, replace_only = FALSE, Nterm = "")
 }
 \arguments{
-\item{seq}{The sequence to be modified.}
+\item{seq}{The stripped sequence to be modified (if modification are already embeded in the sequence, set `replace_only` to `TRUE` and no need to provide `mod`.}
 
-\item{mod}{The modifications with their positions on the *peptide*.}
+\item{mod}{The modifications with their positions on the *peptide* (as represented in `Proline` software)}
 
-\item{Nterm}{N-terminal modification}
+\item{lookup}{A named vector contaning PTMs and their replacment values (such as `histptm_mass` or `histptm_unimod` (`default`) or any custom vector). DON'T use names as "GG" as modifications. This will replace also "GG" residues if found in the modified sequence provided in `mod`.}
+
+\item{replace_only}{(\code{Optional}). If `TRUE`, it assumes that no need for a `seq` argument. It only replaces values in \code{mod} according to the provided `lookup` vector.}
+
+\item{Nterm}{N-terminal modification. Add systematically custom "Nterm" modification to all the sequences.}
 }
 \value{
 character string
 }
 \description{
-Convert Proline modification string to ProForma notation.
+Convert modified peptide sequence to ProForma format.
 }
 \examples{
 ptm_toProForma(seq = "KSAPATGGVKKPHR",
-               mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
+               mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)"
+               )
 
-ptm_toProForma(  seq = "KQLATKVAR",
-                 mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
-               Nterm = "[+56.026]")
+ptm_toProForma(seq = "KQLATKVAR",
+               mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
+               lookup = histptm_mass
+               )
+ptm_toProForma(seq = 'KacSAPATGGVKprKprPHR',
+              lookup = c(ac = 'UNIMOD:1', pr= 'UNIMOD:58'),
+              replace_only = TRUE
+              )
 
 }
