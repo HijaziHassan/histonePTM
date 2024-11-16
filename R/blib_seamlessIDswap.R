@@ -19,62 +19,107 @@
 #' chromatogram window of each sample in Skyline interface).
 #' Also accepts character vector.
 #'
-#' @importFrom dplyr select filter mutate collect tbl case_when left_join join_by pull
-#' @importFrom cli cli_abort cli_alert_warning
+#' @importFrom dplyr select filter mutate collect tbl case_when left_join join_by pull bind_rows summarise
+#' @importFrom cli cli_abort cli_alert_warning cli_alert_danger
 #' @importFrom purrr pmap
+#' @importFrom DBI dbRollback dbConnect dbDisconnect dbExecute dbBegin dbWriteTable dbCommit
+#' @importFrom RSQLite SQLite
 #'
-#' @return The same library but overwritten with the new values.
-#' A dataframe containing all details on the removed and added ids.
+#' @return The same library but overwritten with the new values. A dataframe containing all details on the removed and added ids.
+#'
 #' @export
 
-blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=""){
+blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file= NA_character_){
 
-  if (!requireNamespace("DBI", quietly = TRUE)) {
-    cli::cli_abort("Package 'DBI' is required but not installed.")
-  }
+  #check required packages
+    if (!requireNamespace("DBI", quietly = TRUE)) {
+      cli::cli_abort("Package 'DBI' is required but not installed. Please install it using BiocManager::install('DBI').")
+    }
   if (!requireNamespace("RSQLite", quietly = TRUE)) {
-    cli::cli_abort("Package 'RSQLite' is required but not installed.")
+    cli::cli_abort("Package 'RSQLite' is required but not installed. Please install it using BiocManager::install('RSQLite').")
   }
+
+
+  # Check if the database file exists
+  if (!file.exists(db_main)) { cli::cli_abort(c("x" = "The spectral library {.arg {db_main}} does not exist",
+                                                      "i" = "Check the spelling or set the right working directory.")
+                                                    )}
+
+  if (!file.exists(db_redundant)) {cli::cli_abort(c("x" = "The spectral library {.arg{db_redundant}} does not exist",
+                                                      "i" = "Check the spelling or set the right working directory.")
+                                                      )}
 
   #databases are super-assigned to be used by all underlying functions.
-  conn_redun   <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
-  conn_main    <<- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
+  conn_redun   <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_redundant)
+  conn_main    <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_main)
 
   #remove databases from global environment
   on.exit({
-    dbDisconnect(conn_redun)
-    dbDisconnect(conn_main)
-    rm(list = c("conn_redun", "conn_main"), envir = .GlobalEnv)
+    DBI::dbDisconnect(conn_redun)
+    DBI::dbDisconnect(conn_main)
   }, add = TRUE)
 
 
 
+  DBI::dbBegin(conn_main)
+  DBI::dbBegin(conn_redun)
 
 
-  df_list <-
-    purrr::pmap(.l = list(
-                          rt=rt,
-                          mz=mz,
-                          tol=tol,
-                          file = file
-                          ),
-                .f = .fetch_ID,
-                .progress = TRUE) |>
-    dplyr::bind_rows()
+  tryCatch({
+
+
+    df_list <-
+      purrr::pmap(
+        .l = list(
+          rt = rt,
+          mz = mz,
+          tol = tol,
+          file = file
+        ),
+        .f = function(rt, mz, tol, file) {
+          .fetch_ID(
+            rt = rt,
+            mz = mz,
+            tol = tol,
+            file = file,
+            conn_redun = conn_redun,
+            conn_main = conn_main
+          )
+        },
+        .progress = TRUE
+      ) |>
+      dplyr::bind_rows()
+
+  DBI::dbCommit(conn_main)
+  DBI::dbCommit(conn_redun)
 
   return(df_list)
 
 
 
-}
 
+  }, error = function(e) {
+    # Rollback transaction if an error occurs
+    DBI::dbRollback(conn_main)
+    DBI::dbRollback(conn_redun)
+    cli::cli_alert_danger("Error: {e$message}")
+    cli::cli_alert_info("ID swapping failed.")
+    stop(e)
+  })
+
+}
 
 
 #' @noRd
 #top function
-.fetch_ID <- function(rt, mz, tol, file){
+.fetch_ID <- function(rt, mz, tol, file,
+                      conn_redun = conn_redun,
+                      conn_main = conn_main){
+
+
   #get id for specific rt and mz from reduandant library
-  .blib_getRefID(conn= conn_redun, rt, mz, tol= 1e-12, file="") -> id_table
+  id_table <- .blib_getRefID(conn= conn_redun, rt, mz, tol= 1e-12, file=file)
+
 
   id_redun  <- id_table$id
   id_mz     <- id_table$precursorMZ
@@ -85,24 +130,18 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 
   #transfer the id from the redundant library to the main library
+    # Transfer ID data like rt, mz, ...
   .blib_transferID(conn_from = conn_redun, conn_to = conn_main, table = "RefSpectra", ids = id_redun)
+
+    # Transfer intensity values of fragment ions
   .blib_transferID(conn_from = conn_redun, conn_to = conn_main, table = "RefSpectraPeaks", ids = id_redun )
-  #
+
   #make the id from the reduandant library as main id. i.e. best spectrum and get id_ref
   .blib_swapID(conn = conn_main, ids = id_redun) -> id_ref
 
   #remove initial id (that was representing the best sepctrum) from the main library
   .blib_removeID(conn = conn_main, ids = id_ref)
 
-  # cli::cli_alert_success("TRANSFER SUMMARY:
-  #                        peptide = {id_modseq},
-  #                        m/z  = {id_mz},
-  #                        z    = {id_z},
-  #                        rt   = {id_rt},
-  #                        file = {id_file},
-  #                        from: '{db_redundant}' to: '{db_main}'
-  #                        is successfully transfered.")
-  #
 
   df_summary <- dplyr::tbl(conn_redun, "RefSpectra") |>
     dplyr::collect() |>
@@ -133,42 +172,47 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
 #' @noRd
 #get id of an ID from library by providing mz and RT
-.blib_getRefID <- function(conn, rt, mz, tol= 1e-12, file=""){
+.blib_getRefID <- function(conn, rt, mz, tol = 1e-12, file = NA_character_) {
 
-  ID <- dplyr::tbl(conn, "RefSpectra") |>
+    ID <- dplyr::tbl(conn, "RefSpectra") |>
     dplyr::collect() |>
-    dplyr::select(id,
-                  precursorMZ,
-                  precursorCharge,
-                  peptideModSeq,
-                  retentionTime,
-                  fileID) |>
-    dplyr::filter(round(retentionTime, 1) == round(rt, 1) &
-                    dplyr::near(trunc(100 * precursorMZ) / 100 ,
-                                trunc(100 * mz) / 100,
-                                tol = tol)) |>
-    dplyr::left_join(.blib_getFileID(conn = conn), dplyr::join_by(fileID == id))
+    dplyr::filter(
+      round(retentionTime, 1L) == round(rt, 1L) &
+        dplyr::near(trunc(100 * precursorMZ) / 100, trunc(100 * mz) / 100, tol = tol)
+    ) |>
+    dplyr::select(
+      id,
+      precursorMZ,
+      precursorCharge,
+      peptideModSeq,
+      retentionTime,
+      fileID
+    ) |>
+    dplyr::left_join(.blib_getFileID(conn = conn), by = dplyr::join_by("fileID" == "id"))
 
-  if (missing(file) & nrow(ID) > 1) {
-    cli::cli_abort(c("The 'rt' argument must refer to a unique ID.",
-                     "i"= "To force a unique value, use the 'file' argument.",
-                     "x" = "There are more than one ID of rt= {rt} min in your Skyline document."))
-  }
 
-  if (!missing(file) & nrow(ID) > 1) {
-
-    ID <- ID |>
+if (!is.na(file) & nrow(ID) > 1L) {
+    # Filter further if a specific file is provided
+  ID <- ID |>
       dplyr::filter(fileName == file)
+
+}else if (nrow(ID) == 0L) {
+    cli::cli_abort("No matching ID was found for rt = {rt} and mz = {mz}.")
+
+  }else if (is.na(file) & nrow(ID) > 1L) {
+    cli::cli_abort(c(
+      "The {.arg rt} and {.arg mz} must correspond to a unique ID.",
+      "i" = "Specify {.arg file} name to disambiguate.",
+      "x" = "Multiple IDs found having rt = {rt} and mz = {mz} in the redundant spectral library."
+    ))
   }
-  if(nrow(ID) == 0){
 
-    cli::cli_alert_warning("No matching ID was found.")
-  }
-
-  return(ID)
-
+    return(ID)
 
 }
+
+
+
 
 
 #' @noRd
@@ -211,19 +255,21 @@ blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file=
 
   #Check if any rows exist
   if (nrow(rows_to_copy) == 0) {
-    warning(paste("No rows with provided IDs found in table of redundant lib"))
+
+   cli::cli_abort("ID was not found in the {.arg conn_from}.")
+
   }else{
 
     DBI::dbWriteTable(conn = conn_to, name = table, value = rows_to_copy, overwrite = FALSE, append = TRUE)
 
   }
 
-
 }
 
 
+
 #' @noRd
-#This function opertes on the retention time table of the main library to promote redun_id and silence ref_id
+#This function operates on the retention time table of the main library to promote redun_id and silence ref_id
 .blib_swapID <- function(conn, ids){
 
   rt_table <-  dplyr::tbl(conn, 'RetentionTimes') |>

@@ -4,7 +4,14 @@
 \alias{blib_seamlessIDswap}
 \title{Change best spectrum ID in \emph{.blib} spectral library}
 \usage{
-blib_seamlessIDswap(db_main, db_redundant, rt, mz, tol = 1e-12, file = "")
+blib_seamlessIDswap(
+  db_main,
+  db_redundant,
+  rt,
+  mz,
+  tol = 1e-12,
+  file = NA_character_
+)
 }
 \arguments{
 \item{db_main}{The name of the main Skyline \code{.blib} library file (\code{string}).}
@@ -26,8 +33,7 @@ chromatogram window of each sample in Skyline interface).
 Also accepts character vector.}
 }
 \value{
-The same library but overwritten with the new values.
-A dataframe containing all details on the removed and added ids.
+The same library but overwritten with the new values. A dataframe containing all details on the removed and added ids.
 }
 \description{
 To swap IDs between redundant library and main library in case of wrong peak picking or (near)-coeluting isobaric peptides
