@@ -11,15 +11,20 @@ plot_annotateSpectrum(
   mz,
   intensity,
   title = "",
+  annot_diag = FALSE,
+  nloss = TRUE,
+  ion_types = "by",
+  tol_mz = "20",
+  tol_mode = "ppm",
   output_plot_name = ""
 )
 }
 \arguments{
 \item{Profrma_peptide}{Peptide in proforma representation}
 
-\item{prec_mz}{m/z of the precursor ion}
+\item{prec_mz}{m/z of the precursor ion (double)}
 
-\item{prec_z}{charge state of the precursor ion}
+\item{prec_z}{charge state of the precursor ion (integer)}
 
 \item{mz}{\code{numeric} vector containing mz values}
 
@@ -27,10 +32,20 @@ plot_annotateSpectrum(
 
 \item{title}{title of the annotate MS/MS plot}
 
+\item{annot_diag}{(bool, FALSE (default)) Annotate CyIm ions produced from modified lysines.}
+
+\item{nloss}{(bool, TRUE (default)). Annotate neutral losses (-NH3 by "*" and -H2O by "o")}
+
+\item{ion_types}{Fragment ion types (i.e. "by' (Default))}
+
+\item{tol_mz}{fragment mass tolerance (e.g, 20)}
+
+\item{tol_mode}{'ppm' (Default) or 'Da'}
+
 \item{output_plot_name}{Name of the plot in case you want to save it}
 }
 \value{
-Annotate MS/MS plot
+Annotated MS/MS plot
 }
 \description{
 wrapper function around functions from \code{spectrum_utils} library in Python.
