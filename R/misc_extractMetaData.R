@@ -1,7 +1,7 @@
 
 #' Extract raw file and search file names
 #' @description
-#' Extract .raw file and .dat file names from Proline output excel file (\code{"Search settings and infos"} sheet).
+#' Extract raw and search result files names from Proline output excel file (\code{"Search settings and infos"} sheet).
 #'
 #' @param filename Proline export excel filename ('\code{Search settings and infos}' sheet is hardcoded.)
 #' @param save_file Provide a file name if you want to save the extracted metadata.
@@ -33,7 +33,7 @@ misc_extractMetaData <- function(filename, save_file= ""){
 
   dat_files <- dat_files |>
     dplyr::mutate(dat= as.integer(dat)) |>
-    dplyr::mutate(channel= stringr::str_remove(channel, ".dat|.pep.xml|.pepXML|.msf|.pdResult|.mzid"))
+    dplyr::mutate(channel= stringr::str_remove(channel, ".dat|.pep.xml|.pepXML|.msf|.pdResult|.mzid|.msr"))
 
   if(save_file != ""){
     if(tools::file_ext(save_file) %in% c('xls', 'xlsx')){

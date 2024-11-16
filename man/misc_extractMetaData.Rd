@@ -15,5 +15,5 @@ misc_extractMetaData(filename, save_file = "")
 \code{.csv} file with 3 columns: \code{file}, \code{channel}, and \code{dat}.
 }
 \description{
-Extract .raw file and .dat file names from Proline output excel file (\code{"Search settings and infos"} sheet).
+Extract raw and search result files names from Proline output excel file (\code{"Search settings and infos"} sheet).
 }
