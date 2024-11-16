@@ -7,11 +7,17 @@
 #'
 #' @importFrom dplyr bind_rows
 #' @importFrom tibble as_tibble
+#' @importFrom cli cli_abort
 #'
 #' @return tibble with 4 colums: file name, scan number and their corresponfing mz and intensity values.
 #' @export
 
 mgf_extractScan <- function(mgf_file, scan){
+
+  if (!file.exists(mgf_file)) {
+    cli::cli_abort("The file {.arg {mgf_file}} was not found.")
+  }
+
 
   if (!requireNamespace("reticulate", quietly = TRUE)) {
     stop("Package 'reticulate' is required but not installed.")
