@@ -35,46 +35,58 @@
 #'
 #' @export
 
-ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm = ""){
+ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm = "") {
 
-
-if(replace_only == TRUE){
-
-  if(is.null(lookup)) lookup = setNames(names(shorthistptm_mass), shorthistptm_mass)
-  #add square brackets for any vector used for replacement  if the values are not already in between []
-  if(any(grepl('\\[', lookup)) == FALSE){
-
-  lookup = sapply(X = lookup, \(X) paste0("[", X, "]"))}
-
-  modified_peptide =  stringr::str_replace_all(seq, lookup)
-
-}else{
-
-  if(is.null(lookup)) lookup = histptm_unimod
-
-  modified_peptide <- purrr::map2_chr(
-
-    .x = seq,
-    .y = purrr::map(.x = mod, .f = ~.extract_ptm_indx(.x, lookup = lookup)),
-    .f = ~ .insert_ptm_seq(seq = .x, replace = .y),
-    .progress = TRUE)
-
-  nterm <- .extract_nterm(mod)
-
-  if(!is.na(nterm)){
-
-    nterm = stringr::str_replace_all(nterm, lookup)
-
-    modified_peptide <- paste0("[", nterm, "]-", modified_peptide)
-  }else if(Nterm != ""){
-    modified_peptide <- paste0(Nterm,"-", modified_peptide)
+  if (missing(mod)) {
+    cli_abort("{.arg mod} is required. Please provide modified sequences(s).")
   }
 
+  if (replace_only == FALSE && missing(seq)) {
+    cli_abort("{.arg seq} is required when {.arg replace_only} is set to {.code FALSE}.")
+  }
+
+  if (replace_only == TRUE) {
+    if (is.null(lookup)) lookup <- setNames(names(shorthistptm_mass), shorthistptm_mass)
+
+    # Add square brackets for replacements if not already present
+    if (any(grepl('\\[', lookup)) == FALSE) {
+      lookup <- sapply(X = lookup, \(X) paste0("[", X, "]"))
+    }
+
+    modified_peptide <- stringr::str_replace_all(seq, lookup)
+  } else {
+    if (is.null(lookup)) lookup <- histptm_unimod
+
+    # Process modifications
+    modified_peptide <- purrr::map2_chr(
+      .x = seq,
+      .y = purrr::map(.x = mod, .f = ~.extract_ptm_indx(.x, lookup = lookup)),
+      .f = ~.insert_ptm_seq(seq = .x, replace = .y),
+      .progress = TRUE
+    )
+
+    # Extract N-term modifications element-wise
+    nterm <- purrr::map_chr(mod, .extract_nterm)
+
+    modified_peptide <- purrr::map2_chr(
+      .x = nterm,
+      .y = modified_peptide,
+      .f = ~{
+        if (!is.na(.x)) {
+          nterm_replaced <- stringr::str_replace_all(.x, lookup)
+          paste0("[", nterm_replaced, "]-", .y)
+        } else if (Nterm != "") {
+          paste0(Nterm, "-", .y)
+        } else {
+          .y
+        }
       }
+    )
+  }
 
-  modified_peptide
-
+  return(modified_peptide)
 }
+
 
 
 #' @noRd
@@ -118,7 +130,10 @@ if(replace_only == TRUE){
 #' @noRd
 .extract_nterm <- function(mod){
 
-  stringr::str_extract(string = mod,
+  res <- stringr::str_extract(string = mod,
                        pattern = '(.+)\\s\\(Any N-term\\)', group = 1)
+  if (is.null(res)) return(NA_character_)
+
+  return(res)
 }
 
