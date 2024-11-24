@@ -26,16 +26,20 @@ quant_relIntensity(
 The provided \code{tibble} or \code{dataframe} is returned with relative instead of absolute
 intensity values of the abundance/intensity columns passed to the function.
 
-\deqn{\text{norm\_peptide\_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides of the same sequence as X}}}}
-\deqn{\text{norm\_peptide\_total} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all filtered histone peptides in the sample}}}}{\text{norm_peptide_family} = \frac{\text{Intensity}_{\text{peptide X}}}{\sum \text{Intensity}_{\text{all peptides in the sample}}}}
+\deqn{ norm\_peptide\_family = \frac{Intensity_{peptide\ X}}{\sum Intensity_{all\ peptides\ of\ the\ same\ sequence\ as\ X}} }{
+norm_peptide_family = Intensity_{peptide X} / sum(Intensity_{all peptides of the same sequence as X}) }
+
+\deqn{ norm\_peptide\_total = \frac{Intensity_{peptide\ X}}{\sum Intensity_{all\ peptides\ of\ the\ same\ sequence\ as\ X}} }{
+norm_peptide_family = Intensity_{peptide X} / sum(Intensity_{all\ peptides\ of\ all\ filtered\ peptdies\ in\ each\ sample}) }
 }
 \description{
 A function to normalize intensities of peptidoforms by dividing an intensity value by the
 sum of all intensities other peptidoforms of the same sequence.
 }
 \examples{
+\dontrun{
 #dummy examples
 quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
 quant_relIntensity(iris, starts_with("Sepal"), grouping_var = "Species")
-
+}
 }
