@@ -21,11 +21,13 @@
 #' @importFrom tibble as_tibble
 #'
 #' @examples
-#' plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = TRUE)
-#'
+#' \dontrun{
+#' plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = FALSE)
+#'}
 #' @return plot.
 #' @export
 plot_scheduledPRM <- function(df, rt_col, mz_col, rt_window, peak_width =0.3, save_plot = FALSE) {
+
 
   df <- tibble::as_tibble(df)
 

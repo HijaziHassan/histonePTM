@@ -36,6 +36,7 @@ A function to plot scheduled PRM graph to check how many precursor ions are conc
 monitored over the same time by varying the \code{rt_window} size.
 }
 \examples{
-plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = TRUE)
-
+\dontrun{
+plot_scheduledPRM(mtcars, mpg, cyl, c(5, 10), save_plot = FALSE)
+}
 }
