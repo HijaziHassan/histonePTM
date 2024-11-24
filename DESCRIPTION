@@ -9,7 +9,7 @@ Authors@R:
           role = c("cre", "aut"),
           comment = c(ORCID="0000-0001-6408-1768")))
 Maintainer: The package maintainer <hejaziihassan@gmail.com>
-Description: Useful function to organize, analyse, and visualize histone PTMs proteomics data
+Description: Handy functions to organize, analyse, and visualize histone PTMs proteomics data and "what you have".
 License: CC0
 Encoding: UTF-8
 LazyData: true
@@ -17,9 +17,9 @@ RoxygenNote: 7.3.1
 Depends: 
     R (>= 3.5.0)
 Imports: 
-     dplyr, purrr, stringr, tidyr, tibble, tidytable, rlang,  cli, 
+     dplyr, purrr, stringr, tidyr, tibble, rlang,  cli, 
      ggplot2, ggtext, scales, ggridges,
-     readxl, openxlsx, writexl, DBI, RSQLite
+     readxl, openxlsx, writexl
 Suggests: 
     testthat (>= 3.0.0),
     BiocManager, 
@@ -28,5 +28,7 @@ Suggests:
     BiocParallel,
     rentrez,
     httr2,
-    reticulate
+    reticulate,
+    DBI, 
+    RSQLite
 Config/testthat/edition: 3
