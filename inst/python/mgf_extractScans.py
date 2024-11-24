@@ -2,7 +2,7 @@ from pyteomics import mgf
 import re
 import os
 
-def extract_scan(mgf_file_path, target_scan):
+def mgf_extractScans(mgf_file_path, target_scan):
     """
     Extract a specific scan from an MGF file.
 

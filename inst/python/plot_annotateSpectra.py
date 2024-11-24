@@ -49,6 +49,7 @@ def plot_annotateSpectra(identifier: str,
     mz: list[float], 
     intensity: list[float],  
     output_plot_name: str,
+    min_int: float,
     tol_mz: float,
     tol_mode: str,
     ion_types: str,
@@ -72,7 +73,7 @@ def plot_annotateSpectra(identifier: str,
                                mz=mz, 
                                intensity = intensity)
     
-    my_spec = my_spec.filter_intensity(min_intensity = 0.05)
+    my_spec = my_spec.filter_intensity(min_intensity = min_int)
     my_spec.annotate_proforma(proforma_str = peptide, **annotation_settings)
     
     sup.colors["I"] = "#455a64"

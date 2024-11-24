@@ -21,23 +21,49 @@
 #'
 #'@export
 mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = FALSE){
-  if (!requireNamespace("BiocManager")) install.packages("BiocManager")
 
-  if (!requireNamespace("Spectra", quietly = TRUE)) {
-    cli::cli_abort("Package 'Spectra' is required but not installed. Please install it using BiocManager::install('Spectra').")
+# check dependencies availability -----------------------
+
+  #Those packages are heavy, better to ask the user permission before installing them.
+  required_packages <- c("Spectra", "MsBackendMgf", "BiocParallel")
+  essential_packages <- c("BiocManager", required_packages)
+
+
+  missing_packages <- .check_missing_packages(essential_packages)
+
+  if (length(missing_packages) > 0) {
+
+    message("The following packages are missing:")
+    message(paste(missing_packages, collapse = ", "))
+
+    # Prompt the user
+    install <- readline(prompt = "Do you want to install the missing packages? (yes/no): ")
+    if (tolower(install) == "yes") {
+      if ("BiocManager" %in% missing_packages) {
+        install.packages("BiocManager")
+        missing_packages <- setdiff(missing_packages, "BiocManager")
+      }
+      if (length(missing_packages) > 0) {
+        BiocManager::install(missing_packages)
+      }
+    } else {
+      cli::cli_abort("Required packages are missing. Exiting.")
+    }
+  } else {
+    cli_alert_success("All required packages are available.")
   }
 
-  if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
-    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('MsBackendMgf').")
-  }
-
-  if (!requireNamespace("BiocParallel", quietly = TRUE)) {
-    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('BiocParallel').")
-  }
-
+# check inputs --------------------------------------------
 
   if(rlang::is_missing(mgf_file)) cli::cli_abort(c("Error:",
-                   "i" = 'argument mgf_file is missing with no default'))
+                   "i" = "You didn't provide any mgf file name in {.arg mgf_file}"))
+  if(rlang::is_missing(scan)) cli::cli_abort(c("Error:",
+                                                   "i" = "You didn't provide any scan number in {.arg scan}"))
+  #to avoid any non-numeric or  input
+  stopifnot(" The 'scan' number(s) must be an integer or an integer vector." =
+               is.numeric(scan) && all(scan == as.integer(scan))
+          )
+
 
   file_name = basename(stringr::str_remove(string = mgf_file, pattern = ".mgf"))
 
@@ -142,10 +168,18 @@ mgf_extractMS2scan <- function(mgf_file, scan,  save_file = FALSE, export_mgf = 
 
     mgf= basename(mgf_file),
     scan = as.integer(scan),
-    unlist(peaksData(spec))
+    unlist(Spectra::peaksData(spec))
 
   )
 
 
 }
+
+#' @noRd
+# Function to check for missing packages
+.check_missing_packages <- function(pkgs) {
+  missing <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
+  return(missing)
+}
+
 

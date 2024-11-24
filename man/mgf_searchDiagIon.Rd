@@ -17,11 +17,11 @@ mgf_searchDiagIon(
 
 \item{diag_ion}{The mz of the diagnsotic ion(s)}
 
-\item{tol}{A mass tolerance to respect during the search}
+\item{tol}{\code{numeric; 0.002 (default)}. A mass tolerance to respect during the search.}
 
-\item{export_mgf}{\code{logical} Export only scans containing diagnsotic ion(s) into a an mgf file.}
+\item{export_mgf}{\code{bool; FALSE (default)} Export only scans containing diagnsotic ion(s) into a an mgf file.}
 
-\item{save_file}{\code{logical} Save the results as csv file}
+\item{save_file}{\code{bool; FALSE (default)} Save the results as csv file}
 }
 \value{
 A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.

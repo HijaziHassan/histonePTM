@@ -4,9 +4,9 @@
 #' Report user-defined diagnsotic ion(s) per MS/MS spectrum from an \code{mgf} file.
 #' @param mgf_file mgf file to search.
 #' @param diag_ion The mz of the diagnsotic ion(s)
-#' @param tol A mass tolerance to respect during the search
-#' @param export_mgf \code{logical} Export only scans containing diagnsotic ion(s) into a an mgf file.
-#' @param save_file \code{logical} Save the results as csv file
+#' @param tol \code{numeric; 0.002 (default)}. A mass tolerance to respect during the search.
+#' @param export_mgf \code{bool; FALSE (default)} Export only scans containing diagnsotic ion(s) into a an mgf file.
+#' @param save_file \code{bool; FALSE (default)} Save the results as csv file
 #' @return A \code{tibble} with 6 columns including the diagnostic ion \code{m/z} and its intensity relative to the base peak.
 #' @importFrom dplyr near
 #' @importFrom tibble tibble
@@ -21,38 +21,55 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALS
 
 # check inputs --------------------------------------------
   if(rlang::is_missing(mgf_file)){
-    cli::cli_abort("No mgf file name is identified.")
+    cli::cli_abort("You didn't provide any mgf file name in {.arg mgf_file}.")
   }
   if(rlang::is_missing(diag_ion)){
-    cli::cli_abort("No diagnostic ion is identified.")
+    cli::cli_abort("You didn't provide any diagnostic ion in {.arg diag_ion}.")
   }
 
   #to avoid any non-numeric input
-  stopifnot( "'diag_ion' must be a number or a numeric vector." = is.numeric(diag_ion) == TRUE)
+  stopifnot(
+    "The 'diag_ion' must be an integer or an integer vector." =
+      is.numeric(diag_ion) && all(diag_ion == as.integer(diag_ion))
+  )
+
 
 ####
 
 # check dependencies availability -----------------------
 
-if (!requireNamespace("BiocManager")) install.packages("BiocManager")
+  #Those packages are heavy, better to ask the user permission before installing them.
+  required_packages <- c("Spectra", "MsBackendMgf", "BiocParallel")
+  essential_packages <- c("BiocManager", required_packages)
 
-  if (!requireNamespace("Spectra", quietly = TRUE)) {
-    cli::cli_abort("Package 'Spectra' is required but not installed. Please install it using BiocManager::install('Spectra').")
+
+  missing_packages <- .check_missing_packages(essential_packages)
+
+  if (length(missing_packages) > 0) {
+
+    message("The following packages are missing:")
+    message(paste(missing_packages, collapse = ", "))
+
+    # Prompt the user
+    install <- readline(prompt = "Do you want to install the missing packages? (yes/no): ")
+    if (tolower(install) == "yes") {
+      if ("BiocManager" %in% missing_packages) {
+        install.packages("BiocManager")
+        missing_packages <- setdiff(missing_packages, "BiocManager")
+      }
+      if (length(missing_packages) > 0) {
+        BiocManager::install(missing_packages)
+      }
+    } else {
+      cli::cli_abort("Required packages are missing. Exiting.")
+    }
+  } else {
+    cli_alert_success("All required packages are available.")
   }
 
-  if (!requireNamespace("MsBackendMgf", quietly = TRUE)) {
-    cli::cli_abort("Package 'MsBackendMgf' is required but not installed. Please install it using BiocManager::install('MsBackendMgf').")
-  }
-
-  if (!requireNamespace("BiocParallel", quietly = TRUE)) {
-    cli::cli_abort("Package 'BiocParallel' is required but not installed. Please install it using BiocManager::install('BiocParallel').")
-  }
 
 
-
-
-####---
-
+  ####---
 
 # iterate over mgf files --------------------
 for (file in seq_along(mgf_file)){
@@ -263,3 +280,10 @@ return(mgftospec)
   )
 }
 
+
+#' @noRd
+# Function to check for missing packages
+.check_missing_packages <- function(pkgs) {
+  missing <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
+  return(missing)
+}

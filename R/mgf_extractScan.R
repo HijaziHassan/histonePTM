@@ -26,14 +26,13 @@ mgf_extractScan <- function(mgf_file, scan){
   My_Package_Name_path <- system.file("python", package = "histonePTM")
   reticulate::py_run_string(paste0("import sys; sys.path.append('", My_Package_Name_path, "')"))
 
-  reticulate::source_python(system.file("python",
-                                        "extract_scan_mgf.py",
+  mgf_extractScans <- reticulate::source_python(system.file("python",
+                                        "mgf_extractScans.py",
                                         package = "histonePTM",
                                         mustWork = TRUE
   ))
 
 
-#reticulate::source_python("./inst/python/extract_scan_mgf.py")
 
 list_df <- vector(mode = "list", length = length(mgf_file)*length(scan))
 
@@ -44,7 +43,7 @@ for(mgf in mgf_file){
 
   for(s in scan){
 
-spec <- extract_scan(mgf_file_path = mgf, target_scan = s)
+spec <- mgf_extractScans(mgf_file_path = mgf, target_scan = s)
 
   if(!is.null(spec)){
 
