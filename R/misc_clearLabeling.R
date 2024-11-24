@@ -50,7 +50,7 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling= NULL, residue
 
   if(any(stringr::str_detect(ptm_string, "(?:[:upper:]*\\d*me1)\\b")) & "me1" %in% unname(rules)){
     cli::cli_abort(c('You are trying to replace "bu" by "me1" but "me1" is already in your `rules`.',
-                     "i" = "remove any 'me1' occurnce in `ptm_string` before applying the function or change the `rules` argument."))
+                     "i" = "remove any 'me1' occurence in `ptm_string` before applying the function or change the `rules` argument."))
   }
 
  rules = c(nterm_rule, prop_rules)
