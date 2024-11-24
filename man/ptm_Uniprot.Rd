@@ -18,6 +18,8 @@ A \code{tibble} and \code{.csv} file.
 Get PTM information  reported in literature and documented by Uniprot.
 }
 \examples{
-ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = TRUE)
+\dontrun{
+ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = FALSE)
+}
 
 }
