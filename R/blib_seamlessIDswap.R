@@ -22,8 +22,8 @@
 #' @importFrom dplyr select filter mutate collect tbl case_when left_join join_by pull bind_rows summarise
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_danger
 #' @importFrom purrr pmap
-#' @importFrom DBI dbRollback dbConnect dbDisconnect dbExecute dbBegin dbWriteTable dbCommit
-#' @importFrom RSQLite SQLite
+#@importFrom DBI dbRollback dbConnect dbDisconnect dbExecute dbBegin dbWriteTable dbCommit
+#@importFrom RSQLite SQLite
 #'
 #' @return The same library but overwritten with the new values. A dataframe containing all details on the removed and added ids.
 #'
@@ -31,13 +31,10 @@
 
 blib_seamlessIDswap <- function(db_main, db_redundant, rt, mz, tol= 1e-12, file= NA_character_){
 
-  #check required packages
-    if (!requireNamespace("DBI", quietly = TRUE)) {
-      cli::cli_abort("Package 'DBI' is required but not installed. Please install it using BiocManager::install('DBI').")
-    }
-  if (!requireNamespace("RSQLite", quietly = TRUE)) {
-    cli::cli_abort("Package 'RSQLite' is required but not installed. Please install it using BiocManager::install('RSQLite').")
-  }
+
+  required_packages <- c("DBI", "RSQLite")
+  .check_missing_package(required_packages)
+
 
 
   # Check if the database file exists
@@ -309,6 +306,31 @@ if (!is.na(file) & nrow(ID) > 1L) {
   DBI::dbExecute(conn = conn, paste0("DELETE FROM RefSpectraPeaks WHERE RefSpectraID = ", ids))
 
 }
+
+
+#' @noRd
+#'
+#
+.check_missing_package <- function(packages) {
+  # Identify missing packages
+  missing <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
+
+  if (length(missing) > 0) {
+    # Inform the user about missing packages
+    cli::cli_alert_warning("The following packages are missing: {.pkg {missing}}")
+
+    # Prompt user for installation permission
+    install <- readline(prompt = "Do you want to install the missing packages? (yes/no): ")
+    if (tolower(install) == "yes") {
+      install.packages(missing)
+    } else {
+      cli::cli_abort("Required packages are missing and were not installed. Exiting.")
+    }
+  } else {
+    cli::cli_alert_success("All required packages are available.")
+  }
+}
+
 
 
 
