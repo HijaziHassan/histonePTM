@@ -6,14 +6,14 @@
 #' @param analysisfile `Proline` output excel file
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
 #' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".
-#' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'.
-#' @param NA_threshold A filter value below which an identification having this value of missing intensity value(s) or more is discarded.
-#' @param df_split Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.
+#' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.
+#' @param NA_threshold A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).
+#' @param extra_filter Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).
 #' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #'
-#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename
+#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc
 #' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim
 #' @importFrom tidyr nest drop_na
 #' @importFrom writexl write_xlsx
@@ -21,25 +21,32 @@
 #' @importFrom rlang check_installed is_missing set_names
 #' @importFrom purrr map map2 walk2 pluck
 #' @importFrom cli cli_alert_warning cli_alert_success cli_abort cli_h1 cli_h2 cli_h3
+#'
 #' @return At least 3 excel files fragmented based on different filters:
 #' \describe{
-#'   \subsection{File1: fPSMs_analysisfile.xslx}{
-#'   \itemize{
-#'     \item{SHEET1: 'meta_data'}{SampleName, file and data columns (and Condition, Bioreplicate, TechReplicate if available)}
-#'     \item{SHEET2: 'RawData'}{The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.}
-#'     \item{SHEET3: 'Nt_IDs'}{All peptides that are successfully N-terminally labelled. iRT are always included.}
-#'     \item{SHEET4: '#NA<_NA_threshold'}{IDs quantified with missing values less than the specified threshold.}
-#'     \item{SHEET5: 'FullyMod_IDs'}{All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.}
-#'     \item{SHEET6: 'isob_coel_pep'}{Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.}
-#'     \item{SHEET7: 'unique_IDs'}{Unique IDs considered for quantification. Abundances are not normalized.}
-#'     \item{SHEET8: 'unique_IDs_norm'}{Same as the previous sheet but with normalized abundances.}
-#'     \item{SHEET9: 'unique_IDs_norm_nome1'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1.}
-#'     \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
-#'   }}
-#'   \subsection{File2: PTMsep_analysisfile.xlsx}{A file containing a summary of the identified PTMs. Each sheet per identified PTM is created. This file could be further fragmented into as many proteins as are present. To do this, change the argument `output_result` to 'multiple'.}
-#'   \subsection{File3: hist_prot_analysisfile.xlsx}{A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.}
+#'   \item{File1: fPSMs_analysisfile.xlsx}{
+#'     \itemize{
+#'       \item SHEET1: 'meta_data' — SampleName, file, and data columns (and Condition, Bioreplicate, TechReplicate if available).
+#'       \item SHEET2: 'RawData' — The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.
+#'       \item SHEET3: 'Nt_IDs' — All peptides that are successfully N-terminally labelled. iRT are always included.
+#'       \item SHEET4: '#NA<_NA_threshold' — IDs quantified with missing values less than the specified threshold.
+#'       \item SHEET5: 'FullyMod_IDs' — All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.
+#'       \item SHEET6: 'isob_coel_pep' — Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.
+#'       \item SHEET7: 'unique_IDs' — Unique IDs considered for quantification. Abundances are not normalized.
+#'       \item SHEET8: 'unique_IDs_norm' — Same as the previous sheet but with normalized abundances.
+#'       \item SHEET9: 'unique_IDs_norm_xxx' — Same as the previous sheet but normalized while discarding any peptide with what is defined by `extra_filter`.
+#'     }
+#'   }
+#'   \item{File2: PTMsep_analysisfile.xlsx}{
+#'     A file containing a summary of the identified PTMs. Each sheet per identified PTM is created.
+#'     This file could be further fragmented into as many proteins as are present.
+#'     To do this, change the argument `output_result` to 'multiple'.
+#'   }
+#'   \item{File3: hist_prot_analysisfile.xlsx}{
+#'     A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.
+#'   }
 #' }
-
+#'
 #'
 #'
 #'
@@ -53,21 +60,21 @@ analyzeHistone <- function(analysisfile,
                 NA_threshold,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
-                df_split = c( "none", 'no_me1', "no_me1_K37un")){
+                extra_filter = c( "none", 'no_me1', "no_me1_K37un")){
 
 
   output_result = match.arg(output_result)
   hist_prot = match.arg(hist_prot)
   labeling = match.arg(labeling)
   norm_method = match.arg(norm_method)
-  df_split = match.arg(df_split)
+  extra_filter = match.arg(extra_filter)
 # Data 1st Check -----------------------------------------------
 
 ## packages -------
   rlang::check_installed(c("dplyr", 'stringr', 'purrr', 'tidyr', 'openxlsx', 'cli'))
 
 ## Proline excel output -------
-  if(!file.exists(analysisfile)) cli::cli_abort("{analysisfile} is not found or maybe misspelled!")
+  if(!file.exists(analysisfile)) cli::cli_abort("{analysisfile} was not found. Have you misspelled it?!")
 
 ## Excel spread sheet  -------
   sheetName= 'Best PSM from protein sets'
@@ -89,6 +96,7 @@ cli::cli({
   cli::cli_h1("Histone Analysis")
   cli::cli_h2("Sample: {exp_folder_name}")
   cli::cli_h3("Histones:  {hist_prot}")
+  cli::cli_h3("Labeling method:  {labeling}")
 })
 
 
@@ -106,7 +114,7 @@ cli::cli({
 ## read files ---------
 #readxl function seems to remove spaces upon reading, but to avoid loading extra packges, I used openxlsx
 rawfilenames <- openxlsx::read.xlsx(xlsxFile = metafile) |>
-    dplyr::mutate(dplyr::across(.cols = where(is.character), .fns = ~stringr::str_trim(.x)))
+    dplyr::mutate(dplyr::across(.cols = dplyr::where(is.character), .fns = ~stringr::str_trim(.x)))
 
 proline_output <- openxlsx::read.xlsx(xlsxFile = analysisfile, sheet = sheetName) #read excel file into R
 
@@ -306,7 +314,7 @@ CompleteHistoneCases <- accepted_Histone |>
   PTM_stripped = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'remove'),
   .after = PTM
   ) |>
-  dplyr::arrange(desc(psm_score))
+  dplyr::arrange(dplyr::desc(psm_score))
 
 
 SHEET5 <- CompleteHistoneCases
@@ -344,51 +352,14 @@ SHEET8 <- uniqueHistoneForms |>
                      grouping_var = sequence,
                      norm_method = norm_method) |>
   dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-  quant_coefVariation(df= _, df_meta= rawfilenames,
-                      int_col= dplyr::any_of(rawfilenames$SampleName),
+  quant_coefVariation(df= _, df_meta= meta_names_merge,
+                      int_col= dplyr::any_of(meta_names_merge$SampleName),
                       seq_col = sequence,
                       ptm_col = PTM,
                       format = 'wide') |>
   dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped,
                                                    labeling = labeling),
  .after= 'PTM')
-
-
-#####SHEET 9 & 10-----------------------------------------------
-
-uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
-  dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[:upper:]*\\d*me1)\\b"))|>
-  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM')
-
-
-
-
-SHEET9 <- uniqueHistoneForms_nome1 |>
-  quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                     grouping_var = sequence) |>
-  dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-  quant_coefVariation(df= _, df_meta= rawfilenames,
-                      int_col= dplyr::any_of(rawfilenames$SampleName),
-                      seq_col = sequence,
-                      ptm_col = PTM,
-                      format = 'wide')
-
-
-
-#This sheet is made to filter out H3K27_R40 sequences modified at K37.
-SHEET10 <-  uniqueHistoneForms_nome1 |>
-  dplyr::filter(
-    !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
-      (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$'))
-  ) |>
-quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                     grouping_var = sequence) |>
-  dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-  quant_coefVariation(df= _, df_meta= rawfilenames,
-                      int_col= dplyr::any_of(rawfilenames$SampleName),
-                      seq_col = sequence,
-                      ptm_col = PTM,
-                      format = 'wide')
 
 
 ##names of the sheets where the previous data produced will be saved##
@@ -400,16 +371,70 @@ all_sheets <-
     "FullyMod_IDs",
     "isob_coel_pep",
     "unique_IDs",
-    "unique_IDs_norm",
-    "unique_IDs_norm_nome1",
-    "unique_IDs_norm_nome1_H3K37un"
+    "unique_IDs_norm"
   )
 
+#####SHEET 9 -----------------------------------------------
 
+if(extra_filter == "no_me1"){
 
+  SHEET9 <- uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
+    dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"))|>
+    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
+    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
+                       grouping_var = sequence) |>
+    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+    quant_coefVariation(df= _, df_meta= meta_names_merge,
+                        int_col= dplyr::any_of(meta_names_merge$SampleName),
+                        seq_col = sequence,
+                        ptm_col = PTM,
+                        format = 'wide')
 
+  all_sheets <- c(all_sheets, "unique_IDs_norm_no_me1")
+}else if(extra_filter == "K37un"){
 
-list_dfs= list(SHEET1, SHEET2, SHEET3, SHEET4, SHEET5, SHEET6, SHEET7, SHEET8, SHEET9, SHEET10)
+  SHEET9 <-  uniqueHistoneForms |>
+    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
+    dplyr::filter(
+      !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
+        (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$'))
+    ) |>
+    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
+                       grouping_var = sequence) |>
+    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+    quant_coefVariation(df= _, df_meta= meta_names_merge,
+                        int_col= dplyr::any_of(meta_names_merge$SampleName),
+                        seq_col = sequence,
+                        ptm_col = PTM,
+                        format = 'wide')
+  all_sheets <- c(all_sheets, "unique_IDs_norm_K37un")
+
+}else if(extra_filter == "no_me1_K37un"){
+
+  SHEET9 <- uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
+    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
+    dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"),
+                  !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
+                    (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$')))|>
+    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
+                       grouping_var = sequence) |>
+    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+    quant_coefVariation(df= _, df_meta= meta_names_merge,
+                        int_col= dplyr::any_of(meta_names_merge$SampleName),
+                        seq_col = sequence,
+                        ptm_col = PTM,
+                        format = 'wide')
+all_sheets <- c(all_sheets, "unique_IDs_norm_no_me1_K37un")
+}else if(extra_filter == none){
+
+  all_sheets <- all_sheets[-length(all_sheets)]
+  SHEET9 = NULL
+
+}
+
+list_dfs= list(SHEET1, SHEET2, SHEET3, SHEET4, SHEET5, SHEET6, SHEET7, SHEET8, SHEET9)
+list_dfs <- Filter(Negate(is.null), list_dfs)
+
 #setNames(list_dfs, all_sheets)
 
 
@@ -499,10 +524,12 @@ cli::cli_alert_success('An excel file containing cleaned and renamed data of {pr
 
 #determine the sheet which will be used for the ptm-centered and peptide-centered excel files to be generated.
 
-df_tobe_splitted <- switch(df_split,
+df_tobe_splitted <- switch(extra_filter,
              "none" = SHEET8,
              "no_me1" = SHEET9,
-             "no_me1_K37un" = SHEET10
+             "K37un"= SHEET9,
+             "no_me1_K37un" = SHEET9,
+             SHEET8
 )
 
 df_tobe_splitted |>

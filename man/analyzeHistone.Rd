@@ -12,7 +12,7 @@ analyzeHistone(
   NA_threshold,
   norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
-  df_split = c("none", "no_me1", "no_me1_K37un")
+  extra_filter = c("none", "no_me1", "no_me1_K37un")
 )
 }
 \arguments{
@@ -22,35 +22,41 @@ analyzeHistone(
 
 \item{hist_prot}{One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".}
 
-\item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'.}
+\item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.}
 
-\item{NA_threshold}{A filter value below which an identification having this value of missing intensity value(s) or more is discarded.}
+\item{NA_threshold}{A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).}
 
 \item{norm_method}{Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
 
 \item{output_result}{Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).}
 
-\item{df_split}{Either of 'no_me1', "no_me1_K37un", or "none" (default). This impact the resulting file where data is splited by protein and by PTM.}
+\item{extra_filter}{Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).}
 }
 \value{
 At least 3 excel files fragmented based on different filters:
 \describe{
-  \subsection{File1: fPSMs_analysisfile.xslx}{
-  \itemize{
-    \item{SHEET1: 'meta_data'}{SampleName, file and data columns (and Condition, Bioreplicate, TechReplicate if available)}
-    \item{SHEET2: 'RawData'}{The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.}
-    \item{SHEET3: 'Nt_IDs'}{All peptides that are successfully N-terminally labelled. iRT are always included.}
-    \item{SHEET4: '#NA<_NA_threshold'}{IDs quantified with missing values less than the specified threshold.}
-    \item{SHEET5: 'FullyMod_IDs'}{All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.}
-    \item{SHEET6: 'isob_coel_pep'}{Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.}
-    \item{SHEET7: 'unique_IDs'}{Unique IDs considered for quantification. Abundances are not normalized.}
-    \item{SHEET8: 'unique_IDs_norm'}{Same as the previous sheet but with normalized abundances.}
-    \item{SHEET9: 'unique_IDs_norm_nome1'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1.}
-    \item{SHEET10: 'unique_IDs_norm_nome1_H3K37un'}{Same as the previous sheet but normalized while discarding any peptide with non-labelled me1 and any H3K27R40 peptide modified (not chemically) at K37.}
-  }}
-  \subsection{File2: PTMsep_analysisfile.xlsx}{A file containing a summary of the identified PTMs. Each sheet per identified PTM is created. This file could be further fragmented into as many proteins as are present. To do this, change the argument `output_result` to 'multiple'.}
-  \subsection{File3: hist_prot_analysisfile.xlsx}{A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.}
+  \item{File1: fPSMs_analysisfile.xlsx}{
+    \itemize{
+      \item SHEET1: 'meta_data' — SampleName, file, and data columns (and Condition, Bioreplicate, TechReplicate if available).
+      \item SHEET2: 'RawData' — The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.
+      \item SHEET3: 'Nt_IDs' — All peptides that are successfully N-terminally labelled. iRT are always included.
+      \item SHEET4: '#NA<_NA_threshold' — IDs quantified with missing values less than the specified threshold.
+      \item SHEET5: 'FullyMod_IDs' — All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.
+      \item SHEET6: 'isob_coel_pep' — Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.
+      \item SHEET7: 'unique_IDs' — Unique IDs considered for quantification. Abundances are not normalized.
+      \item SHEET8: 'unique_IDs_norm' — Same as the previous sheet but with normalized abundances.
+      \item SHEET9: 'unique_IDs_norm_xxx' — Same as the previous sheet but normalized while discarding any peptide with what is defined by `extra_filter`.
+    }
+  }
+  \item{File2: PTMsep_analysisfile.xlsx}{
+    A file containing a summary of the identified PTMs. Each sheet per identified PTM is created.
+    This file could be further fragmented into as many proteins as are present.
+    To do this, change the argument `output_result` to 'multiple'.
+  }
+  \item{File3: hist_prot_analysisfile.xlsx}{
+    A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.
+  }
 }
 }
 \description{
