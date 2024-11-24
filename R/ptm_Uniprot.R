@@ -22,7 +22,9 @@
 #'
 #'
 #' @examples
-#' ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = TRUE)
+#'\dontrun{
+#' ptm_Uniprot(Uniprot_accession = "B9FXV5", save_file = FALSE)
+#'}
 #'
 #' @export
 
