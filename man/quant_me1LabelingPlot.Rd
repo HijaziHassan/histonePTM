@@ -9,10 +9,10 @@ quant_me1LabelingPlot(
   seq_col,
   ptm_col,
   int_col,
-  cond_col,
+  cond_col = NULL,
   me1 = "me1",
   me1_label = "bu",
-  format = "",
+  format = c("wide", "long"),
   df_meta,
   save_plot = FALSE
 )
@@ -26,21 +26,21 @@ quant_me1LabelingPlot(
 
 \item{int_col}{Intensity column(s)}
 
-\item{cond_col}{(`optional`) Condition column (e.g. concentration) used for legend. If absent}
+\item{cond_col}{(`optional`) Condition column (e.g. concentration) used for legend. If absent will be replaced by "None".}
 
-\item{me1}{Monomethyl representation inside the `ptm_col`column (i.e. 'me1' (`default`) or 'methyl (K)', ...)}
+\item{me1}{Monomethyl representation inside the `ptm_col`column (i.e. 'me1' (`default`) or 'Methyl', ...)}
 
-\item{me1_label}{Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl (K)', ....)}
+\item{me1_label}{Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl, ....)}
 
 \item{format}{if set to `wide` (most often), data will be reshaped into long format before plotting. Check `df_meta`.}
 
-\item{df_meta}{(`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleNames` and `Conditions`).
+\item{df_meta}{(`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`).
 `SampleNames` MUST match exactly the names of the `int_col`columns.}
 
-\item{save_plot}{(`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown on Plots pane.)}
+\item{save_plot}{(`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown within the Plots pane.)}
 }
 \value{
-Boxplot with jittered point to assess me1 labeling when using anhydrides to label lysines.
+Boxplot with jittered points to assess me1 labeling when using anhydrides to label lysines.
 }
 \description{
 Evaluate the efficiency of monomethylated lysine derivarization per sequencexPTM combination.
