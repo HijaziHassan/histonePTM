@@ -22,6 +22,7 @@
 
 plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col){
 
+  utils::globalVariables('KSAPATGGVKKPHR', 'KSAPSTGGVKKPHR')
 
 
   RA <- df |>
