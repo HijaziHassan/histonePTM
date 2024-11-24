@@ -7,7 +7,7 @@
 #'
 #' @param df Dataset in wide format.
 #' @param int_col The intensity columns. Either a vector `c('column1', 'column2', ...)` or using tidyselect functions
-#' @param save_plot plot_name.(png, svg, ...)
+#' @param save_plot \code{bool}, FALSE (default).
 #' like `starts_with('abundant_')` or `contains('intensity_')`
 #' @importFrom ggridges geom_density_ridges_gradient
 #' @import ggplot2
@@ -19,7 +19,7 @@
 #'
 
 
-plot_intDensity <- function(df, int_col, save_plot= "") {
+plot_intDensity <- function(df, int_col, save_plot= FALSE) {
   df_long <- df |>
     dplyr::select(dplyr::any_of({{int_col}})) |>
     dplyr::distinct() |> #to remove duplicates
@@ -47,9 +47,9 @@ plot_intDensity <- function(df, int_col, save_plot= "") {
 
                          ))) -> plot
 
-if(save_plot != ""){
+if(save_plot){
 
-  ggplot2::ggsave(plot, save_plot, width= 7, height = 12, dpi = 300)
+  ggplot2::ggsave(filename =  "denisty_plot.png", plot, width= 7, height = 12, dpi = 300, bg= "white")
 }
 
 

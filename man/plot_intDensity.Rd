@@ -4,14 +4,14 @@
 \alias{plot_intDensity}
 \title{A ridgeline visualization of intensities per sample}
 \usage{
-plot_intDensity(df, int_col, save_plot = "")
+plot_intDensity(df, int_col, save_plot = FALSE)
 }
 \arguments{
 \item{df}{Dataset in wide format.}
 
 \item{int_col}{The intensity columns. Either a vector `c('column1', 'column2', ...)` or using tidyselect functions}
 
-\item{save_plot}{plot_name.(png, svg, ...)
+\item{save_plot}{\code{bool}, FALSE (default).
 like `starts_with('abundant_')` or `contains('intensity_')`}
 }
 \value{
