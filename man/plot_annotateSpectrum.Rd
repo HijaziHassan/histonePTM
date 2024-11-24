@@ -13,6 +13,7 @@ plot_annotateSpectrum(
   title = "",
   annot_diag = FALSE,
   nloss = TRUE,
+  min_int = 0.01,
   ion_types = "by",
   tol_mz = "20",
   tol_mode = "ppm",
@@ -35,6 +36,8 @@ plot_annotateSpectrum(
 \item{annot_diag}{(bool, FALSE (default)) Annotate CyIm ions produced from modified lysines.}
 
 \item{nloss}{(bool, TRUE (default)). Annotate neutral losses (-NH3 by "*" and -H2O by "o")}
+
+\item{min_int}{(double, 0.01 (default)). To filter intensity which are `min_int` of the base peak.}
 
 \item{ion_types}{Fragment ion types (i.e. "by' (Default))}
 

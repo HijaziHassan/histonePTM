@@ -8,8 +8,9 @@
 #' @param prec_z charge state of the precursor ion (integer)
 #' @param mz \code{numeric} vector containing mz values
 #' @param intensity \code{numeric} vector containing intensity values
-#' @param nloss (bool, TRUE (default)). Annotate neutral losses (-NH3 by "*" and -H2O by "o")
 #' @param annot_diag (bool, FALSE (default)) Annotate CyIm ions produced from modified lysines.
+#' @param nloss (bool, TRUE (default)). Annotate neutral losses (-NH3 by "*" and -H2O by "o")
+#' @param min_int (double, 0.01 (default)). To filter intensity which are `min_int` of the base peak.
 #' @param ion_types Fragment ion types (i.e. "by' (Default))
 #' @param tol_mz fragment mass tolerance (e.g, 20)
 #' @param tol_mode 'ppm' (Default) or 'Da'
@@ -25,6 +26,7 @@ plot_annotateSpectrum <- function(Profrma_peptide,
                                   title= "",
                                   annot_diag= FALSE,
                                   nloss= TRUE,
+                                  min_int= 0.01,
                                   ion_types= "by",
                                   tol_mz = "20",
                                   tol_mode = "ppm",
@@ -38,7 +40,7 @@ plot_annotateSpectrum <- function(Profrma_peptide,
   My_Package_Name_path <- system.file("python", package = "histonePTM")
   reticulate::py_run_string(paste0("import sys; sys.path.append('", My_Package_Name_path, "')"))
 
-  reticulate::source_python(system.file("python",
+  plot_annotateSpectra <- reticulate::source_python(system.file("python",
                                         "plot_annotateSpectra.py",
                                         package = "histonePTM",
                                         mustWork = TRUE
@@ -55,6 +57,7 @@ plot_annotateSpectrum <- function(Profrma_peptide,
     nloss = nloss,
     annot_diag = annot_diag,
     ion_types = ion_types,
+    min_int = min_int,
     tol_mz = tol_mz,
     tol_mode = tol_mode,
     output_plot_name = output_plot_name
