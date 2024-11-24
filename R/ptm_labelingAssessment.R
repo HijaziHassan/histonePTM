@@ -77,7 +77,10 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
 
 
   df_desired <- df_tagged |>
-    dplyr::filter(isNterm == TRUE , isFullyModified == TRUE) |>
+    dplyr::filter(isNterm == TRUE ,
+                  isOverProp == FALSE,
+                  isUnderProp == FALSE,
+                  isFullyModified == TRUE) |>
     dplyr::summarise(dplyr::across({{int_col}},  ~sum(.x, na.rm = T))) |>
     dplyr::mutate(label = 'Desired')
 
