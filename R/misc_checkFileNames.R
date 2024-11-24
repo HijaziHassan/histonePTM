@@ -31,7 +31,7 @@ misc_checkFileNames <- function(raw_df, user_df, common_col) {
 
   if(isTRUE(check.extras)){
     cli::cli_alert_success("The provided and actual names match perfectly. Good job!")
-  }else{cli::cli_alert_warning("There are extra unmatched names")
+  }else{cli::cli_alert_warning("There are extra unmatched names in the metadata file.")
 
   return(diff_col)
     }
