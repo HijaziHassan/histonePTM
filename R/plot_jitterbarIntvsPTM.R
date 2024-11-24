@@ -20,8 +20,8 @@
 #' @importFrom rlang is_empty quo_name enquo
 #' @importFrom stringr str_glue
 #' @importFrom cli cli_abort cli_inform
-#' @importFrom tidyr nest
-#' @importFrom purrr map walk2
+#' @importFrom tidyr nest drop_na
+#' @importFrom purrr map map2
 #' @import ggplot2
 #'
 #' @return A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
@@ -33,7 +33,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              y_axis, #Intensity
                              condition,  #variable on which comparison is done
                              id_col,  #could be sequence or sequence label
-                             plot_title= NULL, #optional: sould be stripped sequence
+                             plot_title= NULL, #optional: e.g. stripped sequence
                              fun = c("median", "mean"),
                              scale = 100,
                              cond_order= NULL,
@@ -59,8 +59,9 @@ plot_jitterbarIntvsPTM <- function(dataset,
   if (is.symbol(xaxis_expr) && is.symbol(plottitle_expr)) {
 
     if(identical(deparse(xaxis_expr), deparse(plottitle_expr))){
-      cli::cli_abort(
-      '`x_axis and `plot_title` arguments should not be identical')}}
+      cli::cli_abort(c(
+      "x" = '{.arg x_axis} and {.arg plot_title} are the same.'),
+      "i" = "choose a different a columno or a static string in {.arg plot_title} to entitle your plot(s).")}}
 
 
 
@@ -78,44 +79,84 @@ plot_jitterbarIntvsPTM <- function(dataset,
   plot_title <- rlang::enquo(plot_title)
   plot_title_label <- rlang::as_label(plot_title)
 
-  # Check if plot_title is NULL or provided as a string (quoted)
-  if (rlang::quo_is_null(plot_title) || plot_title_label %in% names(dataset)) {
 
-        dataset <- dataset |>
-      tidyr::nest(data = -c(!!id_col, !!plot_title)) |>
-          dplyr::mutate(data = purrr::map(data, ~ .x |>
-                                     dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
+  # Check if plot_title is NULL or provided as a string (quoted) #|| plot_title_label %in% names(dataset)
+ if (rlang::quo_is_null(plot_title) || !plot_title_label %in% names(dataset)) {
 
-          ))
+   dataset <- dataset |>
+     tidyr::nest(data = -!!id_col) |>
+     dplyr::mutate(
+       data = purrr::map(
+         data,
+         ~ .x |>
+           dplyr::mutate(
+             size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]])
+           )
+       )
+     )
 
-        print(dataset)
+
+
+   dataset <- dataset |>
+     dplyr::mutate(
+       plots = purrr::map2(
+         .x = {{id_col}},
+         .y = data,
+         .f = ~ plotjit(
+           id_col = .x,
+           dataset = .y,
+           x_axis = {{x_axis}},
+           y_axis = {{y_axis}},
+           condition = {{condition}},
+           plot_title = {{plot_title}},
+           fun = fun,
+           scale = scale,
+           save_plot = save_plot
+         )
+       )
+     )
+
+
+
+
   } else {
 
+
     dataset <- dataset |>
-      tidyr::nest(data = -!!id_col) |>
-    dplyr::mutate(data = purrr::map(data, ~ .x |>
-                                      dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
+      tidyr::nest(data = -c(!!id_col, !!plot_title)) |>
+      dplyr::mutate(data = purrr::map(data, ~ .x |> #size to adjust the size of the jitter points
+                                        dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
 
-    ))
-  }
+      ))
 
+    cols <- list(
+      dataset |> dplyr::pull({{id_col}}),
+      dataset |> dplyr::pull(data),
+      dataset |> dplyr::pull({{plot_title}})
+    )
 
-
-  dataset <- dataset |>
-    dplyr::mutate(plots = purrr::walk2(.x= {{id_col}},
-                        .y= data,
-                        .f = ~ plotjit(id_col= .x,
-                                       dataset = .y,
-                                       x_axis = {{x_axis}},
-                                       y_axis = {{y_axis}},
-                                       condition = {{condition}},
-                                       plot_title = {{plot_title}},
-                                       fun= fun,
-                                       scale=  scale,
-                                       save_plot = save_plot)))
-
+    dataset <- dataset |>
+      dplyr::mutate(
+        plots = purrr::pmap(
+          cols,
+          .f = ~ plotjit(
+            id_col = ..1,
+            dataset = ..2,
+            x_axis = {{x_axis}},
+            y_axis = {{y_axis}},
+            condition = {{condition}},
+            plot_title = ..3,
+            fun = fun,
+            scale = scale,
+            save_plot = save_plot
+          )
+        )
+      )
 
 }
+
+}
+
 
 #' @noRd
 
@@ -128,16 +169,17 @@ plotjit <- function(dataset,
                       fun = c("median", "mean"),
                       scale,
                       save_plot){
+ fun <- match.arg(fun)
 
-
-
+dataset <- tidyr::drop_na(data = dataset, {{y_axis}}) |>
+  dplyr::arrange({{id_col}})
 
 p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axis}}),
                                            y = {{y_axis}},
                                          color = {{condition}},
                                           fill = {{condition}})) +
 
-    #specify if mean or median is to be calacualted. also geom could be changed.
+    #specify if mean or median is to be calculated. also geom could be changed.
     ggplot2::stat_summary(fun = fun, show.legend =  TRUE, geom = "bar",
                           color = "black", width = 0.5,
                           position = ggplot2::position_dodge2(preserve = "single"),
@@ -145,9 +187,10 @@ p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axi
     ggplot2::geom_jitter(show.legend = FALSE,
                          position = ggplot2::position_jitterdodge(dodge.width = 0.5,
                          jitter.width = 0.1),
-                         shape= 21, color = "black", size = ifelse(unique(dataset[['size']]> 10),
-                                                                          unique(dataset[['size']]/10),
-                                                                                 2.75), alpha = 1 ) +
+                         shape= 21, color = "black", size = ifelse(unique(dataset[['size']]) > 10,
+                                                                   unique(dataset[['size']]) / 10,
+                                                                   2.75),
+                         alpha = 1 ) +
 
     ggplot2::scale_y_continuous(labels = scales::label_percent(scale= scale)) +
     ggplot2::scale_colour_brewer(palette = "Set1") +
@@ -155,7 +198,7 @@ p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axi
 
     ggplot2::labs(x= "",
                   y= stringr::str_glue('% of all variably modified forms of {id_col}'),
-                  title = ifelse(is.null(plot_title), "", {{plot_title}})) +
+                  title = ifelse(is.null(plot_title), "", plot_title)) +
 
   ggplot2::guides(fill  = ggplot2::guide_legend(position = "inside")) +
 
@@ -196,6 +239,7 @@ p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axi
 
 
 
+
  if(save_plot){
      ggplot2::ggsave(filename = stringr::str_glue("{id_col}.png"),
             dpi = 300,
@@ -205,9 +249,11 @@ p <- ggplot2::ggplot(dataset, ggplot2::aes(x = stats::reorder({{x_axis}},{{y_axi
             bg = "white")
    }
 
-   return(p)
+return(p)
+
 
 }
+
 
 
 #' @noRd
