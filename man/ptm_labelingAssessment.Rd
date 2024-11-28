@@ -13,7 +13,8 @@ ptm_labelingAssessment(df, seq_col, seq, ptm_col, int_col, plot_title = "")
 
 \item{seq}{sequence to base the assessment on it}
 
-\item{ptm_col}{column containing peptide ptm information}
+\item{ptm_col}{column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma;, for overProp: Propionyl, prNt, pr). Only
+two representations of PTMs can be recognized to filter upon: Propionly (K12) or K27bu-S32pr ....)}
 
 \item{int_col}{sample columns containing intensity values}
 
