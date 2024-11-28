@@ -12,7 +12,7 @@ analyzeHistone(
   NA_threshold,
   norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
-  extra_filter = c("none", "no_me1", "no_me1_K37un")
+  extra_filter = c("none", "no_me1", "K37un", "no_me1_K37un")
 )
 }
 \arguments{

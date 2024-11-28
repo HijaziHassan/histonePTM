@@ -60,7 +60,7 @@ analyzeHistone <- function(analysisfile,
                 NA_threshold,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
-                extra_filter = c( "none", 'no_me1', "no_me1_K37un")){
+                extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un")){
 
 
   output_result = match.arg(output_result)
@@ -375,62 +375,65 @@ all_sheets <-
   )
 
 #####SHEET 9 -----------------------------------------------
+              #detect K followed by another K. The second K should Kpr or Ktma or followed by P.
+              # I used this way, since sometimes K37 appears as K38 in Proline.
+K37un_regex <- 'K(?:\\[\\+?\\-?\\d+\\.\\d+\\])?.*?K(?:\\[\\+84\\.0575\\]|\\[\\+56\\.026\\])?P'
 
-if(extra_filter == "no_me1"){
 
-  SHEET9 <- uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
-    dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"))|>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
-    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                       grouping_var = sequence) |>
-    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-    quant_coefVariation(df= _, df_meta= meta_names_merge,
-                        int_col= dplyr::any_of(meta_names_merge$SampleName),
-                        seq_col = sequence,
-                        ptm_col = PTM,
-                        format = 'wide')
 
-  all_sheets <- c(all_sheets, "unique_IDs_norm_no_me1")
-}else if(extra_filter == "K37un"){
 
-  SHEET9 <-  uniqueHistoneForms |>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
-    dplyr::filter(
-      !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
-        (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$'))
+if (extra_filter %in% c("no_me1", "K37un", "no_me1_K37un")) {
+  filtered_data <- uniqueHistoneForms
+
+  # Apply specific filters based on `extra_filter`
+  if (extra_filter == "no_me1") {
+    filtered_data <- filtered_data |>
+      dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"))
+  } else if (extra_filter == "K37un") {
+    filtered_data <- filtered_data |>
+      dplyr::filter(
+        !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
+          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex))
+      )
+  } else if (extra_filter == "no_me1_K37un") {
+    filtered_data <- filtered_data |>
+      dplyr::filter(
+        !stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"),
+        !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
+          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex))
+      )
+  }
+
+  # Shared processing pipeline
+  SHEET9 <- filtered_data |>
+    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after = 'PTM') |>
+    quant_relIntensity(
+      select_cols = dplyr::starts_with("abundance_"),
+      grouping_var = sequence
     ) |>
-    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                       grouping_var = sequence) |>
     dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-    quant_coefVariation(df= _, df_meta= meta_names_merge,
-                        int_col= dplyr::any_of(meta_names_merge$SampleName),
-                        seq_col = sequence,
-                        ptm_col = PTM,
-                        format = 'wide')
-  all_sheets <- c(all_sheets, "unique_IDs_norm_K37un")
+    quant_coefVariation(
+      df = _,
+      df_meta = meta_names_merge,
+      int_col = dplyr::any_of(meta_names_merge$SampleName),
+      seq_col = sequence,
+      ptm_col = PTM,
+      format = 'wide'
+    )
 
-}else if(extra_filter == "no_me1_K37un"){
+  # Add sheet name to `all_sheets`
+  sheet_name <- switch(extra_filter,
+                       "no_me1" = "unique_IDs_norm_no_me1",
+                       "K37un" = "unique_IDs_norm_K37un",
+                       "no_me1_K37un" = "unique_IDs_norm_no_me1_K37un")
+  all_sheets <- c(all_sheets, sheet_name)
 
-  SHEET9 <- uniqueHistoneForms_nome1 <- uniqueHistoneForms |>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after= 'PTM') |>
-    dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"),
-                  !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
-                    (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_unlabeled, '^.+-.+-un$')))|>
-    quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
-                       grouping_var = sequence) |>
-    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
-    quant_coefVariation(df= _, df_meta= meta_names_merge,
-                        int_col= dplyr::any_of(meta_names_merge$SampleName),
-                        seq_col = sequence,
-                        ptm_col = PTM,
-                        format = 'wide')
-all_sheets <- c(all_sheets, "unique_IDs_norm_no_me1_K37un")
-}else if(extra_filter == none){
+} else if (extra_filter == 'none') {
 
-  all_sheets <- all_sheets[-length(all_sheets)]
   SHEET9 = NULL
 
 }
+
 
 list_dfs= list(SHEET1, SHEET2, SHEET3, SHEET4, SHEET5, SHEET6, SHEET7, SHEET8, SHEET9)
 list_dfs <- Filter(Negate(is.null), list_dfs)
