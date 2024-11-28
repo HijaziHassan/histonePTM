@@ -10,15 +10,18 @@
 #' [lau] for last author, review [pt] for publication type, [ti] for title etc...Check \href{https://pubmed.ncbi.nlm.nih.gov/help/#using-search-field-tags}{here}
 #' for an exhaustive list.
 #' @param db database to searhc in. defaults is "pubmed". check \code{entrez_dbs()} for all options.
-#' @param save_file \code{logical}. If `TRUE` results will be saved as `.csv` files.
-#' @importFrom stringr str_glue
+#' @param save_plot \code{bool}. If `TRUE` a line plot of count vs year colored by search term will be exported as `png`.
+#' @param save_file \code{bool}. If `TRUE` results will be saved as `.csv` files.
+#' @importFrom stringr str_glue str_remove_all
 #' @importFrom purrr map map_chr map_dbl
-#' @importFrom dplyr mutate select summarize filter group_by across
+#' @importFrom dplyr mutate select summarize filter group_by across where
 #' @importFrom tidyr tibble unnest
 #' @importFrom utils write.csv
 #' @importFrom cli cli_abort cli_alert_info
+#' @importFrom scales pretty_breaks
+#' @import ggplot2
 #'
-#' @return A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year.
+#' @return A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year and a a line plot of it.
 #' @examples
 #'\dontrun{
 #' litReview(start = 2019, end = 2024, term = "Huntington's disease
@@ -27,7 +30,8 @@
 #'
 #' @export
 
-litReview <- function(start, end, term, db= "pubmed", save_file= FALSE){
+litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_file= FALSE){
+
 
   if (!requireNamespace("rentrez", quietly = TRUE)) {
     cli::cli_abort("Package 'rentrez' is required but not installed.")
@@ -116,7 +120,38 @@ litReview <- function(start, end, term, db= "pubmed", save_file= FALSE){
 
   }
 
-return(list((title_df_long), table(title_df_long$year)))
+
+  if(nrow(title_df)>0){
+
+    df_plot <- title_df |> #dplyr::distinct() |>
+      dplyr::select(Year = year, search) |>
+      dplyr::count(Year, search, name = 'Count') |>
+      dplyr::mutate(
+                    search = stringr::str_remove_all(search, " AND \\d+\\[PDAT\\]"),
+                    search = factor(search)
+                    )
+
+  p <- ggplot2::ggplot(df_plot, aes(x= Year, y= Count, color= search, group=1))+
+      ggplot2::labs(color = "PubMed Search Term")+
+      ggplot2::geom_line(linewidth= 1.2)+
+      ggplot2::theme_classic(base_size = 12)+
+      ggplot2::scale_color_brewer(palette = "Dark2")+
+    ggplot2::scale_y_continuous(breaks = scales::pretty_breaks())+
+    ggplot2::scale_x_continuous(breaks = scales::pretty_breaks())+
+
+    ggplot2::theme(
+      legend.title = ggplot2::element_text(size = 12, face = "bold"),
+      legend.text = ggplot2::element_text(size= 8)
+    )
+  if(save_plot){
+    ggplot2::ggsave(filename = stringr::str_glue("{term}_{start_year}_{end_year}.png"),
+                    width = 10, height = 7, dpi = 300, units = "in")
+    }
+
+  }else{p= NULL}
+ return_list = list(Data = title_df_long, df_plot, Summary= table(title_df_long$year), plot= p)
+ nonull_list = Filter(Negate(is.null), return_list)
+return(nonull_list)
 
 
   }

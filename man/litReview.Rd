@@ -4,7 +4,14 @@
 \alias{litReview}
 \title{A quick literature review on NCBI}
 \usage{
-litReview(start, end, term, db = "pubmed", save_file = FALSE)
+litReview(
+  start,
+  end,
+  term,
+  db = "pubmed",
+  save_plot = FALSE,
+  save_file = FALSE
+)
 }
 \arguments{
 \item{start}{An \code{integer} specifying the year from which to start the search.}
@@ -17,10 +24,12 @@ for an exhaustive list.}
 
 \item{db}{database to searhc in. defaults is "pubmed". check \code{entrez_dbs()} for all options.}
 
-\item{save_file}{\code{logical}. If `TRUE` results will be saved as `.csv` files.}
+\item{save_plot}{\code{bool}. If `TRUE` a line plot of count vs year colored by search term will be exported as `png`.}
+
+\item{save_file}{\code{bool}. If `TRUE` results will be saved as `.csv` files.}
 }
 \value{
-A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year.
+A list. A dataframe with  year, id, and article title. A vector summarizing the article counts per year and a a line plot of it.
 }
 \description{
 A wrapper function around \code{rentrez} package functions to extract article titles using year and search term.
