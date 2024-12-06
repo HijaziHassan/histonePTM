@@ -160,8 +160,8 @@ plots <- list()
 
   # keep those case where either me1 or me1-labeled is present but not both as well
 
-  df_me1 <- flexy_join(df_me1,  me1_label_doublets, by = "PTMx")
-  df_me1_label <- flexy_join(df_me1_label,  me1_label_doublets, by = "PTMx")
+  df_me1 <- flexy_join(df_me1,  me1_label_doublets, by_col= "PTMx")
+  df_me1_label <- flexy_join(df_me1_label,  me1_label_doublets, by_col= "PTMx")
 
   #Join me1 and me1-labed in one dataframe
   df_doublets <- dplyr::bind_rows(df_me1_label,df_me1)
