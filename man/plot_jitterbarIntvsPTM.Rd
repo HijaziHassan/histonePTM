@@ -12,9 +12,8 @@ plot_jitterbarIntvsPTM(
   id_col,
   plot_title = NULL,
   fun = c("mean", "median"),
-  add_stat = c("mean_se", "mean_sd", "mean_ci", "mean_range", "median_iqr",
-    "median_hilow", "median_q1q3", "median_range"),
-  ci = 0.95,
+  error_type = c("CI", "SE", "SD"),
+  conf_level = 0.95,
   scale = 100,
   cond_order = NULL,
   save_plot = FALSE
@@ -36,9 +35,9 @@ A 5th column can be provided to be the plot title.}
 
 \item{fun}{median (\code{default}) or mean. This will be the height of the bar.}
 
-\item{add_stat}{one of "mean_se", "mean_sd", "mean_ci", "mean_range", "median_iqr", "median_hilow", "median_q1q3", "median_range". Revise [ggpbur package `add_summary` function](https://www.rdocumentation.org/packages/ggpubr/versions/0.6.0/topics/add_summary).}
+\item{error_type}{one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).}
 
-\item{ci}{Confidence interval (e.g. 0.9, 0.5, 0.99, etc...)}
+\item{conf_level}{Confidence level (e.g. 0.9, 0.5, 0.99, etc...)}
 
 \item{scale}{100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.}
 
