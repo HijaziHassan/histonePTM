@@ -19,7 +19,7 @@ Depends:
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, rlang,  cli, 
      ggplot2, ggtext, scales, ggridges,
-     readxl, openxlsx, writexl
+     readxl, openxlsx, writexl, readr
 Suggests: 
     testthat (>= 3.0.0),
     BiocManager, 

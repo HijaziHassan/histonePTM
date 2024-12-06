@@ -14,11 +14,11 @@ globalVariables(unique(c(
   # .get_titles:
   "count", "id",
   # analyzeHistone:
-  "charge", "dat", "data", "experimental_moz", "fully_modified", "histptm_lookup", "histptm_mass", "id_filename", "id_scan", "initial_query_id", "master_elution_time", "modifications", "NA_count", "psm_score", "PTM", "ptm_protein_positions", "ptm_score", "PTM_stripped", "PTM_unlabeled", "rt", "rt_apex", "SampleName", "seq_stretch", "sequenceDB", "split_data",
+  "charge", "dat", "data", "experimental_moz", "fully_modified", "histptm_lookup", "histptm_mass", "id_filename", "id_scan", "initial_query_id", "master_elution_time", "modifications", "NA_count", "psm_score", "PTM", "ptm_protein_positions", "ptm_score", "PTM_stripped", "PTM_unlabeled","PTM_proforma", "rt", "rt_apex", "SampleName", "seq_stretch", "sequenceDB", "split_data",
   # analyzeHistone : <anonymous>:
   "sequenceDB",
   # litReview:
-  "count", "id", "title",
+  "Count", "id", "title",'Year',
   # misc_extractMetaData:
   "channel", "dat", "project_name",
   # misc_useCustomNames:
@@ -38,7 +38,7 @@ globalVariables(unique(c(
   # ptm_flagDupes:
   "n",
   # ptm_labelingAssessment:
-  "intensity", "isFullyModified", "isNterm", "isOverProp", "isUnderProp", "label",
+  "intensity", "isFullyModified", "isNterm", "isOverLab", "isNonLabeledme1", "label",
   # ptm_toProForma:
   "histptm_unimod", "shorthistptm_mass",
   # quant_coefVariation:
@@ -48,5 +48,7 @@ globalVariables(unique(c(
   # seq_AAcountplot:
   "a.a", "relative_percent",
   # seq_spreadIntoSheets:
-  "sequenceDB"
+  "sequenceDB",
+  #quant_manIsoCorrection:
+  "No label", "se",  "ymax", "ymin"
 )))
