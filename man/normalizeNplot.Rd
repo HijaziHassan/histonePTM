@@ -12,7 +12,8 @@ normalizeNplot(
   seq_stretch_col,
   int_cols,
   save_file = TRUE,
-  labeling = "PA",
+  labeling = c("none", "PA", "TMA", "PIC_PA"),
+  rules = NULL,
   plot_title = NULL,
   fun = "mean",
   error_type = NULL,
@@ -36,7 +37,9 @@ normalizeNplot(
 
 \item{save_file}{(\code{bool}) TRUE (default) to save the normalized file.}
 
-\item{labeling}{Labeling method (e.g. 'PA', 'TMA', ...). Check `misc_clearLabeling()`.}
+\item{labeling}{Labeling method (e.g. 'PA', 'TMA', 'PA_PIC', or 'none' (default)). Check `misc_clearLabeling()`.}
+
+\item{rules}{(optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.}
 
 \item{plot_title}{A string or a column name.}
 
