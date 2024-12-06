@@ -32,8 +32,8 @@ You can install the development version of histonePTM from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("remote")
-remote::install_github("HijaziHassan/histonePTM")
+# install.packages("remotes")
+remotes::install_github("HijaziHassan/histonePTM")
 ```
 
 ## Contributing
