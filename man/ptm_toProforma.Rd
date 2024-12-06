@@ -32,7 +32,7 @@ ptm_toProForma(seq = "KQLATKVAR",
                mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)",
                lookup = histptm_mass
                )
-ptm_toProForma(seq = 'KacSAPATGGVKprKprPHR',
+ptm_toProForma(mod = 'KacSAPATGGVKprKprPHR',
               lookup = c(ac = 'UNIMOD:1', pr= 'UNIMOD:58'),
               replace_only = TRUE
               )

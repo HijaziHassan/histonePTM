@@ -28,7 +28,7 @@
 #'                lookup = histptm_mass
 #'                )
 #' @examples
-#' ptm_toProForma(seq = 'KacSAPATGGVKprKprPHR',
+#' ptm_toProForma(mod = 'KacSAPATGGVKprKprPHR',
 #'               lookup = c(ac = 'UNIMOD:1', pr= 'UNIMOD:58'),
 #'               replace_only = TRUE
 #'               )
@@ -37,12 +37,14 @@
 
 ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm = "") {
 
-  if (missing(mod)) {
-    cli_abort("{.arg mod} is required. Please provide modified sequences(s).")
+  if (missing(seq) && missing(mod)) {
+    cli_abort(c("x" = "{.arg seq} and {.arg mod} are required",
+                "i" = "Please provide either one of them or both depending on {.arg replace_only}.")
+    )
   }
 
-  if (replace_only == FALSE && missing(seq)) {
-    cli_abort("{.arg seq} is required when {.arg replace_only} is set to {.code FALSE}.")
+  if (replace_only == TRUE && missing(mod)) {
+    cli_abort("{.arg mod} is required when {.arg replace_only} is set to {.code TRUE}.")
   }
 
   if (replace_only == TRUE) {
@@ -53,7 +55,7 @@ ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm 
       lookup <- sapply(X = lookup, \(X) paste0("[", X, "]"))
     }
 
-    modified_peptide <- stringr::str_replace_all(seq, lookup)
+    modified_peptide <- stringr::str_replace_all(mod, lookup)
   } else {
     if (is.null(lookup)) lookup <- histptm_unimod
 
