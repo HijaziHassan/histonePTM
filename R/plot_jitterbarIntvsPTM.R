@@ -39,7 +39,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              id_col,  #could be sequence or sequence label
                              plot_title= NULL, #optional: e.g. stripped sequence
                              fun = c("mean", "median"),
-                             error_type = c("CI", "SE", "SD"),
+                             error_type = c("none", "CI", "SE", "SD"),
                              conf_level = 0.95,
                              scale = 100,
                              cond_order= NULL,
@@ -176,19 +176,15 @@ plotjit <- function(dataset,
                     id_col,  # could be sequence or sequence label
                     plot_title = NULL,  # optional: should be stripped sequence
                     fun = c("mean", "median"),
-                    error_type = c("CI", "SE", "SD"),
+                    error_type = c("none", "CI", "SE", "SD"),
                     conf_level = 0.95,
                     scale = 1,
                     save_plot = FALSE) {
 
-  # Match arguments
+
   fun <- match.arg(fun)
-  # Handle `NULL` case for `error_type`
-  if (is.null(error_type)) {
-    error_type <- NULL  # Keep it as NULL
-  } else {
-    error_type <- match.arg(error_type)  # Match to one of the valid options
-  }
+  error_type <- match.arg(error_type)
+
 
 
   dataset <- dataset |>
@@ -199,7 +195,7 @@ plotjit <- function(dataset,
 
 
   # Compute summary statistics for error bars if applicable
-  if (!is.null(error_type)) {
+  if (error_type != 'none') {
 
 
     summary_stats <- dataset |>
@@ -241,7 +237,7 @@ plotjit <- function(dataset,
     )
 
   # Add error bars if specified
-  if (!is.null(error_type)) {
+  if (error_type != 'none') {
     p <- p + ggplot2::geom_errorbar(
       data = summary_stats,
       ggplot2::aes(

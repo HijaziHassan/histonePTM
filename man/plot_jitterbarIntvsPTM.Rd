@@ -12,7 +12,7 @@ plot_jitterbarIntvsPTM(
   id_col,
   plot_title = NULL,
   fun = c("mean", "median"),
-  error_type = c("CI", "SE", "SD"),
+  error_type = c("none", "CI", "SE", "SD"),
   conf_level = 0.95,
   scale = 100,
   cond_order = NULL,
