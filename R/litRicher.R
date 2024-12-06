@@ -20,8 +20,11 @@ litRicher <- function(quotes_num = 1){
         warning("Warning: Argument was a double and has been converted to an integer.")
         quotes_num <- as.integer(quotes_num)
       }
-    } else {
-      stop("Error: Argument must be either a number or 'All'.")
+    } else if(quotes_num <= 0){
+      stop("Error: `quotes_num` must be either a non-negative integer.")
+    }else{
+      stop("Error: `quotes_num` only accepts a non-negative integer or 'All'.")
+
     }
 
 
@@ -87,18 +90,48 @@ litRicher <- function(quotes_num = 1){
 
     'There is no universally suitable approach for PTM characterization of all core histones and their variants, and the analytical setup must be tailored in accordance with the main experimental objectives.',
 
-    'Although protocols including hydroxylamine treatment or boiling of propionylated peptides for the reversion of nonspecific O-acylation have been established, such approaches are not suitable for histone preparation as even natural PTMs are lost during hydrolysis of ester bonds.'
+    'Although protocols including hydroxylamine treatment or boiling of propionylated peptides for the reversion of nonspecific O-acylation have been established, such approaches are not suitable for histone preparation as even natural PTMs are lost during hydrolysis of ester bonds.',
+
+    'Proteomics data in general is noisy and complex, with peptides of interest often existing as low-intensity peaks in dense spectra. Histone proteomics is no different. Current software may not alert users to poor quality data and will report results for data too noisy to reproducibly quantify. In addition, popular processing methods can introduce errors during normalization and use simple statistics that can lead to many false-positive results.',
+
+    'In high-quality samples, histone peptides are present as sharp peaks whose intensity is well above instrument noise. Low signal intensity leads to missing peaks, while high intensity leads to peak widening and inaccurate quantification. Peaks should also be measured with high mass accuracy and exhibit good peak separation by RPLC.',
+
+    'Particular attention must be taken when considering relative amounts of PTMs within single experiments, as differently modified peptides might present dramatically different ionization efficiencies. Analysis of larger polypeptides or intact proteins, such as the middle-down or the top-down strategy, might overcome the issue of ionization variability.',
+
+    'Histone PTMs affect chromatin structure that influences enzyme recruitment, gene regulation, DNA repair, and chromosome condensation.',
+
+    'Regardless of the method used [DDA or DIA], histone analysis is still challenging becuase of the extremely high number of histone variants and complex combinatorial patterns of their modifications.',
+
+    'Histone post-translational modifications (hPTMs) are epigentic marks that strongly effect numerous processes, including cell cycling and protein interaction ... together with DNA methylation and action of non-coding RNA, hPTMs are key factors in the regulation of processes that directly involve DNA, including gene expression, DNA repair, and replication.',
+
+    'Although various chemical agents (and conditions) for labeling have been tested, none have met all the requirements for appropriate and straightforward quantification of isobaric peptides at the MS1 level',
+
+    'The identification of peptides in coeluting peaks is hindered by intensity-based precursor selection in DDA mode. During peak elution, limited numbers of mass spectra can be obtained, and not all precursors in a coleuting peak will yield good fragmentation spectra that enable identification of the peptide forms.',
+
+    'The ability to detect and quantify the differential distribution of histone PTMs makes MS an important tool not only in chromatin research but also in the discovery of novel pharmacological agents that inhibit histone-modifying enzymes such as histone deacetylases (HDACs).',
+
+    'Very few data mining approaches exist for in-depth [histone] raw data analysis, and most published methods do not demonstrate any analytical figures of merit for reproducibility or their ability to assess the extent of modifications.',
+
+    'targeting essential epigenetic mediators is being hampered because mapping of hPTMs using mass spectrometry (MS) is inconvenienced by complex data analysis and impractical raw data reuse.',
+
+    'In essence, an LC-MS system measures the intensity and physicochemical properties of analytes like m/z, retention time (tR) and fragmentation pattern, turning a physical sample into a digital transcript. Yet, compared to mining sequencing data, extracting biological information from this raw data matrix is very challenging and is hypothesis-driven, especially for histones, given the combinatorial complexity of the histone code.',
+
+    'The current way of [histone] data acquisition and sharing is not tailored to reuse, because (i) the datasets lack power because they are small, often limited by the nanoflow LC stability, (ii) data quality metrics are not always provided, (iii) the selection of hPTMs included in the search is research-driven and (iv) histones require extensive manual data curation, because of the many (near-)isobaric peptidoforms and ambiguous annotations they create.'
+
   )
 
 
   if(quotes_num == 'All'){
 
     print(excerpts)
+
   }else{
 
-    sample(excerpts,
+    quote = sample(excerpts,
            size = quotes_num,
            replace = FALSE)
+
+    (quote)
   }
 
 
