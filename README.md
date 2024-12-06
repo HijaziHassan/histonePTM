@@ -94,7 +94,7 @@ All this with flexibility to:
 
 - choose only to analyze (and output results) of user-defined histone
   protein (e.g. only `H3`).
-- filter identification with cut-off threshold of missing values.
+- filter identifications with cut-off threshold of missing values.
 - output **File(s) 2** with either removing all unlabeled `me1`,
   `K37mod` (for H3K27R40 peptide) or both.
 - group **File(s) 2** into one file or save each protein results in a
@@ -104,12 +104,12 @@ All this with flexibility to:
 
 - `Proline` excel output file containing the sheets:
 
-- `Best PSM from protein sets` which includes identification and their
+  - `Best PSM from protein sets` which includes identification and their
   intensities in each sample. This assumes that IDs with multiple charge
   states are already summed using post-processing functionality inside
   `Proline`.
 
-- `Search settings and infos` which includes information about `RAW`
+  - `Search settings and infos` which includes information about `RAW`
   files’ names and their corresponding search result files’ names.
 
 - An excel file containing at least two columns:
