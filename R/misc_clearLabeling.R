@@ -10,75 +10,85 @@
 #' @param ptm_string PTM-containing string
 #' @param rules A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{c("pr" = "un")}.
 #' @param labeling The labeling agent used. Use `PA` (propionic anhydride), `TMA` ( trimethylacetic anhydride), or `PIC_PA` (phenylisocynate + PA).
+#' If none applies or you don't want to use the built-in rules, set it to 'none' and indicate your `rules`. Otherwise, it defaults to `NULL`, returning the input as is.
 #' There are embedded rules for those reagents. If those don't match your case, define your own rules and `labeling`must not be `none`.
 #' @param residue Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.
 #' @importFrom stringr str_detect str_replace_all
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_alert_warning
 #' @return unlabeled string or the same string if labeling is `none`.
 #' @export
 #'
 
-misc_clearLabeling <- function(ptm_string, rules = NULL, labeling= NULL, residue = 'keep'){
+misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residue = c("keep", "remove")) {
 
+  residue <- match.arg(residue)
 
-  if(any(is.null(rules) && !labeling %in% c('none', 'PA', 'TMA', 'PIC_PA'))){
-    cli::cli_abort('Please provide valid rules or specify a supported labeling argument.')
+  # Check if both rules and labeling are NULL
+  if (is.null(rules) && is.null(labeling)) {
+    cli::cli_alert_warning('Please provide valid rules or specify a supported labeling argument.')
+    return(ptm_string)
   }
-  if(labeling!= "none"){
 
-    if(is.null(rules)){
 
-  nterm_rule = c(".+Nt-?" = "") #remove N-terminal Labeling
+  supported_labels <- c('none', 'PA', 'TMA', 'PIC_PA')
 
-  prop_rules =  c(
-    "pr"="un", #replace propionyl with unmod
-    "bu"="me1" #replace bu which is me1-pr with me1
+  # Validate labeling argument
+  if (!is.null(labeling)) {
+    if (!labeling %in% supported_labels) {
+      cli::cli_abort(c('x' = 'The provided labeling "{labeling}" is invalid.',
+                       'i' = 'Please choose one of the following: {toString(supported_labels)}.'))
+    }
+  }
+
+  # Default rules for different labeling types
+  nterm_rule <- c(".+Nt-?" = "")  # Remove N-terminal labeling
+  prop_rules <- c(
+    "pr" = "un",  # Replace propionyl with unmodified
+    "bu" = "me1"  # Replace butyrylation (me1-pr) with me1
   )
+  tma_rules <- c(
+    "tmame1" = "me1",  # Replace tmame1 with me1
+    "tma" = "un"       # Replace TMAyl with unmodified
+  )
+  pic_rules <- c("pic" = "un")  # Replace phenylisocyanate with unmodified
 
-  tma_rules = c(
-    "tmame1" = "me1", #replace tmame1 with me1
-    "tma" = "un") #replace TMAyl with unmod
-
-
-  pic_rules =  c("pic" = "un") #replace phenylisocynate with unmod
-
-  pic_pro_rules = c(prop_rules, pic_rules)
-
+  # Combine rules based on labeling
+  if (!is.null(labeling)) {
+    if (is.null(rules)) {
+      if (labeling == "PA") {
+        # Validate conflicting rules
+        if (any(stringr::str_detect(ptm_string, "(?:[:upper:]*\\d*me1)\\b")) && "me1" %in% unname(prop_rules)) {
+          cli::cli_abort(c(
+            'x' = 'You are trying to replace "bu" with "me1", but "me1" is already in your rules.',
+            'i' = 'Remove any "me1" occurrences in `ptm_string` before applying the function, or adjust the `rules` argument.'
+          ))
+        }
+        rules <- c(nterm_rule, prop_rules)
+      } else if (labeling == "TMA") {
+        rules <- c(nterm_rule, tma_rules)
+      } else if (labeling == "PIC_PA") {
+        rules <- c(nterm_rule, prop_rules, pic_rules)
+      } else if (labeling == "none") {
+        # Ignore labeling and use user-provided rules
+        unlabeld_string <- stringr::str_replace_all(ptm_string, rules)
+      }
     }
-
-  if(labeling== "PA"){
-
-  if(any(stringr::str_detect(ptm_string, "(?:[:upper:]*\\d*me1)\\b")) & "me1" %in% unname(rules)){
-    cli::cli_abort(c('You are trying to replace "bu" by "me1" but "me1" is already in your `rules`.',
-                     "i" = "remove any 'me1' occurence in `ptm_string` before applying the function or change the `rules` argument."))
   }
 
- rules = c(nterm_rule, prop_rules)
-
-  } else if (labeling== "TMA"){
-
-    rules = c(nterm_rule, tma_rules)
-
-  }else if(labeling== "PIC_PA"){
-
-    rules = c(nterm_rule, prop_rules, pic_rules)
+  # Apply the rules to the ptm_string
+  if (!is.null(rules)) {
+    unlabeld_string <- stringr::str_replace_all(ptm_string, rules)
+  } else {
+    unlabeld_string <- ptm_string
   }
 
-    #if non of the labeling used, then the labeling arg is ignored and rules provided by the user is considered
+  # remove Capital letter(i.e. residue) followed by a number (i.e its position).
+  if (residue == 'remove') {
+    return(stringr::str_remove_all(unlabeld_string, '[:upper:]\\d+'))
+  }
 
-unlabeld_string = stringr::str_replace_all(ptm_string, rules)
-
-# option to keep or remove the residues which assumed to be capitalized and followed by a number
-  if(residue == 'keep'){
-
+  # Return the unlabelled string
   return(unlabeld_string)
-
-} else if(residue == 'remove'){
-
-stringr::str_remove_all(unlabeld_string, '[:upper:]\\d+')
-    }
-}else{return (ptm_string)}
-
 }
 
 

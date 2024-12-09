@@ -4,7 +4,12 @@
 \alias{misc_clearLabeling}
 \title{Reverse PTM Labeling}
 \usage{
-misc_clearLabeling(ptm_string, rules = NULL, labeling = NULL, residue = "keep")
+misc_clearLabeling(
+  ptm_string,
+  rules = NULL,
+  labeling = NULL,
+  residue = c("keep", "remove")
+)
 }
 \arguments{
 \item{ptm_string}{PTM-containing string}
@@ -12,6 +17,7 @@ misc_clearLabeling(ptm_string, rules = NULL, labeling = NULL, residue = "keep")
 \item{rules}{A named vector containing \code{(labeled_ptm = unlabeled_ptm)}. Example: \code{c("pr" = "un")}.}
 
 \item{labeling}{The labeling agent used. Use `PA` (propionic anhydride), `TMA` ( trimethylacetic anhydride), or `PIC_PA` (phenylisocynate + PA).
+If none applies or you don't want to use the built-in rules, set it to 'none' and indicate your `rules`. Otherwise, it defaults to `NULL`, returning the input as is.
 There are embedded rules for those reagents. If those don't match your case, define your own rules and `labeling`must not be `none`.}
 
 \item{residue}{Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.}
