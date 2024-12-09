@@ -87,8 +87,8 @@ analyzeHistone <- function(analysisfile,
 
 
 # create folders ------------------
-  exp_folder_name  = tools::file_path_sans_ext(paste0("analysis/", analysisfile))
-#img_folder_name  = tools::file_path_sans_ext(paste0("figures/", analysisfile))
+exp_folder_name  = tools::file_path_sans_ext(paste0("analysis/", analysisfile))
+img_folder_name  = tools::file_path_sans_ext(paste0("figures/", analysisfile))
 
 
 # Overview ------------------
@@ -103,9 +103,10 @@ cli::cli({
 
  cat("\nCreating folders to store the results ...\n")
   misc_createFolder(foldername = "analysis")
-  #misc_createFolder(foldername = "figures")
   misc_createFolder(foldername = exp_folder_name)
-  #misc_createFolder(foldername = img_folder_name)
+
+  misc_createFolder(foldername = "figures")
+  misc_createFolder(foldername = img_folder_name)
 
 
 
@@ -573,8 +574,27 @@ openxlsx::saveWorkbook(wb=wb_ptm,
              overwrite = TRUE)
 
 
-cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.')
+cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.\n')
 
+# Start of the Graphing Module --------------------------
+
+df_tobe_splitted |>
+  dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(meta_names_merge$SampleName)) |>
+  tidyr::pivot_longer(cols = dplyr::any_of(meta_names_merge$SampleName), names_to = 'SampleName', values_to = 'intensity') |>
+  dplyr::left_join(meta_names_merge, dplyr::join_by(SampleName)) |>
+  plot_jitterbarIntvsPTM(dataset = _,
+                         x_axis = PTM_unlabeled,
+                         y_axis = intensity,
+                         condition = Condition,
+                         id_col = seq_stretch,
+                         fun = "mean",
+                         error_type = NULL,
+                         plot_title = sequence,
+                         save_plot = TRUE,
+                         output_dir = img_folder_name)
+
+
+#End of the Graphing Module##########################
 
 cat("\n", date(), "\n")
 cat(" A plus dans le bus ^_^!")
