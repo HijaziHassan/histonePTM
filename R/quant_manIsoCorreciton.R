@@ -9,7 +9,7 @@
 #' @param cond_col Condition column (Concentration, disease vs non-disease ...)
 #'
 #' @importFrom readr parse_number
-#' @importFrom dplyr group_by group_split group_keys pull select bind_rows bind_cols rowwise mutate filter across matches
+#' @importFrom dplyr group_by group_split group_keys pull select bind_rows bind_cols rowwise mutate filter across matches all_of summarise if_else
 #' @importFrom purrr map
 #' @importFrom stringr str_to_lower str_glue str_flatten
 #' @importFrom tibble deframe
@@ -20,7 +20,9 @@
 #' @export
 #'
 #'
-quant_manIsoCorreciton <- function(df, time_col, t0, cond_col) {
+quant_manIsoCorreciton <- function(df, time_col, t0, cond_col, avg_by) {
+
+
   # Step 1: Extract columns of isotopes
   col_names <- colnames(df)
   ## Step 1.1 classify them into odd and even
@@ -30,8 +32,13 @@ quant_manIsoCorreciton <- function(df, time_col, t0, cond_col) {
 
   ## Step 1.3: get-rid of odd C13 istopes
   df <- df |>
-    dplyr::select(!matches(all_isotopes[['odd_iso']]))
+    dplyr::select(!dplyr::matches(all_isotopes[['odd_iso']]))
 
+  ### Step 1.3.1
+  if(!missing(avg_by)){
+
+    df <- get_avg(df, col = {{avg_by}})
+  }
 
   #Step 2: Split the dataframe by `cond_col` into a named list
 
@@ -164,7 +171,7 @@ correct_isotopes <- function(df, time_col, t0, M0_ratios, even_iso) {
     # Apply the correction dynamically
     df_corr <- df_corr |>
       dplyr::mutate(
-        !!rlang::sym(paste0("M+", iso_num)) := if_else(
+        !!rlang::sym(paste0("M+", iso_num)) := dplyr::if_else(
           stringr::str_to_lower({{time_col}}) == t0,
           0,
           eval(parse(text = correction_formula))
@@ -188,4 +195,13 @@ perc_incorporation <- function(df_corrected) {
 }
 
 
+#' @noRd
+#Avg intensities
+get_avg <- function(df, col){
+  df |>
+    dplyr::summarise(dplyr::across(c(dplyr::all_of(c("No label")),
+                                     dplyr::all_of(c(dplyr::ends_with("C13")))),
+                                   ~ mean(.x, na.rm = TRUE)),
+                     .by = {{col}})
 
+}

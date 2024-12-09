@@ -4,7 +4,7 @@
 \alias{quant_manIsoCorreciton}
 \title{Correct of Naturally Occuring Abundances}
 \usage{
-quant_manIsoCorreciton(df, time_col, t0, cond_col)
+quant_manIsoCorreciton(df, time_col, t0, cond_col, avg_by)
 }
 \arguments{
 \item{df}{A dataframe as Picor output but with raw values.}
