@@ -33,9 +33,9 @@ You can install the development version of histonePTM from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("remote")
-remote::install_github("HijaziHassan/histonePTM") # you only have to run the code once to install it on ypur hard disk. 
-                                                  #after that use `library(histonePTM)`
+# install.packages("remotes")
+remotes::install_github("HijaziHassan/histonePTM") # you only have to run the code once to install it on 
+                                                  #your hard disk. After that use `library(histonePTM)`.
 ```
 
 ## Contributing
