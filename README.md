@@ -1,13 +1,14 @@
 HistonePTM
 <img src="man/figures/logo.png" align="right" width="240" height="277"/>
 ================
-24 November 2024
+09 December 2024
 
 - [Overview](#overview)
 - [Installation](#installation)
 - [Contributing](#contributing)
 - [Getting help](#getting-help)
 - [Workflows](#workflows)
+- [1. PTMs](#1-ptms)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- badges: start -->
@@ -32,8 +33,9 @@ You can install the development version of histonePTM from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("HijaziHassan/histonePTM")
+# install.packages("remote")
+remote::install_github("HijaziHassan/histonePTM") # you only have to run the code once to install it on ypur hard disk. 
+                                                  #after that use `library(histonePTM)`
 ```
 
 ## Contributing
@@ -51,50 +53,54 @@ request, please open an
 
 If you would like to discuss questions related to histone analysis using
 mass spectrometry, please open a discussion here
-[discussion](https://github.com/HijaziHassan/histonePTM/discussions)
+[discussion](https://github.com/HijaziHassan/histonePTM/discussions).
 
 ## Workflows
 
 ### Analysis of DDA results using `analyzeHistone()`
 
 If you are using [`Proline`](https://www.profiproteomics.fr/proline/)
-software to validate identifications resulted from search engines such
-as `Mascot`, the function `analyzeHistone()` will:
+software to validate identifications (IDs) resulted from search engines
+such as `Mascot`, the function `analyzeHistone()` can:
 
-- **Isolate** histone peptides.
-- **Normalize** intensities within peptide families to the total area or
-  intensity
-- **Abbreviate** histone peptides
-- **Rename** PTMs
-- **Calculate** coefficients of variations
-- **Remove** and **store** duplications
-- **Mark** with (**\***) and **store** identifications where the
-  software assigns the same peak apex (i.e. same intensities) to
-  isobaric positional isomers (i.e. K18acK23un and K18unK23ac) which
-  nearly co-elute.
-- **Filter** unwanted and/or identifications that are -more often than
-  not- false positives (e.g. H3 K37mod).
-- **Filter** some identifications if they are not quantified in a
-  user-defined number of samples.
+- **Isolate** histone peptides based on user-defined histone protein(s).
+- **Normalize** intensities to the total area or intensity within
+  peptide families or total filttered peptides.
+- **Abbreviate** histone peptides.
+- **Rename** PTMs strings into
+  [Proforma](https://pubs.acs.org/doi/10.1021/acs.jproteome.1c00771),
+  [Brno nomenclature](https://www.nature.com/articles/nsmb0205-110), or
+  other more simplistic representation.
+- **Calculate** mean, standard deviation, and coefficient of variation
+  for each ID in each condition.
+- **Remove** and **store** duplications.
+- **Mark** with (**\***) and **store** IDs where the software assigns
+  the same peak apex (i.e. same intensities) to isobaric positional
+  isomers (i.e. K18acK23un and K18unK23ac) which nearly co-elute.
+- **Filter** unwanted and/or IDs that are -more often than not- false
+  positives (e.g. H3 K37mod).
+- **Filter** some IDs if they are not quantified in a user-defined
+  number of samples.
 
 This results in 3 Excel file:
 
-- **File 1**: Containing the raw data with sheets. Sheet 1 contains raw
-  data of isolated histone peptides without any transformation of data.
-  The rest of the sheets are filtered data from the first sheet original
-  data. E.g. Only N-terminally labeled peptides.
+- **File 1**: Containing the raw data with several sheets. Sheet 1
+  contains the raw data of isolated histone peptides without any
+  transformation. The rest of the sheets are filtered data from the
+  original data in the first sheet . E.g. Only N-terminally labeled
+  peptides.
 
 - **File(s) 2**: Peptide-centric. An excel file per histone protein with
-  each sheet containing identifications from same peptide.
+  each sheet containing IDs from the same peptide.
 
 - **File 3**: PTM-centric. An excel file summarizing PTMs with each
-  sheet containing identifications with specific PTM.
+  sheet containing IDs with specific PTM.
 
 All this with flexibility to:
 
 - choose only to analyze (and output results) of user-defined histone
   protein (e.g. only `H3`).
-- filter identifications with cut-off threshold of missing values.
+- filter IDs with cut-off threshold of missing values.
 - output **File(s) 2** with either removing all unlabeled `me1`,
   `K37mod` (for H3K27R40 peptide) or both.
 - group **File(s) 2** into one file or save each protein results in a
@@ -104,23 +110,24 @@ All this with flexibility to:
 
 - `Proline` excel output file containing the sheets:
 
-  - `Best PSM from protein sets` which includes identification and their
-  intensities in each sample. This assumes that IDs with multiple charge
-  states are already summed using post-processing functionality inside
-  `Proline`.
+- `Best PSM from protein sets` which includes IDs and their intensities
+  in each sample. This assumes that IDs with multiple charge states are
+  already summed using post-processing functionality inside `Proline`.
 
-  - `Search settings and infos` which includes information about `RAW`
+- `Search settings and infos` which includes information about `RAW`
   files’ names and their corresponding search result files’ names.
 
-- An excel file containing at least two columns:
+- An excel file containing at least three columns:
 
   - `SampleName`: custom samples names
-  - `file`: names of `RAW` files. other optional columns: `Condition`,
-    `BioReplicate`, and/or `TechReplicate` depending on the experimental
-    design.
+  - `file`: names of `RAW` files.
+  - `Condition`: concentration, WT vs disease … other recognized
+    optional columns: `BioReplicate`, and/or `TechReplicate` depending
+    on the experimental design.
 
-Some functions used to build-up this workflow among others are shown
-below:
+For further detailed of this fucntion and other use `?` behind the
+function name without paraenthesis in R console to get the full
+documentation (i.e. `?analyzeHistone`).
 
 ``` r
 library(histonePTM)
@@ -136,70 +143,90 @@ library(histonePTM)
                
 ```
 
-### Learn with Fun
+Some functions used to build-up this workflow among others are shown
+below:
 
-Go histonic and get random quotes about histones from the literature!
+# 1. PTMs
 
-``` r
+Rename PTM strings from `Proline` or `Skyline` to have a shorthanded
+representation.
 
-litRicher()
-#> [1] "Biological databases contribute perspective to evaluate the reasonableness of PTMs."
-```
+### 1.1 `ptm_beautify()`
 
-… or do your own literature from Pubmed!
-
-``` r
-#install.packages('rentrez')
-library(rentrez)
-litReview(start = 2023, 
-          end = 2024 , 
-          db = "pubmed",
-          term = "Histone lactylation",
-          save_file = FALSE)
-#> [[1]]
-#> # A tibble: 40 × 3
-#>     year id       title                                                         
-#>    <int> <chr>    <chr>                                                         
-#>  1  2023 38707638 20(S)-ginsenoside Rh2 ameliorates ATRA resistance in APL by m…
-#>  2  2023 38327665 Lactate regulates major zygotic genome activation by H3K18 la…
-#>  3  2023 38162077 [Role of Histone Modifications in Acute Kidney Injury Progres…
-#>  4  2023 38155775 Proteomic analysis identifies PFKP lactylation in SW480 colon…
-#>  5  2023 38149461 Natural product fargesin interferes with H3 histone lactylati…
-#>  6  2023 38101413 BACH1 changes microglial metabolism and affects astrogenesis …
-#>  7  2023 38084701 Histone lactylation-derived LINC01127 promotes the self-renew…
-#>  8  2023 38074159 Functioning and mechanisms of PTMs in renal diseases.         
-#>  9  2023 38051708 Lactate-induced histone lactylation by p300 promotes osteobla…
-#> 10  2023 38041125 Glucose transporter 3 (GLUT3) promotes lactylation modificati…
-#> # ℹ 30 more rows
-#> 
-#> [[2]]
-#> 
-#> 2023 2024 
-#>   20   20
-#A list with two tables
-    # 1 - Articles titles with their year of publication
-    # 2 - number of publication per year
-```
-
-scrape MS-identified PTMs from Uniprot
+#### Proline
 
 ``` r
 
-ptm_Uniprot(Uniprot_accession = 'P62805', #H4_HUMAN
-            save_file = FALSE)
-#> # A tibble: 7 × 20
-#>   type           begin end   xrefs_name xrefs_id    xrefs_url     evidences_code
-#>   <chr>          <chr> <chr> <chr>      <chr>       <chr>         <chr>         
-#> 1 PROTEOMICS_PTM 69    78    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 2 PROTEOMICS_PTM 69    78    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 3 PROTEOMICS_PTM 81    92    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 4 PROTEOMICS_PTM 25    37    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 5 PROTEOMICS_PTM 81    93    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 6 PROTEOMICS_PTM 47    56    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> 7 PROTEOMICS_PTM 46    60    Proteomes  UP000005640 https://www.… ECO:0007829   
-#> # ℹ 13 more variables: evidences_source_name <chr>, evidences_source_id <chr>,
-#> #   evidences_source_url <chr>, PEP <chr>, peptide <chr>, unique <lgl>,
-#> #   name <chr>, position <int>, sources <chr>, dbReferences_name <chr>,
-#> #   dbReferences_id <chr>, dbReferences_url <chr>,
-#> #   `dbReferences_properties_Localization probability` <chr>
+#PTM from Proline export, from 'modifications' column of sheet 'Best PSM from protein sets'.
+PTM_Proline <- 'Propionyl (Any N-term); Propionyl (K1); Butyryl (K10); Butyryl (K11)'
+
+ptm_beautify(PTM_Proline, lookup = histptm_lookup, software = 'Proline', residue = 'keep')
+#> [1] "prNt-K1pr-K10bu-K11bu"
+
+ 
+ptm_beautify(PTM_Proline, lookup = histptm_lookup, software = 'Proline', residue = 'remove')
+#> [1] "prNt-pr-bu-bu"
 ```
+
+### Skyline
+
+Skyline PTMs are enclosed between square brackets (e.g. \[+28.0313\])
+and sometimes they are rounded (e.g \[+28\]). We don’t support rounded
+numbers since some PTMs like \[Ac\] and \[3Me\] are rounded to the same
+number: +42. Use instead: ‘Peptide Modified Sequence Monoisotopic
+Masses’ column. Modified peptides in the ‘isolation list’ output file
+(‘Comment’ column) from Skyline always contains monoisotopic masses of
+PTMs as well.
+
+``` r
+PTM_Skyline <- "K[+124.05243]SVPSTGGVK[+56.026215]K[+56.026215]PHR"
+ 
+
+ptm_beautify(PTM_Skyline, lookup = shorthistptm_mass, software = 'Skyline', residue = 'keep')
+#> [1] "prNt-KcrSVPSTGGVKprKprPHR"
+
+ptm_beautify(PTM_Skyline, lookup = shorthistptm_mass, software = 'Skyline', residue = 'remove')
+#> [1] "prNt-cr-pr-pr"
+```
+
+### 1.2 `misc_clearLabeling`
+
+Remove the chemical labeling like `propionyl` (PA) or `TMA` which are
+not biologically relevant.
+
+``` r
+misc_clearLabeling("prNt-cr-pr-pr", labeling = "PA")
+#> [1] "cr-un-un"
+```
+
+### 1.3 `ptm_toProForma()`
+
+Convert PTM string to
+<a href="https://www.psidev.info/proforma">ProForma</a> ProForma
+(Proteoform and Peptidoform Notation)
+
+``` r
+histonePTM::ptm_toProForma(seq = "KSAPATGGVKKPHR",
+                mod = "Propionyl (Any N-term); Lactyl (K1); Dimethyl (K10); Propionyl (K11)")
+#> [1] "[UNIMOD:58]-K[UNIMOD:2114]SAPATGGVK[UNIMOD:36]K[UNIMOD:58]PHR"
+
+ptm_toProForma(seq = "KSAPATGGVKKPHR",
+               mod = "TMAyl_correct (Any N-term); Butyryl (K1); Trimethyl (K10); Propionyl (K11)")
+#> [1] "[TMAyl_correct]-K[UNIMOD:1289]SAPATGGVK[UNIMOD:37]K[UNIMOD:58]PHR"
+
+ptm_toProForma(  seq = "KQLATKVAR",
+                 mod = "Propionyl (Any N-term); Propionyl (K1); Propionyl (K6)")
+#> [1] "[UNIMOD:58]-K[UNIMOD:58]QLATK[UNIMOD:58]VAR"
+```
+
+### 1.4 `ptm_labelingAssessment()`
+
+Lysine derivatization can go rogue and can label other residues such as
+S, T, and Y. When using propionic anhydride, this is called ’
+Overpropionylation’. Hydroxylamine is used to remove this adventitous
+labeling, so-called “reverse propionylation’. This function help for a
+quick visual review to see if overpropionylation is limited or enormous.
+
+This for sure assumes that the database search results was run with
+`Propionyl (STY)` or any other labeling modification as varaible
+modification.
