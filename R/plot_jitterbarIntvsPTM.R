@@ -15,6 +15,7 @@
 #' @param scale 100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.
 #' @param cond_order (optional). A character vector containing conditions according to which bars will be ordered in the plot.
 #' @param save_plot (\code{logical}; \code{optional})
+#' @param output_dir Output directory.
 #'
 #' @importFrom dplyr select pull n_distinct mutate
 #' @importFrom stats reorder median qt
@@ -43,12 +44,14 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              conf_level = 0.95,
                              scale = 100,
                              cond_order= NULL,
-                             save_plot = FALSE
+                             save_plot = FALSE,
+                             output_dir = ""
 ){
 
 
 # Check inputs------------
   fun <- match.arg(fun)
+  output_dir <- if (output_dir == "") getwd() else output_dir
  if(!is.symbol(substitute(x_axis))){cli::cli_abort('remove the quotation around "x_axis" argument: {x_axis}.')}
  if(!is.symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
@@ -118,7 +121,8 @@ plot_jitterbarIntvsPTM <- function(dataset,
            error_type = error_type,
            conf_level = conf_level,
            scale = scale,
-           save_plot = save_plot
+           save_plot = save_plot,
+           output_dir = output_dir
          )
        )
      )
@@ -157,7 +161,8 @@ plot_jitterbarIntvsPTM <- function(dataset,
             error_type = error_type,
             conf_level = conf_level,
             scale = scale,
-            save_plot = save_plot
+            save_plot = save_plot,
+            output_dir= output_dir
           )
         )
       )
@@ -179,7 +184,8 @@ plotjit <- function(dataset,
                     error_type = c("none", "CI", "SE", "SD"),
                     conf_level = 0.95,
                     scale = 1,
-                    save_plot = FALSE) {
+                    save_plot = FALSE,
+                    output_dir= ouput_dir) {
 
 
   fun <- match.arg(fun)
@@ -318,8 +324,10 @@ plotjit <- function(dataset,
     cli::cli_inform("Plotting: {id_col}")
 
   if (save_plot) {
+
     ggplot2::ggsave(
       filename = stringr::str_glue("{id_col}.png"),
+      path = output_dir,
       dpi = 300,
       height = 7,
       width = 10,

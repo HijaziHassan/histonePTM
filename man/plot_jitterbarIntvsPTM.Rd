@@ -16,7 +16,8 @@ plot_jitterbarIntvsPTM(
   conf_level = 0.95,
   scale = 100,
   cond_order = NULL,
-  save_plot = FALSE
+  save_plot = FALSE,
+  output_dir = ""
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ A 5th column can be provided to be the plot title.}
 \item{cond_order}{(optional). A character vector containing conditions according to which bars will be ordered in the plot.}
 
 \item{save_plot}{(\code{logical}; \code{optional})}
+
+\item{output_dir}{Output directory.}
 }
 \value{
 A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
