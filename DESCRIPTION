@@ -19,7 +19,7 @@ Depends:
     R (>= 3.5.0)
 Imports: 
      dplyr, purrr, stringr, tidyr, tibble, rlang,  cli, 
-     ggplot2 (>=3.5.0), ggtext, scales, ggridges,
+     ggplot2 (>= 3.5.0), ggtext, scales, ggridges,
      readxl, openxlsx, writexl, readr
 Suggests: 
     testthat (>= 3.0.0),
