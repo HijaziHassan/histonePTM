@@ -29,8 +29,7 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALS
 
   #to avoid any non-numeric input
   stopifnot(
-    "The 'diag_ion' must be an integer or an integer vector." =
-      is.numeric(diag_ion) && all(diag_ion == as.integer(diag_ion))
+    "The 'diag_ion' must be a numeric vector." = is.numeric(diag_ion)
   )
 
 
@@ -61,10 +60,10 @@ mgf_searchDiagIon <- function(mgf_file, diag_ion, tol = 0.002, export_mgf = FALS
         BiocManager::install(missing_packages)
       }
     } else {
-      cli::cli_abort("Required packages are missing. Exiting.")
+      cli::cli_abort(c('x' = "Required packages are missing. Exiting.",
+                       'i'= 'Please install them manually.')
+                     )
     }
-  } else {
-    cli_alert_success("All required packages are available.")
   }
 
 
