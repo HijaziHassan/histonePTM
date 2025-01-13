@@ -270,7 +270,8 @@ plotjit <- function(dataset,
     ),
     shape = 19, #color = "black",
     size = ifelse("size" %in% colnames(dataset) && unique(dataset[["size"]]) > 10,
-                  unique(dataset[["size"]]) / 10, 2.75),
+                  2.75 / (1 + 0.05 * (unique(dataset[["size"]]) - 10)), #decay fn to adapt point size to # of PTM combinations
+                  2.75),
     alpha = 1
   ) +
 
@@ -282,7 +283,7 @@ plotjit <- function(dataset,
     # Add labels and title
     ggplot2::labs(
       x = "",
-      y = stringr::str_glue('% of all variably modified forms of {id_col}'),
+      y =  wrap_label(stringr::str_glue("% of all variably modified forms of {id_col}")),
       title = ifelse(is.null(plot_title), "", plot_title)
     ) +
 
@@ -384,4 +385,11 @@ return(sorted_levels)
 
 
 
-
+#' @noRd
+wrap_label <- function(label, width = 35) {
+if (nchar(label) > 47) {
+  stringr::str_wrap(label, width = width)
+} else {
+  label
+}
+}
