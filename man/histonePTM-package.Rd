@@ -10,6 +10,14 @@
 
 Handy functions to organize, analyse, and visualize histone PTMs proteomics data and "what you have".
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/HijaziHassan/histonePTM}
+  \item Report bugs at \url{https://github.com/HijaziHassan/histonePTM/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Hassan Hijazi \email{hejaziihassan@gmail.com} (\href{https://orcid.org/0000-0001-6408-1768}{ORCID})
 

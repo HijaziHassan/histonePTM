@@ -12,6 +12,7 @@
 #' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
+#' @param save_plot bool; TRUE (default). draw and save or not the jitter bar plots of PTMs vs intensity for each peptide.
 #'
 #' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc
 #' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim
@@ -60,11 +61,12 @@ analyzeHistone <- function(analysisfile,
                 NA_threshold,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
-                extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un")){
+                extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un"),
+                save_plot = TRUE){
 
 
   output_result = match.arg(output_result)
-  hist_prot = match.arg(hist_prot)
+  if(missing(hist_prot)) hist_prot= c('H3', 'H4', "H2A", 'H2B')
   labeling = match.arg(labeling)
   norm_method = match.arg(norm_method)
   extra_filter = match.arg(extra_filter)
@@ -104,10 +106,10 @@ cli::cli({
  cat("\nCreating folders to store the results ...\n")
   misc_createFolder(foldername = "analysis")
   misc_createFolder(foldername = exp_folder_name)
-
+  if(save_plot ==TRUE){
   misc_createFolder(foldername = "figures")
   misc_createFolder(foldername = img_folder_name)
-
+  }
 
 
 # Data 2nd Check -----------------------------------------------
@@ -577,7 +579,7 @@ openxlsx::saveWorkbook(wb=wb_ptm,
 cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.\n')
 
 # Start of the Graphing Module --------------------------
-
+if(save_plot == TRUE){
 df_tobe_splitted |>
   dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(meta_names_merge$SampleName)) |>
   tidyr::pivot_longer(cols = dplyr::any_of(meta_names_merge$SampleName), names_to = 'SampleName', values_to = 'intensity') |>
@@ -592,7 +594,7 @@ df_tobe_splitted |>
                          plot_title = sequence,
                          save_plot = TRUE,
                          output_dir = img_folder_name)
-
+}
 
 #End of the Graphing Module##########################
 
