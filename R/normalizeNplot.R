@@ -20,10 +20,11 @@
 #' @param cond_order (optional) A character vector containing the conditions in the preferred order. If you want a specific order of the condition.
 #' @param save_plot (\code{bool}) TRUE (default) to save the plot(s). Otherwise, set it to FALSE.
 #'
-#' @importFrom dplyr mutate select left_join join_by starts_with
+#' @importFrom dplyr mutate select left_join join_by starts_with any_of all_of
 #' @importFrom tidyr pivot_longer
 #' @importFrom openxlsx write.xlsx
 #' @importFrom cli cli_abort
+#' @importFrom rlang is_empty
 #' @return Same output as `plot_jitterbarIntvsPTM()`. A dataframe grouped by 'id_col' (and 'plot_title' if passed) with a nested list-column harboring the generated
 #' bar plots (representing either 'mean' or 'median') with jitter points (corresponding to individual measurements per 'condition').
 #' @export
@@ -46,11 +47,12 @@ normalizeNplot <- function(df_corrected,
 
 labeling = match.arg(labeling)
 
+#check of all intensity column names are found in the dataset
   intensity_columns <- df_corrected |>
-    dplyr::select({{int_cols}}) |>
+    dplyr::select(dplyr::any_of({{int_cols}})) |>
     colnames()
 
-  if(!all(intensity_columns %in% colnames(df_corrected))) {
+  if(!all(intensity_columns %in% colnames(df_corrected)) | rlang::is_empty(intensity_columns)) {
     cli::cli_abort(
       "The provided intensity column names in {.arg int_cols} are not found in {.arg df_corrected}."
     )
@@ -74,9 +76,9 @@ labeling = match.arg(labeling)
 
   #transform data into long format. add a clean PTM_unlabeled column for plotting
   df_long <- df_norm |>
-    dplyr::select(PTM_unlabeled, {{seq_col}}, {{seq_stretch_col}}, {{int_cols}}) |>
+    dplyr::select(PTM_unlabeled, {{seq_col}}, {{seq_stretch_col}}, dplyr::all_of({{int_cols}})) |>
     tidyr::pivot_longer(
-      cols = {{int_cols}},
+      cols = dplyr::all_of({{int_cols}}),
       names_to = "sample",
       values_to = "intensity",
       values_drop_na = TRUE
