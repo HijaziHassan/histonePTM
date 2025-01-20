@@ -2,13 +2,14 @@
 #' @description
 #' Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
 #'
-#' @param dataset A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguemnts below.
+#' @param dataset A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguments below.
 #' A 5th column can be provided to be the plot title.
 #' @param x_axis x variable (PTM column)
 #' @param y_axis y variable (intensity column). If already values are percentage, set \code{scale} to 1.
 #' @param condition The condition column (WT vs disease, concentration, ...)
 #' @param id_col unique ID column such as sequence or sequence label
 #' @param plot_title (\code{optional})A column with values to be the plot_title (optional).
+#' @param max_cutoff (\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.
 #' @param fun median (\code{default}) or mean. This will be the height of the bar.
 #' @param error_type one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).
 #' @param conf_level Confidence level (e.g. 0.9, 0.5, 0.99, etc...)
@@ -17,12 +18,12 @@
 #' @param save_plot (\code{logical}; \code{optional})
 #' @param output_dir Output directory.
 #'
-#' @importFrom dplyr select pull n_distinct mutate
+#' @importFrom dplyr select pull n_distinct mutate filter
 #' @importFrom stats reorder median qt
 #' @importFrom scales label_percent
 #' @importFrom rlang is_empty quo_name enquo
 #' @importFrom stringr str_glue
-#' @importFrom cli cli_abort cli_inform
+#' @importFrom cli cli_abort cli_inform cli_alert_danger
 #' @importFrom tidyr nest drop_na
 #' @importFrom purrr map map2
 #' @import ggplot2
@@ -39,6 +40,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              condition,  #variable on which comparison is done
                              id_col,  #could be sequence or sequence label
                              plot_title= NULL, #optional: e.g. stripped sequence
+                             max_cutoff = NULL, #optional
                              fun = c("mean", "median"),
                              error_type = c("none", "CI", "SE", "SD"),
                              conf_level = 0.95,
@@ -76,6 +78,24 @@ plot_jitterbarIntvsPTM <- function(dataset,
   # prepare the dataset ------------
 
 
+# make sure max_cutoff is numeric.
+
+  if(is.symbol(substitute(max_cutoff))){
+
+    max_cutoff_str <- deparse(substitute(max_cutoff))
+    cli::cli_alert_danger("The intensity filter `{max_cutoff_str}` is ignored. {.arg max_cutoff} must be numeric.")
+
+    }else if (is.character(max_cutoff)){
+
+          cli::cli_alert_danger("The intensity filter {.arg {max_cutoff}} is ignored. {.arg max_cutoff} must be numeric.")
+
+  }else if (is.numeric(max_cutoff)) {
+       dataset <- dataset |>
+         dplyr::filter({{y_axis}} <= max_cutoff)
+   }
+
+
+
   dataset <- dataset |>
     dplyr::mutate({{condition}} := factor({{condition}},
                                           levels = assort_cond(dataset,
@@ -88,7 +108,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
   plot_title_label <- rlang::as_label(plot_title)
 
 
-  # Check if plot_title is NULL or provided as a string (quoted) #|| plot_title_label %in% names(dataset)
+  # Check if plot_title is NULL or provided as a string (quoted)
  if (rlang::quo_is_null(plot_title) || !plot_title_label %in% names(dataset)) {
 
    dataset <- dataset |>
@@ -117,6 +137,7 @@ plot_jitterbarIntvsPTM <- function(dataset,
            y_axis = {{y_axis}},
            condition = {{condition}},
            plot_title = {{plot_title}},
+           max_cutoff = max_cutoff,
            fun = fun,
            error_type = error_type,
            conf_level = conf_level,
@@ -180,17 +201,17 @@ plotjit <- function(dataset,
                     condition,  # variable on which comparison is done
                     id_col,  # could be sequence or sequence label
                     plot_title = NULL,  # optional: should be stripped sequence
+                    max_cutoff= NULL,
                     fun = c("mean", "median"),
                     error_type = c("none", "CI", "SE", "SD"),
                     conf_level = 0.95,
-                    scale = 1,
+                    scale = 100,
                     save_plot = FALSE,
                     output_dir= ouput_dir) {
 
 
   fun <- match.arg(fun)
   error_type <- match.arg(error_type)
-
 
 
   dataset <- dataset |>

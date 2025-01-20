@@ -11,6 +11,7 @@ plot_jitterbarIntvsPTM(
   condition,
   id_col,
   plot_title = NULL,
+  max_cutoff = NULL,
   fun = c("mean", "median"),
   error_type = c("none", "CI", "SE", "SD"),
   conf_level = 0.95,
@@ -21,7 +22,7 @@ plot_jitterbarIntvsPTM(
 )
 }
 \arguments{
-\item{dataset}{A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguemnts below.
+\item{dataset}{A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguments below.
 A 5th column can be provided to be the plot title.}
 
 \item{x_axis}{x variable (PTM column)}
@@ -33,6 +34,8 @@ A 5th column can be provided to be the plot title.}
 \item{id_col}{unique ID column such as sequence or sequence label}
 
 \item{plot_title}{(\code{optional})A column with values to be the plot_title (optional).}
+
+\item{max_cutoff}{(\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.}
 
 \item{fun}{median (\code{default}) or mean. This will be the height of the bar.}
 
