@@ -110,13 +110,15 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
     dplyr::summarize(dplyr::across(id:title, ~paste0(na.omit(.x), collapse = ";")),
                      .groups = "drop")
 
-  if(save_file == TRUE){
+  #remove special characters from file names. e.g. '*" wild card can be used in the search term
+  file_name <- gsub("[*?/\\:|<>\"']", "", stringr::str_glue("{term}_{start_year}_{end_year}"))
 
-    write.csv(x = title_df_wide, str_glue("{term}_{start_year}_{end_year}.csv"), row.names = FALSE)
-    write.csv(x = title_df_long, file = stringr::str_glue("long_{term}_{start_year}_{end_year}.csv"),
+  if(save_file == TRUE){
+    write.csv(x = title_df_wide, paste0(file_name, ".csv"), row.names = FALSE)
+    write.csv(x = title_df_long, file = paste0("long_", file_name, ".csv"),
               row.names = FALSE)
 
-    cat(stringr::str_glue("\n\nFile {term}_{start_year}_{end_year}.csv is saved successfully.\n"))
+    cat(paste0("\n\nFile ", file_name, ".csv is saved successfully.\n"))
 
   }
 
@@ -131,22 +133,26 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
                     search = factor(search)
                     )
 
-  p <- ggplot2::ggplot(df_plot, aes(x= Year, y= Count, color= stringr::str_wrap(search, width = 20), group=1))+
-      ggplot2::labs(color = "PubMed Search Term")+
+  p <- ggplot2::ggplot(df_plot,
+                       aes(x= Year, y= Count,
+                           color= stringr::str_wrap(search, width = 20),
+                           group=1)
+                       )+
       ggplot2::geom_line(linewidth= 1.2)+
-      ggplot2::theme_classic(base_size = 12)+
-      ggplot2::scale_color_brewer(palette = "Dark2")+
-    ggplot2::scale_y_continuous(breaks = scales::pretty_breaks()
-                                )+
-    ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()
-                                ) +
 
-    ggplot2::theme(
+      ggplot2::labs(color = "PubMed Search Term")+
+      ggplot2::scale_color_brewer(palette = "Dark2")+
+      ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
+
+      ggplot2::theme_classic(base_size = 12)+
+      ggplot2::theme(
       legend.title = ggplot2::element_text(size = 12, face = "bold"),
       legend.text = ggplot2::element_text(size= 8)
     )
+
   if(save_plot){
-    ggplot2::ggsave(filename = stringr::str_glue("{term}_{start_year}_{end_year}.png"),
+
+    ggplot2::ggsave(filename =  paste0(file_name, ".png"),
                     width = 10, height = 7, dpi = 300, units = "in")
     }
 
