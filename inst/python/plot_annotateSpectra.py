@@ -119,7 +119,7 @@ def plot_annotateSpectra(identifier: str,
 
 
 # plot aesthetics
-    ax.set_title(peptide, fontdict={"fontsize": "xx-large"}, pad = 30)
+    ax.set_title(identifier, fontdict={"fontsize": "xx-large"}, pad = 30)
     ax.set_xlabel("m/z", fontsize=16, weight = 'bold')  # Set x-axis label font size
     ax.set_ylabel("Intensity", fontsize=16, weight = 'bold')  # Set y-axis label font size
 
