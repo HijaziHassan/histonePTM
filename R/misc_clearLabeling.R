@@ -57,15 +57,27 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residu
     if (is.null(rules)) {
       if (labeling == "PA") {
         # Validate conflicting rules
-        if (any(stringr::str_detect(ptm_string, "(?:[:upper:]*\\d*me1)\\b")) && "me1" %in% unname(prop_rules)) {
-          cli::cli_abort(c(
-            'x' = 'You are trying to replace "bu" with "me1", but "me1" is already in your rules.',
-            'i' = 'Remove any "me1" occurrences in `ptm_string` before applying the function, or adjust the `rules` argument.'
-          ))
+        if (any(stringr::str_detect(ptm_string, "\\b(me1|[:upper:]\\d*me1)\\b")) && "me1" %in% unname(prop_rules)) {
+          # cli::cli_abort(c(
+          #   'x' = 'You are trying to replace "bu" with "me1", but "me1" is already in your rules.',
+          #   'i' = 'Remove any "me1" occurrences in `ptm_string` before applying the function, or adjust the `rules` argument.'
+          # ))
+          cli::cli_alert_danger("'me1' exist in your PTMs and you are converting 'bu' to 'me1'.
+                                'bu' will not be converted to 'me1'.")
+          prop_rules <- prop_rules[-2]
         }
+
         rules <- c(nterm_rule, prop_rules)
+
       } else if (labeling == "TMA") {
+        if (any(stringr::str_detect(ptm_string, "\\b(me1|[:upper:]\\d*me1)\\b")) && "me1" %in% unname(prop_rules)) {
+          cli::cli_alert_danger("'me1' exist in your PTMs and you are converting 'tmame1' to 'me1'.
+                                'tmame1' will not be converted to me1.")
+          tma_rules <- tma_rules[-1]
+        }
+
         rules <- c(nterm_rule, tma_rules)
+
       } else if (labeling == "PIC_PA") {
         rules <- c(nterm_rule, prop_rules, pic_rules)
       } else if (labeling == "none") {
