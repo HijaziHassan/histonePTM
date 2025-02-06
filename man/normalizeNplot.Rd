@@ -14,12 +14,7 @@ normalizeNplot(
   save_file = TRUE,
   labeling = c("none", "PA", "TMA", "PIC_PA"),
   rules = NULL,
-  plot_title = NULL,
-  fun = "mean",
-  error_type = NULL,
-  conf_level = 0.95,
-  cond_order = NULL,
-  save_plot = TRUE
+  ...
 )
 }
 \arguments{
@@ -41,17 +36,7 @@ normalizeNplot(
 
 \item{rules}{(optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.}
 
-\item{plot_title}{A string or a column name.}
-
-\item{fun}{A statistical test ('mean' or 'median'). This will be the height of the bars.}
-
-\item{error_type}{(optional) Argument to add error bars. It takes either "CI", "SD" or "SE" (check `plot_jitterbarIntvsPTM()`).}
-
-\item{conf_level}{(optional) The confidence level (0.95 (default)). Only useful if you want to add error bars (see `error_type`).}
-
-\item{cond_order}{(optional) A character vector containing the conditions in the preferred order. If you want a specific order of the condition.}
-
-\item{save_plot}{(\code{bool}) TRUE (default) to save the plot(s). Otherwise, set it to FALSE.}
+\item{...}{Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot` etc ... Revise the documentation for more details.}
 }
 \value{
 Same output as `plot_jitterbarIntvsPTM()`. A dataframe grouped by 'id_col' (and 'plot_title' if passed) with a nested list-column harboring the generated

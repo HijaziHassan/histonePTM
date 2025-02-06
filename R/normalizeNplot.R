@@ -13,12 +13,7 @@
 #' @param save_file (\code{bool}) TRUE (default) to save the normalized file.
 #' @param labeling Labeling method (e.g. 'PA', 'TMA', 'PA_PIC', or 'none' (default)). Check `misc_clearLabeling()`.
 #' @param rules (optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.
-#' @param plot_title A string or a column name.
-#' @param fun A statistical test ('mean' or 'median'). This will be the height of the bars.
-#' @param error_type (optional) Argument to add error bars. It takes either "CI", "SD" or "SE" (check `plot_jitterbarIntvsPTM()`).
-#' @param conf_level (optional) The confidence level (0.95 (default)). Only useful if you want to add error bars (see `error_type`).
-#' @param cond_order (optional) A character vector containing the conditions in the preferred order. If you want a specific order of the condition.
-#' @param save_plot (\code{bool}) TRUE (default) to save the plot(s). Otherwise, set it to FALSE.
+#' @param ... Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot` etc ... Revise the documentation for more details.
 #'
 #' @importFrom dplyr mutate select left_join join_by starts_with any_of all_of
 #' @importFrom tidyr pivot_longer
@@ -38,12 +33,8 @@ normalizeNplot <- function(df_corrected,
                            save_file = TRUE,
                            labeling= c('none', 'PA', 'TMA', 'PIC_PA'),
                            rules= NULL,
-                           plot_title= NULL,
-                           fun = "mean",
-                           error_type = NULL,
-                           conf_level = 0.95,
-                           cond_order = NULL,
-                           save_plot= TRUE){
+                           ...
+                           ){
 
 labeling = match.arg(labeling)
 
@@ -97,13 +88,9 @@ labeling = match.arg(labeling)
                          y_axis= intensity,
                          condition = Condition,
                          id_col = {{seq_stretch_col}},
-                         fun= fun,
-                         error_type = error_type,
-                         conf_level = conf_level,
-                         scale= 100,
-                         cond_order = cond_order,
-                         plot_title = plot_title,
-                         save_plot = save_plot)
+                         ...
+
+                         )
 
 
 
