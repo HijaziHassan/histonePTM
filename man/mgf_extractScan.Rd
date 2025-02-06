@@ -12,8 +12,9 @@ mgf_extractScan(mgf_file, scan)
 \item{scan}{\code{numeric}. scan number}
 }
 \value{
-tibble with 4 colums: file name, scan number and their corresponfing mz and intensity values.
+tibble with 4 colums: file name, scan number and their corresponding mz and intensity values.
 }
 \description{
 wrapper function around \code{mgf.read} from \code{spectrum_utils} library in Python.
+`Python` and the `reticulate` R package MUST be installed for the function to work.
 }
