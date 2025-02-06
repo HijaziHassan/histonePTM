@@ -12,7 +12,7 @@
 #' @param nloss (bool, TRUE (default)). Annotate neutral losses (-NH3 by "*" and -H2O by "o")
 #' @param min_int (double, 0.01 (default)). To filter intensity which are `min_int` of the base peak.
 #' @param ion_types Fragment ion types (i.e. "by' (Default))
-#' @param tol_mz fragment mass tolerance (e.g, 20)
+#' @param tol_mz fragment mass tolerance (e.g, 20 (Default))
 #' @param tol_mode 'ppm' (Default) or 'Da'
 #' @param title title of the annotate MS/MS plot
 #' @param output_plot_name Name of the plot in case you want to save it
@@ -40,14 +40,14 @@ plot_annotateSpectrum <- function(Profrma_peptide,
   My_Package_Name_path <- system.file("python", package = "histonePTM")
   reticulate::py_run_string(paste0("import sys; sys.path.append('", My_Package_Name_path, "')"))
 
-  plot_annotateSpectra <- reticulate::source_python(system.file("python",
+  reticulate::source_python(system.file("python",
                                         "plot_annotateSpectra.py",
                                         package = "histonePTM",
                                         mustWork = TRUE
   ))
 
 
-  plot_annotateSpectra(
+  reticulate::py$plot_annotateSpectra(
     identifier = title,
     peptide = Profrma_peptide,
     precursor_mz = prec_mz,

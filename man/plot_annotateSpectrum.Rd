@@ -41,7 +41,7 @@ plot_annotateSpectrum(
 
 \item{ion_types}{Fragment ion types (i.e. "by' (Default))}
 
-\item{tol_mz}{fragment mass tolerance (e.g, 20)}
+\item{tol_mz}{fragment mass tolerance (e.g, 20 (Default))}
 
 \item{tol_mode}{'ppm' (Default) or 'Da'}
 
