@@ -133,7 +133,7 @@ ptm_toProForma <- function(seq, mod, lookup = NULL, replace_only = FALSE, Nterm 
 .extract_nterm <- function(mod){
 
   res <- stringr::str_extract(string = mod,
-                       pattern = '(.+)\\s\\(Any N-term\\)', group = 1)
+                       pattern = '(.+)\\s\\(.+ N-term\\)', group = 1) #capture Any N-term or Protein N-term
   if (is.null(res)) return(NA_character_)
 
   return(res)
