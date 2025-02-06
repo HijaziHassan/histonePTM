@@ -10,13 +10,13 @@
 #' @param id_col unique ID column such as sequence or sequence label
 #' @param plot_title (\code{optional})A column with values to be the plot_title (optional).
 #' @param max_cutoff (\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.
-#' @param fun median (\code{default}) or mean. This will be the height of the bar.
+#' @param fun mean (\code{default}) or median. This will be the height of the bar.
 #' @param error_type one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).
-#' @param conf_level Confidence level (e.g. 0.9, 0.5, 0.99, etc...)
+#' @param conf_level Confidence level (e.g. 0.95 (default), 0.99, etc...)
 #' @param scale 100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.
 #' @param cond_order (optional). A character vector containing conditions according to which bars will be ordered in the plot.
-#' @param save_plot (\code{logical}; \code{optional})
-#' @param output_dir Output directory.
+#' @param save_plot (\code{logical}; FALSE \code{default})
+#' @param output_dir (character; Optional) The output directory for the plots to be saved in. Default to working directory if unassigned.
 #'
 #' @importFrom dplyr select pull n_distinct mutate filter
 #' @importFrom stats reorder median qt
@@ -47,13 +47,16 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              scale = 100,
                              cond_order= NULL,
                              save_plot = FALSE,
-                             output_dir = ""
+                             output_dir = NULL
 ){
 
 
 # Check inputs------------
   fun <- match.arg(fun)
-  output_dir <- if (output_dir == "") getwd() else output_dir
+  output_dir <- if (is.null(output_dir)) getwd() else output_dir
+  if (!is.null(output_dir) && !dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
  if(!is.symbol(substitute(x_axis))){cli::cli_abort('remove the quotation around "x_axis" argument: {x_axis}.')}
  if(!is.symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
@@ -207,7 +210,7 @@ plotjit <- function(dataset,
                     conf_level = 0.95,
                     scale = 100,
                     save_plot = FALSE,
-                    output_dir= ouput_dir) {
+                    output_dir= NULL) {
 
 
   fun <- match.arg(fun)
@@ -253,12 +256,12 @@ plotjit <- function(dataset,
   p <- ggplot2::ggplot(dataset, ggplot2::aes(
     x = stats::reorder({{ x_axis }}, {{ y_axis }}),
     y = {{ y_axis }},
-    color = {{ condition }},
+   # color = {{ condition }},
     fill = {{ condition }}
   )) +
     ggplot2::stat_summary(
       fun = fun, show.legend = TRUE, geom = "bar",
-      color = "black", width = 0.5,
+      , width = 0.5,
       position = ggplot2::position_dodge2(preserve = "single"),
       alpha = 0.5
     )
@@ -283,13 +286,14 @@ plotjit <- function(dataset,
   }
 
   # Add jittered points
-  p <- p + ggplot2::geom_jitter(
+  p <- p + ggplot2::geom_jitter(aes(color = {{ condition }}),
     show.legend = FALSE,
     position = ggplot2::position_jitterdodge(
       dodge.width = 0.5,
       jitter.width = 0.1
     ),
-    shape = 19, #color = "black",
+    shape = 19,
+    #color = "black",
     size = ifelse("size" %in% colnames(dataset) && unique(dataset[["size"]]) > 10,
                   2.75 / (1 + 0.05 * (unique(dataset[["size"]]) - 10)), #decay fn to adapt point size to # of PTM combinations
                   2.75),
@@ -314,7 +318,8 @@ plotjit <- function(dataset,
       panel.grid.major.x  = ggplot2::element_blank(),
       panel.grid.major.y  = ggplot2::element_line(color = "grey70"),
       axis.text.y = ggplot2::element_text(
-        size = 14,
+        size = 15,
+        face = "bold",
         margin = ggplot2::margin(
           t = 0,
           r = 20,
@@ -324,7 +329,8 @@ plotjit <- function(dataset,
       ),
       axis.title.y = ggplot2::element_text(size = 16, face = "bold"),
       axis.text.x = ggplot2::element_text(
-        size = 12,
+        size = 15,
+        face = "bold",
         angle = 60,
         colour = "black",
         hjust = 0.7
@@ -332,14 +338,14 @@ plotjit <- function(dataset,
       axis.line.x = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
       plot.margin = ggplot2::unit(c(0.5, 0.5, 0.2, 0.5), "cm") ,
-      legend.text = ggplot2::element_text(face = "bold", size = 13),
+      legend.text = ggplot2::element_text(face = "bold", size = 14),
       legend.position = "inside",
       legend.position.inside = c(0.01, 0.95),
       legend.justification = c(0, 1),
       legend.direction = "vertical",
       legend.title = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
-      title = ggplot2::element_text(size = 16)
+      title = ggplot2::element_text(size = 17)
     )
 
 

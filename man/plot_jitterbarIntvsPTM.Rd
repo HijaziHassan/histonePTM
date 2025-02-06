@@ -18,7 +18,7 @@ plot_jitterbarIntvsPTM(
   scale = 100,
   cond_order = NULL,
   save_plot = FALSE,
-  output_dir = ""
+  output_dir = NULL
 )
 }
 \arguments{
@@ -37,19 +37,19 @@ A 5th column can be provided to be the plot title.}
 
 \item{max_cutoff}{(\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.}
 
-\item{fun}{median (\code{default}) or mean. This will be the height of the bar.}
+\item{fun}{mean (\code{default}) or median. This will be the height of the bar.}
 
 \item{error_type}{one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).}
 
-\item{conf_level}{Confidence level (e.g. 0.9, 0.5, 0.99, etc...)}
+\item{conf_level}{Confidence level (e.g. 0.95 (default), 0.99, etc...)}
 
 \item{scale}{100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.}
 
 \item{cond_order}{(optional). A character vector containing conditions according to which bars will be ordered in the plot.}
 
-\item{save_plot}{(\code{logical}; \code{optional})}
+\item{save_plot}{(\code{logical}; FALSE \code{default})}
 
-\item{output_dir}{Output directory.}
+\item{output_dir}{(character; Optional) The output directory for the plots to be saved in. Default to working directory if unassigned.}
 }
 \value{
 A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
