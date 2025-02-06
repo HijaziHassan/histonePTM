@@ -1,6 +1,7 @@
 #' Extract user-defined Scan from MGF file.
 #' @description
 #' wrapper function around \code{mgf.read} from \code{spectrum_utils} library in Python.
+#' `Python` and the `reticulate` R package MUST be installed for the function to work.
 #'
 #' @param mgf_file mgf file (path) name
 #' @param scan \code{numeric}. scan number
@@ -9,7 +10,7 @@
 #' @importFrom tibble as_tibble
 #' @importFrom cli cli_abort
 #'
-#' @return tibble with 4 colums: file name, scan number and their corresponfing mz and intensity values.
+#' @return tibble with 4 colums: file name, scan number and their corresponding mz and intensity values.
 #' @export
 
 mgf_extractScan <- function(mgf_file, scan){
@@ -26,11 +27,12 @@ mgf_extractScan <- function(mgf_file, scan){
   My_Package_Name_path <- system.file("python", package = "histonePTM")
   reticulate::py_run_string(paste0("import sys; sys.path.append('", My_Package_Name_path, "')"))
 
-  mgf_extractScans <- reticulate::source_python(system.file("python",
+  reticulate::source_python(system.file("python",
                                         "mgf_extractScans.py",
                                         package = "histonePTM",
                                         mustWork = TRUE
   ))
+
 
 
 
@@ -43,7 +45,7 @@ for(mgf in mgf_file){
 
   for(s in scan){
 
-spec <- mgf_extractScans(mgf_file_path = mgf, target_scan = s)
+spec <- reticulate::py$mgf_extractScans(mgf_file_path = mgf, target_scan = s)
 
   if(!is.null(spec)){
 
