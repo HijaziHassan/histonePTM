@@ -391,19 +391,19 @@ if (extra_filter %in% c("no_me1", "K37un", "no_me1_K37un")) {
   # Apply specific filters based on `extra_filter`
   if (extra_filter == "no_me1") {
     filtered_data <- filtered_data |>
-      dplyr::filter(!stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"))
+      dplyr::filter(!stringr::str_detect(PTM, "\\b(K\\d*me1)\\b")) #filter only lysine Kme1
   } else if (extra_filter == "K37un") {
     filtered_data <- filtered_data |>
       dplyr::filter(
         !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
-          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex))
+          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex)) #filter modified K37
       )
   } else if (extra_filter == "no_me1_K37un") {
     filtered_data <- filtered_data |>
       dplyr::filter(
-        !stringr::str_detect(PTM_stripped, "(?:[a-zA-Z]\\d*me1)\\b"),
+        !stringr::str_detect(PTM, "\\b(K\\d*me1)\\b"), #filter only lysine Kme1 not Rme1 or ...
         !stringr::str_detect(sequence, 'KS.P..GGVKKPHR') |
-          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex))
+          (stringr::str_detect(sequence, 'KS.P..GGVKKPHR') & stringr::str_detect(PTM_proforma, K37un_regex)) #filter modified K37
       )
   }
 
