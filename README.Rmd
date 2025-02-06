@@ -41,9 +41,8 @@ Some functions rely heavily on other functions from well-established packages.
 You can install the development version of histonePTM from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("HijaziHassan/histonePTM") # you only have to run the code once to install it on 
-                                                  #your hard disk. After that use `library(histonePTM)`.
+# install.packages("pak")
+pak::pkg_install("HijaziHassan/histonePTM")
 ```
 ## Contributing
 
