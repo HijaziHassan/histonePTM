@@ -1,7 +1,7 @@
 HistonePTM
 <img src="man/figures/logo.png" align="right" width="240" height="277"/>
 ================
-09 December 2024
+06 February 2025
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -33,9 +33,8 @@ You can install the development version of histonePTM from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("HijaziHassan/histonePTM") # you only have to run the code once to install it on 
-                                                  #your hard disk. After that use `library(histonePTM)`.
+# install.packages("pak")
+pak::pkg_install("HijaziHassan/histonePTM")
 ```
 
 ## Contributing
