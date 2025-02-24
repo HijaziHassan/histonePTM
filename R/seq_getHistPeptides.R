@@ -19,7 +19,7 @@
 #' @importFrom cli cli_abort
 #' @export
 
-seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All", "H3", "H4", "H2A", "H2B")){
+seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All", "H3", "H4", "H2A", "H2B", "H1")){
 
   seq_col = rlang::enexpr(seq_col)
   #seq_col argument must be unquoted
@@ -29,12 +29,12 @@ seq_getHistPeptide <- function(df, seq_col = sequence ,  histoneProtein = c("All
          )
 
 
-  if(!any(histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B"))){cli::cli_abort(c("Invalid input.",
+  if(!any(histoneProtein %in% c("All", "H3", "H4", "H2A", "H2B", "H1"))){cli::cli_abort(c("Invalid input.",
                                                                                "x" = "'{histoneProtein}' is not recognized.",
-                                                                               "i" = "Please choose any of: 'All' (default), 'H3', 'H4', 'H2A', 'H2B')"))
+                                                                               "i" = "Please choose any of: 'All' (default), 'H3', 'H4', 'H2A', 'H2B', 'H1')"))
  }else if ("All" %in% histoneProtein){
 
-   histoneProtein = c("H3", "H4", "H2A", "H2B")
+   histoneProtein = c("H3", "H4", "H2A", "H2B", "H1")
    protein_extracted <- purrr::map(.x = histoneProtein,
                                    .f = ~ purrr::pluck(histonePTM::sequenceDB, .x, "argC_frags"))|>
                                          unlist()

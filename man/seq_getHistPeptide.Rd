@@ -7,7 +7,7 @@
 seq_getHistPeptide(
   df,
   seq_col = sequence,
-  histoneProtein = c("All", "H3", "H4", "H2A", "H2B")
+  histoneProtein = c("All", "H3", "H4", "H2A", "H2B", "H1")
 )
 }
 \arguments{
