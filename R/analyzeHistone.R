@@ -5,9 +5,10 @@
 #'
 #' @param analysisfile `Proline` output excel file
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
-#' @param hist_prot One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".
+#' @param hist_prot One or all of 5 histone proteins ('H3', 'H4', 'H2A', 'H2B', 'H1'). If you want to analyze them all, choose "All".
 #' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.
 #' @param NA_threshold A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).
+#' @param PSM_threshold A cutt-off value (default is `0`) of PSM counts below which an identification is to be discarded (i.e. if 2, a ID with only 2, 1, or no PSM is discarded)
 #' @param extra_filter Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).
 #' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
@@ -56,9 +57,10 @@
 
 analyzeHistone <- function(analysisfile,
                 metafile,
-                hist_prot= c('All','H3', 'H4', 'H2A', 'H2B'),
+                hist_prot= c('All','H3', 'H4', 'H2A', 'H2B', 'H1'),
                 labeling = c('PA', 'TMA', 'PIC_PA', "none"),
                 NA_threshold,
+                PSM_threshold = 0,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
                 extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un"),
@@ -66,7 +68,7 @@ analyzeHistone <- function(analysisfile,
 
 
   output_result = match.arg(output_result)
-  if(missing(hist_prot)) hist_prot= c('H3', 'H4', "H2A", 'H2B')
+  if(missing(hist_prot)) hist_prot= c('H3', 'H4', "H2A", 'H2B', 'H1')
   labeling = match.arg(labeling)
   norm_method = match.arg(norm_method)
   extra_filter = match.arg(extra_filter)
@@ -177,7 +179,7 @@ Histone <-  seq_getHistPeptide(df = proline_output, seq_col = sequence, histoneP
 #extract peptides and assign names to them (labelbyk is used here)
 
 if ("All" %in% hist_prot) {
-  prot_to_extract <- c('H3', 'H4', "H2A", 'H2B')
+  prot_to_extract <- c('H3', 'H4', "H2A", 'H2B', 'H1')
 } else {
   prot_to_extract <- hist_prot
 }
@@ -226,19 +228,19 @@ Histone <- Histone |>
   ptm_score,
   moz = experimental_moz,
   rt_apex = master_elution_time,
-  rt,
-  z= charge,
+  id_rt = rt,
+  id_z = charge,
   id_query = initial_query_id,
-  id_scan,
-  dat,
-  id_filename,
-  SampleName,
+  id_scan, #generated from misc_parseSpectrumtitle
+  id_dat = dat, #from misc_extractMetaData
+  id_filename,#generated from misc_parseSpectrumtitle
+  SampleName, #from user custome names file
   dplyr::any_of(c(
     "Condition",
     "BioReplicate",
     'TechReplicate')),
   dplyr::starts_with(c("psm_count", "abundance_"))) |>
-  dplyr::mutate(diff_rt = rt_apex - rt, .after =  rt)
+  dplyr::mutate(diff_rt = rt_apex - id_rt, .after =  id_rt)
 
 
 #rename_PTMs
@@ -288,7 +290,7 @@ SHEET3 <- Nt_Histone
 if(rlang::is_missing(NA_threshold)){NA_threshold = numberofsamples}
 
 accepted_Histone <- Nt_Histone |>
-  dplyr::filter(NA_count <= NA_threshold) |>
+  dplyr::filter(NA_count <= NA_threshold & PSM_count >= PSM_threshold) |>
   dplyr::mutate(fully_modified = dplyr::if_else(stringr::str_detect(sequence, "K"),  #mark sequences having lysines in their sequences
                                                 dplyr::if_else(
                                                   #for sequence containing K, mark those whose number of PTMs match number of Ks
@@ -580,6 +582,25 @@ cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} 
 
 # Start of the Graphing Module --------------------------
 if(save_plot == TRUE){
+
+
+  df_tobe_splitted |>
+    dplyr::select(tidyr::starts_with('cv_')) |>
+    tidyr::pivot_longer(cols = tidyr::everything()
+                        , names_to = "Condition"
+                        , names_prefix = "cv_"
+                        , values_to = 'CV',
+                        values_drop_na = TRUE) |>
+    plot_CVs(df = _,
+             cond_col = Condition,
+             cv_col = CV,
+             save_plot = TRUE,
+             scale = 1, #CVs are already multiplied by 100
+             output_dir= img_folder_name )
+
+  cli::cli_alert_success('CV plots are saved successfully.')
+
+
 df_tobe_splitted |>
   dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(meta_names_merge$SampleName)) |>
   tidyr::pivot_longer(cols = dplyr::any_of(meta_names_merge$SampleName), names_to = 'SampleName', values_to = 'intensity') |>
@@ -594,6 +615,8 @@ df_tobe_splitted |>
                          plot_title = sequence,
                          save_plot = TRUE,
                          output_dir = img_folder_name)
+
+
 }
 
 #End of the Graphing Module##########################

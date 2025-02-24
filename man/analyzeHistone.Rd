@@ -7,9 +7,10 @@
 analyzeHistone(
   analysisfile,
   metafile,
-  hist_prot = c("All", "H3", "H4", "H2A", "H2B"),
+  hist_prot = c("All", "H3", "H4", "H2A", "H2B", "H1"),
   labeling = c("PA", "TMA", "PIC_PA", "none"),
   NA_threshold,
+  PSM_threshold = 0,
   norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
   extra_filter = c("none", "no_me1", "K37un", "no_me1_K37un"),
@@ -21,11 +22,13 @@ analyzeHistone(
 
 \item{metafile}{An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).}
 
-\item{hist_prot}{One of 4 histone proteins ('H3', 'H4', 'H2A', 'H2B'). If you want to analyze them all, choose "All".}
+\item{hist_prot}{One or all of 5 histone proteins ('H3', 'H4', 'H2A', 'H2B', 'H1'). If you want to analyze them all, choose "All".}
 
 \item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.}
 
 \item{NA_threshold}{A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).}
+
+\item{PSM_threshold}{A cutt-off value (default is `0`) of PSM counts below which an identification is to be discarded (i.e. if 2, a ID with only 2, 1, or no PSM is discarded)}
 
 \item{norm_method}{Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
