@@ -36,7 +36,7 @@ normalizeNplot(
 
 \item{rules}{(optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.}
 
-\item{...}{Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot` etc ... Revise the documentation for more details.}
+\item{...}{Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot`, `max_cutoff`, `output_dir` etc ... Revise the documentation for more details.}
 }
 \value{
 Same output as `plot_jitterbarIntvsPTM()`. A dataframe grouped by 'id_col' (and 'plot_title' if passed) with a nested list-column harboring the generated

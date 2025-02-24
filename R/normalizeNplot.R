@@ -13,7 +13,7 @@
 #' @param save_file (\code{bool}) TRUE (default) to save the normalized file.
 #' @param labeling Labeling method (e.g. 'PA', 'TMA', 'PA_PIC', or 'none' (default)). Check `misc_clearLabeling()`.
 #' @param rules (optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.
-#' @param ... Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot` etc ... Revise the documentation for more details.
+#' @param ... Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot`, `max_cutoff`, `output_dir` etc ... Revise the documentation for more details.
 #'
 #' @importFrom dplyr mutate select left_join join_by starts_with any_of all_of
 #' @importFrom tidyr pivot_longer
