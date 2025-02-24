@@ -40,7 +40,7 @@ quant_relIntensity <- function(df, select_cols, grouping_var, norm_method = c('p
   if ( norm_by == 'peptide_family'){
 
   df_norm <- df |>
-    dplyr::mutate(dplyr::across({{select_cols}}, ~ .normalize_vec(x=.)),
+    dplyr::mutate(dplyr::across(dplyr::all_of({{select_cols}}), ~ .normalize_vec(x=.)),
                    .by = {{grouping_var}}
     )
 
