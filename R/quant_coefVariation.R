@@ -53,6 +53,8 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
       dplyr::select({{int_col}})  |>
       names()
 
+    #remove columns with no names or column renamed after repair to ...1, ..2
+    df_meta <-  df_meta[, !grepl("^\\.{3}[1-9]$|^$", colnames(df_meta))]
 
     df_meta <- df_meta |> dplyr::filter(SampleName %in% int_cols)
 
