@@ -30,7 +30,7 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
   #STY propionylation/TMAylation
   regex_OverLab = 'Propionyl.*\\([TSY]\\d+\\)|TMAyl(?:_correct)?.*\\([TSY]\\d+\\)|[ST]\\d+(?:tma|pr)'
 
-  #ethyl or me1 and not tmame1
+  #Methyl or me1 and not tmame1
   regex_nonLabMe1 = '(?:Methyl\\s*K?R?\\s*\\(K\\d+\\))|(?:[:upper:]*\\d+me1)\\b'
     #^(?:(?!.*(?:\\(Any N-term\\)|prNt|tmaNt)).)*$|(?:Methyl\\s*K?R?\\s*\\(K\\d+\\))|(?:[:upper:]*\\d+me1)\\b
 
@@ -40,15 +40,20 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
   #Propionyl//TMA N-term
   regex_Nterm = '.* \\(Any N-term\\)|tmaNt|prNt'
 
+
+
+  # filter data by removing duplications, selecting the sequence of interest
   df_filtered <- df |>
     dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}) |>
     dplyr::filter(stringr::str_detect({{seq_col}}, {{seq}})) |>
     dplyr::distinct(dplyr::across({{int_col}}), .keep_all = TRUE)
 
+#### Calculate CVs #####
+
+if(nrow(df_filtered)>1){
 
 
-
-
+#### Label the data #####
 
   df_tagged <- df_filtered |>
     dplyr::mutate(isOverLab = stringr::str_detect({{ptm_col}}, regex_OverLab),
@@ -59,6 +64,7 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
                   isNterm = stringr::str_detect({{ptm_col}}, regex_Nterm ))
 
 
+##### Isolate and sum each labeled group #####
   df_total <- df_tagged |>
     dplyr::summarise(dplyr::across({{int_col}},  ~sum(.x, na.rm = T))) |>
     dplyr::mutate(label = 'Total')
@@ -87,7 +93,8 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
 
 
 
-  df_total = dplyr::bind_rows(df_total, df_underlab, df_overlab, df_desired)
+  df_total = dplyr::bind_rows(df_total, df_underlab, df_overlab, df_desired) |>
+    mutate(seq_analyzed = seq)
 
 
   df_total_norm <- df_total |>
@@ -103,7 +110,7 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
 
   sample_number <- length(colnames(df_filtered))-2
 
-  angle = ifelse(sample_number < 6, 0, 45)
+  angle = ifelse(sample_number < 8, 0, 45)
 
 
   p <- df_total_norm |>
@@ -132,5 +139,16 @@ ptm_labelingAssessment <- function(df, seq_col, seq, ptm_col, int_col, plot_titl
   #adapt it to take more than one sequence.
 
   return(list(raw_data = df_total, normalized_data = df_total_norm, plot= p))
+
+    }else if (nrow(df_filtered) == 0){
+
+  cli::cli_alert_info('The sequence {.val {seq}} is not found in your {.val {deparse(substitute(seq_col))}} column.')
+
+      }else{
+
+         return(NULL)
+
+  }
+
 }
 
