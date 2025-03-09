@@ -10,19 +10,21 @@
 #' @param seq_col sequence column
 #' @param seq_ptm_col column name containing sequnce information
 #' @param int_col column name containing peptide intensity values.
+#' @param save_file \code{bool, FALSE} (default)
+#' @param save_plot \code{bool, FALSE} (default)
 #'
 #' @importFrom dplyr select distinct filter across summarise mutate
 #' @import ggplot2
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom ggtext element_markdown
 #'
-#' @return stacked bar plot showing percentage of H3.1 and H3.3 in each sample.
+#' @return a list of two elements: the data and the plot which is a stacked bar plot showing percentage of H3.1 and H3.3 in each sample.
 #' @export
 #'
 
-plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col){
+plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col, save_plot = FALSE, save_file = FALSE){
 
-  utils::globalVariables('KSAPATGGVKKPHR', 'KSAPSTGGVKKPHR')
+  #utils::globalVariables(c('KSAPATGGVKKPHR', 'KSAPSTGGVKKPHR'))
 
 
   RA <- df |>
@@ -60,8 +62,16 @@ plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col){
   RA_per |>
     dplyr::mutate(variant= factor(variant),
                   sample = gsub('abundance_', '', sample)
-    ) |>
+    ) -> RA_per_plot
 
+  if(save_file){
+
+    datasave <- RA_per_plot |> dplyr::select(-reorder_col)
+
+    openxlsx::write.xlsx(x = datasave, file = 'H3_H33.xlsx', sheetName = 'H3_H33')
+  }
+
+ plotH3 <-  RA_per_plot |>
     ggplot2::ggplot(aes(x= stats::reorder(x= sample, reorder_col, .desc = TRUE),  y= intensity, fill= variant))+
     ggplot2::geom_col(width = 0.5)+
     ggplot2::labs(x= "", y = "", fill= "",
@@ -81,5 +91,10 @@ plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col){
           plot.caption = ggtext::element_markdown(hjust = 0,face="italic", size = 12)
     )
 
+if(save_plot){
 
+ggplot2::ggsave("H3_H33.png")
+}
+
+ return(list( data= datasave , plot = plotH3))
 }

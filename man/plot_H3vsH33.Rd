@@ -4,7 +4,14 @@
 \alias{plot_H3vsH33}
 \title{H3cano vs H3.3 Relative Abundance Plot}
 \usage{
-plot_H3vsH33(df, seq_col, seq_ptm_col, int_col)
+plot_H3vsH33(
+  df,
+  seq_col,
+  seq_ptm_col,
+  int_col,
+  save_plot = FALSE,
+  save_file = FALSE
+)
 }
 \arguments{
 \item{df}{dataframe in wide format}
@@ -14,9 +21,13 @@ plot_H3vsH33(df, seq_col, seq_ptm_col, int_col)
 \item{seq_ptm_col}{column name containing sequnce information}
 
 \item{int_col}{column name containing peptide intensity values.}
+
+\item{save_plot}{\code{bool, FALSE} (default)}
+
+\item{save_file}{\code{bool, FALSE} (default)}
 }
 \value{
-stacked bar plot showing percentage of H3.1 and H3.3 in each sample.
+a list of two elements: the data and the plot which is a stacked bar plot showing percentage of H3.1 and H3.3 in each sample.
 }
 \description{
 H3K27R40 of H3cano and H3.3 are hard-coded (i.e. 'KSAPATGGVKKPHR' and 'KSAPSTGGVKKPHR').
