@@ -6,9 +6,12 @@
 #' @param ptm_col PTM column containing PTMs in Brno nomenclature, separated by "-" if multiple PTMs exist (e.g. 'K27ac-K36bu')
 #' @param id_col The identity column(s) (e.g. column containing sequences).
 #' @param int_cols Column(s) containing intensity values.
+#' @param sep_ptm separator that separates PTMs (default is "-").
 #' @param format Format of `df` ('wide' (default) or 'long'))
 #' @param remove_ptm A ptm to be excluded. provided as a string.
+#' @param save_data \code{bool, FALSE} (default)
 #' @param save_plot \code{bool, FALSE} (default)
+#' @param ... additional arguments passed to `plot_jitterbarIntvsPTM()` function.
 #'
 #' @importFrom dplyr select filter pull summarize across bind_rows
 #' @importFrom stringr str_detect
@@ -17,7 +20,13 @@
 #' @export
 #'
 
-ptm_siteAbundance<- function(df, metadata, ptm_col, id_col, int_cols, format= c('wide', 'long'), remove_ptm = NULL, save_plot = FALSE) {
+ptm_siteAbundance <- function(df, df_meta, ptm_col, id_col, int_cols
+                             , format= c('wide', 'long')
+                             , sep_ptm = '-'
+                             , remove_ptm = NULL
+                             , save_data = FALSE
+                             , save_plot = FALSE
+                             , ...) {
 
   format= match.arg(format)
 
@@ -28,10 +37,10 @@ ptm_siteAbundance<- function(df, metadata, ptm_col, id_col, int_cols, format= c(
     remove_ptm <- paste("\\*", remove_ptm, sep = "|")
   }
 
-  #extact unique residue and ptm (e.g. K10ac)
+  #extract unique residue and ptm (e.g. K10ac)
   res_ptm <- df |>
     dplyr::pull({{ ptm_col }}) |>
-    strsplit(split = "-") |>
+    strsplit(split = sep_ptm) |>
     unlist() |>
     unique() |>
     gsub(pattern = remove_ptm, replacement = "", x = _) |>
@@ -51,6 +60,11 @@ ptm_siteAbundance<- function(df, metadata, ptm_col, id_col, int_cols, format= c(
   }) |> dplyr::bind_rows()
 
 
+  if(save_data){
+
+    write.csv(x = df_siteAbundance , file = "siteAbundance.csv")
+
+  }
 
 
 
@@ -65,15 +79,17 @@ ptm_siteAbundance<- function(df, metadata, ptm_col, id_col, int_cols, format= c(
       dplyr::left_join(y = df_meta, by = 'SampleName')
 }
 
-   plot_jitterbarIntvsPTM(dataset = df_plot
+   p <- plot_jitterbarIntvsPTM(dataset = df_plot
                                    , x_axis = PTMsite
                                    , y_axis = intensity
                                    , condition = Condition
                                    , id_col = {{id_col}}
-                                   , save_plot = save_plot)
+                                   , save_plot = save_plot
+                                   , ...
+                          )
 }
 
+return(list(data = df_siteAbundance, plot = p))
 
-  return(df_siteAbundance)
 }
 

@@ -7,17 +7,22 @@ Calculates the abundance of an individual histone PTM site.}
 \usage{
 ptm_siteAbundance(
   df,
-  metadata,
+  df_meta,
   ptm_col,
   id_col,
   int_cols,
   format = c("wide", "long"),
+  sep_ptm = "-",
   remove_ptm = NULL,
-  save_plot = FALSE
+  save_data = FALSE,
+  save_plot = FALSE,
+  ...
 )
 }
 \arguments{
 \item{df}{Dataframe containing normalized values}
+
+\item{df_meta}{Dataframe containing the sample design. Must contain the column "SampleName" and "Condition".}
 
 \item{ptm_col}{PTM column containing PTMs in Brno nomenclature, separated by "-" if multiple PTMs exist (e.g. 'K27ac-K36bu')}
 
@@ -27,11 +32,15 @@ ptm_siteAbundance(
 
 \item{format}{Format of `df` ('wide' (default) or 'long'))}
 
+\item{sep_ptm}{separator that separates PTMs (default is "-").}
+
 \item{remove_ptm}{A ptm to be excluded. provided as a string.}
+
+\item{save_data}{\code{bool, FALSE} (default)}
 
 \item{save_plot}{\code{bool, FALSE} (default)}
 
-\item{df_meta}{Dataframe containing the sample design. Must contain the column "SampleName" and "Condition".}
+\item{...}{additional arguments passed to `plot_jitterbarIntvsPTM()` function.}
 }
 \value{
 dataframe with id_col(s), `PTMsite` containing the quantified sites, and the intensity column(s)
