@@ -9,8 +9,8 @@ analyzeHistone(
   metafile,
   hist_prot = c("All", "H3", "H4", "H2A", "H2B", "H1"),
   labeling = c("PA", "TMA", "PIC_PA", "none"),
-  NA_threshold,
-  PSM_threshold = 0,
+  Quant_threshold = NULL,
+  PSM_threshold = NULL,
   norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
   extra_filter = c("none", "no_me1", "K37un", "no_me1_K37un"),
@@ -26,9 +26,9 @@ analyzeHistone(
 
 \item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.}
 
-\item{NA_threshold}{A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).}
+\item{Quant_threshold}{A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in EVERY condition.}
 
-\item{PSM_threshold}{A cutt-off value (default is `0`) of PSM counts below which an identification is to be discarded (i.e. if 2, a ID with only 2, 1, or no PSM is discarded)}
+\item{PSM_threshold}{A cutt-off value (default is `NULL`). The ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.}
 
 \item{norm_method}{Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
@@ -47,7 +47,7 @@ At least 3 excel files fragmented based on different filters:
       \item SHEET1: 'meta_data' — SampleName, file, and data columns (and Condition, Bioreplicate, TechReplicate if available).
       \item SHEET2: 'RawData' — The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.
       \item SHEET3: 'Nt_IDs' — All peptides that are successfully N-terminally labelled. iRT are always included.
-      \item SHEET4: '#NA<_NA_threshold' — IDs quantified with missing values less than the specified threshold.
+      \item SHEET4: 'QuantQuant_threshold_PSM_PSM_threshold' — IDs quantified with in at least `Quant_threshold` samples with minimum of `PSM_threshold` PSMs.
       \item SHEET5: 'FullyMod_IDs' — All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.
       \item SHEET6: 'isob_coel_pep' — Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.
       \item SHEET7: 'unique_IDs' — Unique IDs considered for quantification. Abundances are not normalized.
