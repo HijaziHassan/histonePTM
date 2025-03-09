@@ -7,8 +7,8 @@
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
 #' @param hist_prot One or all of 5 histone proteins ('H3', 'H4', 'H2A', 'H2B', 'H1'). If you want to analyze them all, choose "All".
 #' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.
-#' @param NA_threshold A cutt-off value of missing intensity values in which an identification is to be discarded (i.e. if 2, an ID with 2 or more NA will be discared).
-#' @param PSM_threshold A cutt-off value (default is `0`) of PSM counts below which an identification is to be discarded (i.e. if 2, a ID with only 2, 1, or no PSM is discarded)
+#' @param Quant_threshold A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in EVERY condition.
+#' @param PSM_threshold A cutt-off value (default is `NULL`). The ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.
 #' @param extra_filter Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).
 #' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
@@ -31,7 +31,7 @@
 #'       \item SHEET1: 'meta_data' — SampleName, file, and data columns (and Condition, Bioreplicate, TechReplicate if available).
 #'       \item SHEET2: 'RawData' — The raw data as is with a subset of columns, some of which are renamed, and new columns like rt_diff, NA_count, etc., in addition to those parsed from the _spectrum_title_ column.
 #'       \item SHEET3: 'Nt_IDs' — All peptides that are successfully N-terminally labelled. iRT are always included.
-#'       \item SHEET4: '#NA<_NA_threshold' — IDs quantified with missing values less than the specified threshold.
+#'       \item SHEET4: 'QuantQuant_threshold_PSM_PSM_threshold' — IDs quantified with in at least `Quant_threshold` samples with minimum of `PSM_threshold` PSMs.
 #'       \item SHEET5: 'FullyMod_IDs' — All peptides that are N-terminally labelled and all Ks are modified endogenously or chemically.
 #'       \item SHEET6: 'isob_coel_pep' — Peptides spotted by the `ptm_flagDupes()` function. Helps see which PTM × sequence combinations have a zero delta score.
 #'       \item SHEET7: 'unique_IDs' — Unique IDs considered for quantification. Abundances are not normalized.
@@ -59,8 +59,8 @@ analyzeHistone <- function(analysisfile,
                 metafile,
                 hist_prot= c('All','H3', 'H4', 'H2A', 'H2B', 'H1'),
                 labeling = c('PA', 'TMA', 'PIC_PA', "none"),
-                NA_threshold,
-                PSM_threshold = 0,
+                Quant_threshold = NULL,
+                PSM_threshold = NULL,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
                 extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un"),
@@ -98,7 +98,7 @@ img_folder_name  = tools::file_path_sans_ext(paste0("figures/", analysisfile))
 # Overview ------------------
 cli::cli({
   cli::cli_h1("Histone Analysis")
-  cli::cli_h2("Sample: {exp_folder_name}")
+  cli::cli_h2("Sample: {.path {exp_folder_name}}")
   cli::cli_h3("Histones:  {hist_prot}")
   cli::cli_h3("Labeling method:  {labeling}")
 })
@@ -162,6 +162,13 @@ meta_names_merge <- dplyr::left_join(meta_names, rawfilenames, by = "file") |>
   dplyr::select(SampleName, file, dat, dplyr::any_of(c('Condition', 'BioReplicate', 'TechReplicate'))) |>
   tidyr::drop_na(SampleName, file, dat)
 
+intensityCols <- meta_names_merge$SampleName
+psmCols <- paste0(intensityCols, '_psmCount')
+conds <- meta_names_merge$Condition
+unique_cond = unique(conds)
+
+
+
 ##### SHEET 1 -----------------------------------------------
 
 SHEET1 = meta_names_merge
@@ -175,6 +182,11 @@ proline_output <- dplyr::left_join(proline_output, meta_names_merge,
 Histone <-  seq_getHistPeptide(df = proline_output, seq_col = sequence, histoneProtein = hist_prot)
 #cli::cli_inform("{histoneProtein} histone peptides are extracted.")
 
+#end the code if no peptides were found in the dataset.
+if (nrow(Histone) == 0) {  # Condition to stop execution
+  cli::cli_alert_warning("No peptide of {hist_prot} were found in this dataset")
+  return()
+}
 
 #extract peptides and assign names to them (labelbyk is used here)
 
@@ -243,21 +255,38 @@ Histone <- Histone |>
   dplyr::mutate(diff_rt = rt_apex - id_rt, .after =  id_rt)
 
 
-#rename_PTMs
+#rename_PTMs & rename cols
 Histone <- Histone |>
   dplyr::mutate(
     PTM_proforma = ptm_toProForma(seq = sequence, mod= modifications, lookup = histptm_mass),
     PTM = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup), .after = PTM) |>
-  dplyr::select(-modifications) #no need for this column anymore.
+  dplyr::select(-modifications) |>  #no need for this column anymore.
+  dplyr::rename(!!!dplyr::any_of(ColNames))
 
-
-#Count NA & PSMs rowwise
 
 Histone <- Histone |>
+  #dplyr::rename(!!!dplyr::any_of(ColNames)) |>
   dplyr::mutate(
-    NA_count = rowSums(is.na(dplyr::across(dplyr::starts_with("abundance_")))),
-    PSM_count = rowSums(dplyr::across(dplyr::starts_with("psm_count")))
+    NA_count = rowSums(is.na(dplyr::across(dplyr::all_of(intensityCols)))),
+    PSM_count = rowSums(dplyr::across(dplyr::all_of(psmCols)))
   )
+
+###### Count NA & PSMs per condition -----------------
+##To extract sample names from metadata as named vector
+sample_cond = split(intensityCols, conds)
+psmCount_cond = split(psmCols, conds)
+
+
+for (cond in unique_cond) {
+  int_cols <- sample_cond[[cond]]
+  psm_cols <- psmCount_cond[[cond]]
+
+  Histone <- Histone |>
+    dplyr::mutate(
+      !!paste0("Quantcount_", cond) := rowSums(!is.na(Histone[, int_cols, drop = FALSE]))
+      #,!!paste0("PSMcount_", cond) := rowSums(Histone[, psm_cols, drop = FALSE], na.rm = TRUE)
+    )
+}
 
 
 #####SHEET 2 -----------------------------------------------
@@ -280,17 +309,17 @@ Nt_Histone <- Histone |>
 #   cli::cli_inform("Nt-terminally labeled peptides and iRTs are isolated.\n")}else{
 #     cli::cli_inform("Nt-terminally labeled peptides are isolated.\n")}
 
+if (nrow(Nt_Histone) == 0) {  # Condition to stop execution
+  cli::cli_alert_warning("No N-terminally modified peptide were found. Did you choose the right {.arg labeling}?")
+  return()
+}
 
 SHEET3 <- Nt_Histone
 
 #####SHEET 4 -----------------------------------------------
 #Contain only identifications where number of NAs is below user-defined threshold
 # if not defined, the threshold will be number of samples (i.e. only remove an id if it is not quantified.)
-
-if(rlang::is_missing(NA_threshold)){NA_threshold = numberofsamples}
-
 accepted_Histone <- Nt_Histone |>
-  dplyr::filter(NA_count <= NA_threshold & PSM_count >= PSM_threshold) |>
   dplyr::mutate(fully_modified = dplyr::if_else(stringr::str_detect(sequence, "K"),  #mark sequences having lysines in their sequences
                                                 dplyr::if_else(
                                                   #for sequence containing K, mark those whose number of PTMs match number of Ks
@@ -300,7 +329,35 @@ accepted_Histone <- Nt_Histone |>
                                                 "Lysine_free_seq"))|>
   dplyr::mutate(fully_modified = dplyr::if_else(stringr::str_detect(seq_stretch, "iRT"), "iRT", fully_modified))
 
-cli::cli_alert_warning("IDs with {NA_threshold} or more missing values were discarded.")
+if (!is.null(PSM_threshold) || !is.null(Quant_threshold)) {
+  accepted_Histone <- accepted_Histone |>
+    dplyr::filter(
+      # Scenario 1: Both thresholds are not NULL
+      if (!is.null(PSM_threshold) && !is.null(Quant_threshold)) {
+        !(PSM_count < PSM_threshold |
+            rowSums(across(starts_with("Quantcount_"), ~ . < Quant_threshold)) > 0)
+      }
+      # Scenario 2: PSM_threshold is NULL, Quant_threshold is not
+      else if (is.null(PSM_threshold) && !is.null(Quant_threshold)) {
+        !(rowSums(across(starts_with("Quantcount_"), ~ . < Quant_threshold)) > 0)
+      }
+      # Scenario 3: PSM_threshold is not NULL, Quant_threshold is NULL
+      else if (!is.null(PSM_threshold) && is.null(Quant_threshold)) {
+        !(PSM_count < PSM_threshold)
+      }
+
+      else TRUE
+    )
+} else {
+  accepted_Histone <- accepted_Histone
+}
+
+
+
+
+
+
+#cli::cli_alert_warning("IDs with {NA_threshold} or more missing values were discarded.")
 
 SHEET4 <- accepted_Histone
 
@@ -336,7 +393,7 @@ SHEET5 <- CompleteHistoneCases
 dupesAnalysis <- ptm_flagDupes(df= CompleteHistoneCases,
                                     PTM_col = PTM,
                                     var_col = sequence,
-                                    select_cols = dplyr::starts_with("abundance_"))
+                                    select_cols = intensityCols)
 
 
 SHEET6 <- dupesAnalysis[[2]] # duplicate dataframe
@@ -353,10 +410,10 @@ SHEET7 <- uniqueHistoneForms <- dupesAnalysis[[1]] #unique-ID dataframe
           #4) new column: PTM_unlabeled
 
 SHEET8 <- uniqueHistoneForms |>
-  quant_relIntensity(select_cols = dplyr::starts_with("abundance_"),
+  quant_relIntensity(select_cols = intensityCols,
                      grouping_var = sequence,
                      norm_method = norm_method) |>
-  dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+  # dplyr::rename(!!!dplyr::any_of(ColNames)) |>
   quant_coefVariation(df= _, df_meta= meta_names_merge,
                       int_col= dplyr::any_of(meta_names_merge$SampleName),
                       seq_col = sequence,
@@ -372,7 +429,7 @@ all_sheets <-
   c("meta_data",
     "RawData",
     "Nt_IDs",
-    paste0("#NA<", NA_threshold),
+    paste0("Quant", Quant_threshold, "_PSM", PSM_threshold),
     "FullyMod_IDs",
     "isob_coel_pep",
     "unique_IDs",
@@ -413,10 +470,10 @@ if (extra_filter %in% c("no_me1", "K37un", "no_me1_K37un")) {
   SHEET9 <- filtered_data |>
     dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after = 'PTM') |>
     quant_relIntensity(
-      select_cols = dplyr::starts_with("abundance_"),
+      select_cols = intensityCols,
       grouping_var = sequence
     ) |>
-    dplyr::rename(!!!dplyr::any_of(ColNames)) |>
+    #dplyr::rename(!!!dplyr::any_of(ColNames)) |>
     quant_coefVariation(
       df = _,
       df_meta = meta_names_merge,
@@ -580,9 +637,31 @@ openxlsx::saveWorkbook(wb=wb_ptm,
 
 cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.\n')
 
-# Start of the Graphing Module --------------------------
-if(save_plot == TRUE){
 
+
+# Start of the Graphing Module --------------------------
+
+## Site Abundance plot
+
+cli::cli_alert_info('Plotting RA site abundance plots ...')
+siteAnalysis <- ptm_siteAbundance(df = df_tobe_splitted
+                  ,df_meta = meta_names_merge
+                  ,ptm_col = PTM
+                  ,id_col = sequence
+                  ,int_cols = intensityCols
+                  , format = 'wide'
+                  , remove_ptm = 'prNt|tmaNt'
+                  , save_plot = save_plot,
+                  , output_dir = paste0(img_folder_name, "/RAsiteplots")
+)
+
+writexl::write_xlsx(siteAnalysis[['data']] , path = paste0('./analysis/', folderName,"/siteAbundance.xlsx"))
+
+
+
+if(save_plot == TRUE){
+## CV plot
+  cli::cli_alert_info('Plotting CV plots ...')
 
   df_tobe_splitted |>
     dplyr::select(tidyr::starts_with('cv_')) |>
@@ -598,12 +677,12 @@ if(save_plot == TRUE){
              scale = 1, #CVs are already multiplied by 100
              output_dir= img_folder_name )
 
-  cli::cli_alert_success('CV plots are saved successfully.')
+  cli::cli_alert_info('Plotting RA abundance plots ...')
 
-
+## RA plots
 df_tobe_splitted |>
-  dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(meta_names_merge$SampleName)) |>
-  tidyr::pivot_longer(cols = dplyr::any_of(meta_names_merge$SampleName), names_to = 'SampleName', values_to = 'intensity') |>
+  dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(intensityCols)) |>
+  tidyr::pivot_longer(cols = dplyr::any_of(intensityCols), names_to = 'SampleName', values_to = 'intensity') |>
   dplyr::left_join(meta_names_merge, dplyr::join_by(SampleName)) |>
   plot_jitterbarIntvsPTM(dataset = _,
                          x_axis = PTM_unlabeled,
@@ -614,7 +693,9 @@ df_tobe_splitted |>
                          error_type = NULL,
                          plot_title = sequence,
                          save_plot = TRUE,
-                         output_dir = img_folder_name)
+                         output_dir = paste0(img_folder_name, "/RAplots")
+                                             )
+
 
 
 }
