@@ -2,21 +2,33 @@
 % Please edit documentation in R/ptm_labelingAssessment.R
 \name{ptm_labelingAssessment}
 \alias{ptm_labelingAssessment}
-\title{Assessing (over)Labeling Effeciency}
+\title{Assessing (over)Labeling Efficiency}
 \usage{
-ptm_labelingAssessment(df, seq_col, seq, ptm_col, int_col, plot_title = "")
+ptm_labelingAssessment(
+  df,
+  seq_col,
+  seq = NULL,
+  ptm_col,
+  int_col,
+  save_plot = FALSE,
+  plot_title = ""
+)
 }
 \arguments{
-\item{df}{Your dataset}
+\item{df}{Proteomics results dataset.}
 
 \item{seq_col}{column containing bare peptide sequences}
 
-\item{seq}{sequence to base the assessment on it}
+\item{seq}{sequence(s) to base the assessment on. Multiple sequences should be passed as a character vector.
+If empty or `NULL` (default), five H3 and H4 built-in sequences will be analyzed.
+If "All", then all the unique sequence in the `seq_col` will be analyzed.}
 
 \item{ptm_col}{column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma;, for overProp: Propionyl, prNt, pr). Only
-two representations of PTMs can be recognized to filter upon: Propionly (K12) or K27bu-S32pr ....)}
+two representations of PTMs can be recognized to filter upon: Propionyl (K12) or K27bu-S32pr ....)}
 
 \item{int_col}{sample columns containing intensity values}
+
+\item{save_plot}{bool; `FALSE` (default). Save or not the plot to the desktop.`}
 
 \item{plot_title}{A title for the plot}
 }
@@ -24,5 +36,5 @@ two representations of PTMs can be recognized to filter upon: Propionly (K12) or
 list of two dataframes (raw and normalized values) and a bar plot.
 }
 \description{
-Some time overlabeling is very abundant which decrease sensitivity and affect quantification accuracy.
+Sometimes overlabeling is very abundant which decrease sensitivity and affect quantification accuracy.
 }
