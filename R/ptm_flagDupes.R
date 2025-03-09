@@ -41,7 +41,7 @@
 
 ptm_flagDupes <- function(df,PTM_col, var_col, select_cols) {
 
-  select_exp <- rlang::enexpr(select_cols)
+  #select_exp <- rlang::enexpr(select_cols)
   PTM_col <-  rlang::enexpr(PTM_col)
   var_col <-  rlang::enexpr(var_col)
 
@@ -60,7 +60,9 @@ ptm_flagDupes <- function(df,PTM_col, var_col, select_cols) {
 
   #isolate different IDs but having same intensities over ALL samples.
   Duplicates <- NotIdentical |>
-    dplyr::add_count(dplyr::across(!!select_exp)) |>
+    #dplyr::add_count(dplyr::across(!!select_exp)) |>
+    dplyr::add_count(dplyr::across({{select_cols}})) |>
+
     dplyr::filter(n > 1)
 
   rlang::eval_tidy(Duplicates)
@@ -83,7 +85,9 @@ names(freq_table) <- c('dupes_count', 'freq')
   # identification is repeated (shared peptide between two or more proteins)#
 
   uniqueHistoneForms <- NotIdentical |>
-    dplyr::distinct(.data = _, across(!!select_exp) , .keep_all = TRUE)
+   # dplyr::distinct(.data = _, across(!!select_exp) , .keep_all = TRUE)
+  dplyr::distinct(.data = _, across({{select_cols}}) , .keep_all = TRUE)
+
 
   rlang::eval_tidy(uniqueHistoneForms)
 
