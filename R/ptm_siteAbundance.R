@@ -67,8 +67,8 @@ ptm_siteAbundance <- function(df, df_meta, ptm_col, id_col, int_cols
   }
 
 
-
   if(save_plot){
+
 
     if(format == "wide"){
 
@@ -87,9 +87,15 @@ ptm_siteAbundance <- function(df, df_meta, ptm_col, id_col, int_cols
                                    , save_plot = save_plot
                                    , ...
                           )
-}
+
+
 
 return(list(data = df_siteAbundance, plot = p))
+
+   }else{
+
+     return(list(data = df_siteAbundance, plot = NULL))
+   }
 
 }
 
