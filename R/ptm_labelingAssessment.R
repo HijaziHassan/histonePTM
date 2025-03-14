@@ -34,17 +34,17 @@ ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, sa
 
 
   #STY propionylation/TMAylation
-  regex_OverLab = 'Propionyl.*\\([TSY]\\d+\\)|TMAyl(?:_correct)?.*\\([TSY]\\d+\\)|[ST]\\d+(?:tma|pr)'
+  regex_OverLab = 'Propionyl.*\\([TSY]\\d+\\)|TMAyl(?:_correct)?.*\\([TSY]\\d+\\)|[TSY]\\d+(?:tma|pr)'
 
   #Methyl or me1 and not tmame1
-  regex_nonLabMe1 = '(?:Methyl\\s*K?R?\\s*\\(K\\d+\\))|(?:[:upper:]*\\d+me1)\\b'
+  regex_nonLabMe1 = '(?:Methyl\\s*K?R?\\s*\\(K\\d+\\))|(?:K\\d+me1)\\b'
     #^(?:(?!.*(?:\\(Any N-term\\)|prNt|tmaNt)).)*$|(?:Methyl\\s*K?R?\\s*\\(K\\d+\\))|(?:[:upper:]*\\d+me1)\\b
 
   #how many Ks are modified
   regex_Kmod = '\\(K\\d+?\\)|K\\d+'
 
   #Propionyl//TMA N-term
-  regex_Nterm = '.* \\(Any N-term\\)|tmaNt|prNt'
+  regex_Nterm = '.* \\(Any N-term\\)|.* \\(Protein N-term\\)|tmaNt|prNt|acPNt'
 
 
 
