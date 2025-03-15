@@ -10,6 +10,8 @@ ptm_labelingAssessment(
   seq = NULL,
   ptm_col,
   int_col,
+  type = c("dodged", "stacked"),
+  show_text = TRUE,
   save_plot = FALSE,
   plot_title = ""
 )
@@ -28,12 +30,16 @@ two representations of PTMs can be recognized to filter upon: Propionyl (K12) or
 
 \item{int_col}{sample columns containing intensity values}
 
+\item{type}{Either "dodged (default)" or "stacked" to plot stacked or dodged bar plot.}
+
+\item{show_text}{bool; TRUE (default) shows the percentages on the bars.}
+
 \item{save_plot}{bool; `FALSE` (default). Save or not the plot to the desktop.`}
 
 \item{plot_title}{A title for the plot}
 }
 \value{
-list of two dataframes (raw and normalized values) and a bar plot.
+A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
 }
 \description{
 Sometimes overlabeling is very abundant which decrease sensitivity and affect quantification accuracy.
