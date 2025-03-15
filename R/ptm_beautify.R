@@ -111,8 +111,8 @@ ptm_beautify <- function(PTM,
   # for Nterm+Kmod we make custome modifications like [+72.021129] which represents la-Nt.
   #When replacing the string of sequence it nice to have Nt- before the sequence not after N-term K.
   #This if statement removes it infort of N-terminal K and return back.
-  if(any(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-'))){
-    Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-')
+  if(any(stringr::str_detect(string = renamed_ptm, pattern = 'prNt-|tmaNt-|acPNt-'))){
+    Nterm <- stringr::str_extract(string = renamed_ptm, pattern = 'prNt-|tmaNt-|acPNt-')
     renamed_ptm <- stringr::str_remove(string = renamed_ptm, pattern = Nterm)
     renamed_ptm <- paste0(Nterm, renamed_ptm)}
 
