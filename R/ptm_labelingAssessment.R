@@ -15,6 +15,8 @@
 #' @param ptm_col column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma;, for overProp: Propionyl, prNt, pr). Only
 #'two representations of PTMs can be recognized to filter upon: Propionyl (K12) or K27bu-S32pr ....)
 #' @param int_col sample columns containing intensity values
+#' @param type Either "dodged (default)" or "stacked" to plot stacked or dodged bar plot.
+#' @param show_text bool; TRUE (default) shows the percentages on the bars.
 #' @param save_plot bool; `FALSE` (default). Save or not the plot to the desktop.`
 #' @param plot_title A title for the plot
 #' @importFrom stringr str_detect str_count str_remove
@@ -25,13 +27,21 @@
 #' @importFrom cli cli_alert_info cli_alert_warning
 #' @import ggplot2
 #'
-#' @return list of two dataframes (raw and normalized values) and a bar plot.
+#' @return A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
 #' @export
 
 
-ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, save_plot = FALSE, plot_title= ""){
+ptm_labelingAssessment <- function(df,
+                                   seq_col,
+                                   seq = NULL,
+                                   ptm_col,
+                                   int_col,
+                                   type = c('dodged', 'stacked'),
+                                   show_text = TRUE,
+                                   save_plot = FALSE,
+                                   plot_title= ""){
 
-
+type = match.arg(type)
 
   #STY propionylation/TMAylation
   regex_OverLab = 'Propionyl.*\\([TSY]\\d+\\)|TMAyl(?:_correct)?.*\\([TSY]\\d+\\)|[TSY]\\d+(?:tma|pr)'
@@ -66,8 +76,10 @@ ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, sa
     }
 
 
+plot_list = list()
+df_list <- list()
 
-    df_results <- purrr::map(seq, function(current_seq) {
+    results <- purrr::map(seq, function(current_seq) {
       df_seq <- df_filtered |>
         dplyr::filter(stringr::str_detect({{seq_col}}, current_seq))
 
@@ -95,7 +107,7 @@ ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, sa
 
       df_all <- df_tagged |>
         dplyr::mutate(
-          label = dplyr::case_when(
+          tag = dplyr::case_when(
             isNonLabeledme1 | !isFullyModified | !isNterm & !isOverLab ~ 'UnderLabeled',
             isOverLab & !(isNonLabeledme1 | !isFullyModified | !isNterm) ~ 'OverLabeled',
             isNterm & !isOverLab & !isNonLabeledme1 & isFullyModified ~ 'Desired',
@@ -103,7 +115,7 @@ ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, sa
           )
         ) |>
 
-        dplyr::summarise(dplyr::across({{int_col}}, ~sum(.x, na.rm = TRUE)), .by = label) |>
+        dplyr::summarise(dplyr::across({{int_col}}, ~sum(.x, na.rm = TRUE)), .by = tag) |>
         dplyr::mutate(seq_analyzed = current_seq)
 
       df_all_norm <- df_all |>
@@ -119,39 +131,124 @@ ptm_labelingAssessment <- function(df, seq_col, seq = NULL, ptm_col, int_col, sa
       # Plot for each sequence
 
       plot <- df_all_norm |>
-        dplyr::mutate(label = factor(label, levels= c('Total', 'Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
+        dplyr::mutate(tag = factor(tag, levels= c('Total', 'Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
         tidyr::pivot_longer(
           cols = {{int_col}},
           names_to = 'sample',
           values_to = 'intensity'
         ) |>
-        dplyr::mutate(sample = stringr::str_remove(sample, 'abundance_')) |> # specific for Proline software
-        ggplot2::ggplot(ggplot2::aes(x= sample, y= intensity, fill= label)) +
-        ggplot2::labs(y= "Relative Intensity (%)", fill= "", x= "", title= plot_title) +
-        ggplot2::geom_col(position= ggplot2::position_dodge2(preserve= 'single')) +
-        ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
-        ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
-        ggplot2::scale_fill_brewer(palette = "Dark2") +
-        ggplot2::theme_classic(base_size = 14) +
+        dplyr::mutate(sample = stringr::str_remove(sample, 'abundance_'), # specific for Proline software
+                      pct_formatted = {
+                        if (!show_text) {
+                          NA_character_
+                        } else if (type == "dodged") {
+                          paste0(round(intensity), "%")  # Ensure it's character
+                        } else {
+                          ifelse(intensity < 5, NA_character_, paste0(round(intensity), "%"))
+                        }
+                      }
+
+                      )
+
+
+
+
+      sample_number <- length(colnames(df_filtered))-2
+
+      angle = ifelse(sample_number < 10, 0, 45)
+
+      custom_theme <-  ggplot2::theme_classic(base_size = 14)+
         ggplot2::theme(
           legend.position = "bottom", legend.direction = "horizontal",
           legend.text = ggplot2::element_text(face= "bold"),
-          axis.text.x = ggplot2::element_text(angle = 45, vjust = 0.5),
+          axis.text.x = ggplot2::element_text(angle = angle, vjust = 0.5),
           axis.line = ggplot2::element_line(linewidth = 1.2),
           axis.text = ggplot2::element_text(face= 'bold', color = 'black')
         )
 
-      if(save_plot){
-      cat(paste0('Plotting: ', current_seq))
-      filename <- paste0('overlabassess_', current_seq, ".png")
-      ggplot2::ggsave(filename, plot, width = 8, height = 6)
+
+      barplotting <- function(){
+
+        ggplot2::ggplot(plot, ggplot2::aes(x= sample, y= intensity, fill= tag, label= pct_formatted)) +
+          ggplot2::labs(y= "Relative Intensity (%)", fill= "", x= "", title= plot_title) +
+          ggplot2::geom_col(position= ggplot2::position_dodge2(preserve= 'single')) +
+          ggplot2::geom_text(size= 4, fontface = 'bold', color= 'black',
+                             na.rm = TRUE, position = ggplot2::position_dodge2(.9), vjust= -.5)+
+          ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
+          ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
+          ggplot2::scale_fill_brewer(palette = "Dark2") + custom_theme
+
       }
-      return(df_all_norm)
 
-    }) |> dplyr::bind_rows()
 
-    return(df_results)
-  }
+      stackplotting <- function(){
+
+        ggplot2::ggplot(plot, ggplot2::aes(x= sample, y= intensity, fill= tag, label= pct_formatted)) +
+          ggplot2::labs(y= "Relative Intensity (%)", fill= "", x= "", title= plot_title) +
+          ggplot2::geom_col(width = 0.6) +
+          ggplot2::geom_text(position= ggplot2::position_stack(vjust= 0.5),
+                             size= 4, fontface = 'bold', color= 'white', na.rm = TRUE)+
+          ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
+          ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
+          ggplot2::scale_fill_brewer(palette = "Dark2") + custom_theme
+      }
+
+
+      plot_functions <- list(
+        dodged = barplotting,
+        stacked = stackplotting
+      )
+
+
+      plot_output <- switch(
+        type,
+        dodged = barplotting(),
+        stacked = stackplotting(),
+        stop("Invalid plot type. Use 'dodged' or 'stacked'.")
+      )
+
+
+
+      if(save_plot){
+        cat(paste0('Plotting: ', current_seq))
+        filename <- paste0('overlabassess_', current_seq, ".png")
+        ggplot2::ggsave(filename, plot_output, width = 8, height = 6)
+      }
+
+
+
+      list(
+        df_all_norm = df_all_norm,
+        plot_output = plot_output
+      )
+
+    }
+
+
+    )
+
+    names(results) <- seq
+
+    # Extract all dataframes and bind them together
+    df_all_norm_combined <- results |>
+      purrr::map("df_all_norm") |>
+      dplyr::bind_rows()
+
+    # Extract all plots into a list
+    plot_list <- results |>
+      purrr::map("plot_output")
+
+
+
+
+    return(list(
+      data = df_all_norm_combined,
+      plot = plot_list
+    ))
+
+
+}
+
 
 
 
