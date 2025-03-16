@@ -15,13 +15,13 @@
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #' @param save_plot bool; TRUE (default). draw and save or not the jitter bar plots of PTMs vs intensity for each peptide.
 #'
-#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc
-#' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim
+#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc coalesce
+#' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim str_extract
 #' @importFrom tidyr nest drop_na
 #' @importFrom writexl write_xlsx
 #' @importFrom openxlsx writeData read.xlsx createWorkbook getSheetNames saveWorkbook addWorksheet
 #' @importFrom rlang check_installed is_missing set_names
-#' @importFrom purrr map map2 walk2 pluck
+#' @importFrom purrr map map2 walk2 pluck map_dbl
 #' @importFrom cli cli_alert_warning cli_alert_success cli_abort cli_h1 cli_h2 cli_h3
 #'
 #' @return At least 3 excel files fragmented based on different filters:
@@ -46,6 +46,11 @@
 #'   }
 #'   \item{File3: hist_prot_analysisfile.xlsx}{
 #'     A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.
+#'   }
+#'   \item{File4: siteAbundance.xlsx}{
+#'     A file per modified residue at each position. It contains the summed values of all peptidoforms of a sequence having this residue modified by the same PTM.
+#'     Ex: H3_K18K23, for K18ac, the sum will be Intensity of (K18acK23un, K18acK23ac, K18acK23bu, ...)
+#'
 #'   }
 #' }
 #'
@@ -373,7 +378,7 @@ CompleteHistoneCases <- accepted_Histone |>
   #select iRTs, lysine-free sequences, and completely modified sequences.
   dplyr::filter(fully_modified %in% c("TRUE", "Lysine_free_seq", "iRT")) |>
   dplyr::mutate(
-  PTM_stripped = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'remove'),
+  PTM_stripped = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'removeK'),
   .after = PTM
   ) |>
   dplyr::arrange(dplyr::desc(psm_score))
@@ -420,8 +425,8 @@ SHEET8 <- uniqueHistoneForms |>
                       ptm_col = PTM,
                       format = 'wide') |>
   dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped,
-                                                   labeling = labeling),
- .after= 'PTM')
+                                                   labeling = labeling, residue = "removeK"),
+ .after= PTM_stripped)
 
 
 ##names of the sheets where the previous data produced will be saved##
@@ -468,7 +473,7 @@ if (extra_filter %in% c("no_me1", "K37un", "no_me1_K37un")) {
 
   # Shared processing pipeline
   SHEET9 <- filtered_data |>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling), .after = 'PTM') |>
+    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling, residue = "removeK"), .after = PTM_stripped) |>
     quant_relIntensity(
       select_cols = intensityCols,
       grouping_var = sequence
@@ -597,11 +602,23 @@ df_tobe_splitted <- switch(extra_filter,
              SHEET8
 )
 
+
+#function to extract residues position to order the sheets of peptides in increasing order
+extract_num_named_dfs <- function(name) {
+  name |>
+    stringr::str_split_i(pattern = "_| ", i = 2) |>  # e.g. H3_ ==> K4
+    stringr::str_extract("\\d+") |>      #    K4 ==> 4
+    as.numeric() |>                      # Convert to numeric
+    dplyr::coalesce(Inf)                        # Replace NA with Inf
+}
+
+
 df_tobe_splitted |>
 
     tidyr::nest(.by = protein) |>
   dplyr::mutate(
-    split_data = purrr::map(data, ~ split(.x, .x['seq_stretch'])),
+    split_data = purrr::map(data, ~ split(.x, .x[['seq_stretch']]) |>
+                             (\(df) df[order(purrr::map_dbl(names(df), extract_num_named_dfs))])()),
     # named dfs will be saved as sheets with write_xlsx
     save_files = purrr::walk2(.x = protein,
                               .y = split_data,
@@ -619,15 +636,27 @@ cli::cli_alert_success('{protein}.xlsx is saved.')
 
 
 wb_ptm = openxlsx::createWorkbook()
-ident_ptms <- strsplit(df_tobe_splitted$PTM_unlabeled, "-") |> unlist() |> unique()
-purrr::map(.x = ident_ptms , .f = ~openxlsx::addWorksheet(wb=wb_ptm, sheetName = .x))
+ident_ptms <- strsplit(df_tobe_splitted$PTM_unlabeled, "-") |>
+  unlist() |>
+  unique() |>
+  stringr::str_remove_all(pattern = "[:upper:]\\d+un") |> #to remove over-labelled residues recognized by the presence of the residue followed by 'un' (e.g. T33un)
+  Filter(nzchar, x= _) #remove empty strings
 
-for(ptm in ident_ptms){
+ident_ptms_sheet <- ident_ptms |>
+  stringr::str_replace_all(pattern = "([:upper:])\\d+(.+)" , replacement = '\\1\\2' ) |>
+  unique()
 
-  df_tobe_splitted |>
-    dplyr::filter(stringr::str_detect(PTM_unlabeled, ptm)) |>
-    openxlsx::writeData(wb = wb_ptm, x = _, sheet = ptm)
-}
+purrr::map(.x = ident_ptms_sheet , .f = ~openxlsx::addWorksheet(wb=wb_ptm, sheetName = .x))
+
+ident_ptms_detect <- ident_ptms_sheet  |>
+  stringr::str_replace_all(pattern = "([:upper:])([a-z]\\d*)" , replacement = '\\1\\\\d+\\2') #account for any non-K modification (e.g. R32me1)
+
+    purrr::map2(.x= ident_ptms_detect , .y = ident_ptms_sheet, .f = ~ {
+      df_tobe_splitted |>
+        dplyr::filter(stringr::str_detect(PTM_unlabeled, .x)) |>
+        openxlsx::writeData(wb = wb_ptm, x = _, sheet = .y)
+    })
+
 
 
 openxlsx::saveWorkbook(wb=wb_ptm,
@@ -635,15 +664,15 @@ openxlsx::saveWorkbook(wb=wb_ptm,
              overwrite = TRUE)
 
 
-cli::cli_alert_success('An excel file summarizing the IDs per each {ident_ptms} is created.\n')
+cli::cli_alert_success('An excel file summarizing the IDs per each {.val {ident_ptms_sheet}} is created.\n')
 
-
+##### --------- output file 4: peptides ---------#######
 
 # Start of the Graphing Module --------------------------
 
 ## Site Abundance plot
-
-cli::cli_alert_info('Plotting RA site abundance plots ...')
+if(save_plot == TRUE){
+cli::cli_alert_info('Plotting RA site abundance plots ...')}
 siteAnalysis <- ptm_siteAbundance(df = df_tobe_splitted
                   ,df_meta = meta_names_merge
                   ,ptm_col = PTM
