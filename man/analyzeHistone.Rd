@@ -63,6 +63,11 @@ At least 3 excel files fragmented based on different filters:
   \item{File3: hist_prot_analysisfile.xlsx}{
     A file per protein specified in `hist_prot`. Each file contains the identified peptide families, separated into sheets.
   }
+  \item{File4: siteAbundance.xlsx}{
+    A file per modified residue at each position. It contains the summed values of all peptidoforms of a sequence having this residue modified by the same PTM.
+    Ex: H3_K18K23, for K18ac, the sum will be Intensity of (K18acK23un, K18acK23ac, K18acK23bu, ...)
+
+  }
 }
 }
 \description{
