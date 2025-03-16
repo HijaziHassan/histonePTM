@@ -72,13 +72,24 @@ test_that("PTM conversion from Skyline with PTMs as 'Three Letter Code' works", 
 
 test_that("PTM conversion Protein N-term from Proline works", {
   expect_equal(ptm_beautify('Acetyl (Protein N-term); Propionyl (K22); Propionyl (K25); Propionyl (K26)',
-                            lookup = thistptm_mass,
+                            lookup = histptm_lookup,
                             software = 'Proline',
                             residue = 'keep')
                ,
 
 
-               "acNt-K22pr-K25pr-K26pr")
+               "acPNt-K22pr-K25pr-K26pr")
+})
+
+test_that("PTM conversion removing only Lys residues", {
+  expect_equal(ptm_beautify('Propionyl (Any N-term); Propionyl (K1); Propionyl (T5); Propionyl (K6)',
+                            lookup = histptm_lookup,
+                            software = 'Proline',
+                            residue = 'removeK')
+               ,
+
+
+               "prNt-pr-T5pr-pr")
 })
 
 
