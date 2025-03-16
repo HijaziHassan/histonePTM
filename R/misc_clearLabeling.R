@@ -12,14 +12,14 @@
 #' @param labeling The labeling agent used. Use `PA` (propionic anhydride), `TMA` ( trimethylacetic anhydride), or `PIC_PA` (phenylisocynate + PA).
 #' If none applies or you don't want to use the built-in rules, set it to 'none' and indicate your `rules`. Otherwise, it defaults to `NULL`, returning the input as is.
 #' There are embedded rules for those reagents. If those don't match your case, define your own rules and `labeling`must not be `none`.
-#' @param residue Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.
+#' @param residue Specify wether to remove residue(capitlized letter followed by number). Either `keep`, `remove`, `removeK (to remove only Lys resiudes).
 #' @importFrom stringr str_detect str_replace_all
 #' @importFrom cli cli_abort cli_alert_warning
 #' @return unlabeled string or the same string if labeling is `none`.
 #' @export
 #'
 
-misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residue = c("keep", "remove")) {
+misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residue = c("keep", "remove", "removeK")) {
 
   residue <- match.arg(residue)
 
@@ -41,7 +41,7 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residu
   }
 
   # Default rules for different labeling types
-  nterm_rule <- c(".+Nt-?" = "")  # Remove N-terminal labeling
+  nterm_rule <- c(".+Nt-?" = "")  # Remove N-terminal labeling not protein N-terminal mod like 'acPNt-'
   prop_rules <- c(
     "pr" = "un",  # Replace propionyl with unmodified
     "bu" = "me1"  # Replace butyrylation (me1-pr) with me1
@@ -65,6 +65,8 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residu
           cli::cli_alert_danger("'me1' exist in your PTMs and you are converting 'bu' to 'me1'.
                                 'bu' will not be converted to 'me1'.")
           prop_rules <- prop_rules[-2]
+
+          residue = "removeK"
         }
 
         rules <- c(nterm_rule, prop_rules)
@@ -74,6 +76,7 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residu
           cli::cli_alert_danger("'me1' exist in your PTMs and you are converting 'tmame1' to 'me1'.
                                 'tmame1' will not be converted to me1.")
           tma_rules <- tma_rules[-1]
+          residue = "removeK"
         }
 
         rules <- c(nterm_rule, tma_rules)
@@ -82,25 +85,26 @@ misc_clearLabeling <- function(ptm_string, rules = NULL, labeling = NULL, residu
         rules <- c(nterm_rule, prop_rules, pic_rules)
       } else if (labeling == "none") {
         # Ignore labeling and use user-provided rules
-        unlabeld_string <- stringr::str_replace_all(ptm_string, rules)
+        unlabeled_string <- stringr::str_replace_all(ptm_string, rules)
       }
     }
   }
 
   # Apply the rules to the ptm_string
   if (!is.null(rules)) {
-    unlabeld_string <- stringr::str_replace_all(ptm_string, rules)
+    unlabeled_string <- stringr::str_replace_all(ptm_string, rules)
   } else {
-    unlabeld_string <- ptm_string
+    unlabeled_string <- ptm_string
   }
 
   # remove Capital letter(i.e. residue) followed by a number (i.e its position).
-  if (residue == 'remove') {
-    return(stringr::str_remove_all(unlabeld_string, '[:upper:]\\d+'))
-  }
+  return(switch(residue,
+                "remove" = stringr::str_remove_all(unlabeled_string, '[:upper:]\\d+'),
+                "removeK" = stringr::str_remove_all(unlabeled_string, 'K\\d+'),
+                "keep" = unlabeled_string
+  ))
 
-  # Return the unlabelled string
-  return(unlabeld_string)
+
 }
 
 

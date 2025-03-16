@@ -4,7 +4,7 @@
 #' @param lookup The shorthanded names to replace the long PTM names (`histptm_lookup` and `shorthistptm_mass` are named vector provided by default.
 #' The user can provide any named vector adapted to the PTM being used.)
 #' @param software The software used for proteomic analysis (ex. Proline (Default) 'ptm_protein_positions' or 'modifications' columns or Skyline 'Peptide Modified Sequence Monoisotopic Masses' column.)
-#' @param residue Choose to keep or remove the residues. If `removed` ptms will be separated by a hyphen.
+#' @param residue Choose to 'keep' (default) or 'remove' the residues. If `remove` ptms will be separated by a hyphen. 'removeK' can be used for Proline-type of PTMs to remove only Lys residues.
 #' @param rd rounding digit to match provided PTM mass with lookup vector. default is 2.
 #' @return renamed PTM string
 #'
@@ -35,7 +35,7 @@
 ptm_beautify <- function(PTM,
                        lookup,
                        software = c("Proline", "Skyline"),
-                       residue = c('keep', 'remove'),
+                       residue = c('keep', 'remove', 'removeK'),
                        rd = 2){
 
   software <- match.arg(software)
@@ -60,6 +60,10 @@ ptm_beautify <- function(PTM,
              return(renamed_ptm)
       }  else if (residue == 'remove'){
       return(stringr::str_remove_all(renamed_ptm, '[:upper:]\\d+'))
+      }else if (residue == 'removeK'){
+
+        return(stringr::str_remove_all(renamed_ptm, 'K\\d+'))
+
       }
 
 

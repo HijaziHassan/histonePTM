@@ -8,7 +8,7 @@ misc_clearLabeling(
   ptm_string,
   rules = NULL,
   labeling = NULL,
-  residue = c("keep", "remove")
+  residue = c("keep", "remove", "removeK")
 )
 }
 \arguments{
@@ -20,7 +20,7 @@ misc_clearLabeling(
 If none applies or you don't want to use the built-in rules, set it to 'none' and indicate your `rules`. Otherwise, it defaults to `NULL`, returning the input as is.
 There are embedded rules for those reagents. If those don't match your case, define your own rules and `labeling`must not be `none`.}
 
-\item{residue}{Specify wether to remove residue(capitlized letter followed by number). Either `keep` or `remove`.}
+\item{residue}{Specify wether to remove residue(capitlized letter followed by number). Either `keep`, `remove`, `removeK (to remove only Lys resiudes).}
 }
 \value{
 unlabeled string or the same string if labeling is `none`.
