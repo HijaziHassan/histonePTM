@@ -102,9 +102,9 @@ format = match.arg(format)
 
  }
 
-if(isNormalized){
+if(isNormalized == FALSE){
  df <- quant_relIntensity(df = df,
-                          select_cols = intensity,
+                          select_cols = 'intensity',
                           grouping_var = dplyr::all_of(c('SampleName',
                                                          rlang::as_name(rlang::ensym(seq_col))))
  )}
