@@ -35,6 +35,8 @@ quant_me1LabelingPlot <- function(df,
                                   cond_col= NULL,
                                   me1 = "me1",
                                   me1_label = "bu",
+                                  isNormalized = FALSE,
+                                  scale = 100,
                                   format= c('wide', 'long'),
                                   df_meta,
                                   save_plot = FALSE){
