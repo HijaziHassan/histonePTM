@@ -64,6 +64,8 @@ plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col, save_plot = FALSE, s
                   sample = gsub('abundance_', '', sample)
     ) -> RA_per_plot
 
+  datasave= NULL
+
   if(save_file){
 
     datasave <- RA_per_plot |> dplyr::select(-reorder_col)
