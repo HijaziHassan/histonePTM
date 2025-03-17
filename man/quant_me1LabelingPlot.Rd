@@ -38,6 +38,10 @@ quant_me1LabelingPlot(
 `SampleNames` MUST match exactly the names of the `int_col`columns.}
 
 \item{save_plot}{(`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown within the Plots pane.)}
+
+\item{isNormalized}{bool; FALSE (default).}
+
+\item{scale}{1 or 100 (default). Multiply (normalized) intensity values by a scalar.}
 }
 \value{
 Boxplot with jittered points to assess me1 labeling when using anhydrides to label lysines.

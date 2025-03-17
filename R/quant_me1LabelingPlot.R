@@ -11,6 +11,8 @@
 #' @param cond_col (`optional`) Condition column (e.g. concentration) used for legend. If absent will be replaced by "None".
 #' @param me1 Monomethyl representation inside the `ptm_col`column (i.e. 'me1' (`default`) or 'Methyl', ...)
 #' @param me1_label Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl, ....)
+#' @param isNormalized bool; FALSE (default).
+#' @param scale 1 or 100 (default). Multiply (normalized) intensity values by a scalar.
 #' @param format if set to `wide` (most often), data will be reshaped into long format before plotting. Check `df_meta`.
 #' @param df_meta (`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`).
 #' `SampleNames` MUST match exactly the names of the `int_col`columns.
@@ -64,7 +66,7 @@ format = match.arg(format)
 
   #Avoid forgetting or using wrong pattern inside tidyselect function to select intensity columns
 
- df_check <- df |> dplyr::select({{int_col}})
+ df_check <- df |> dplyr::select(dplyr::all_of({{int_col}}))
 
  if (ncol(df_check) == 0) {
    cli::cli_abort(c('x' = "The provided column names in `int_col` argument are not found in `df`.",
@@ -74,13 +76,13 @@ format = match.arg(format)
 
  if (format == "long") {
    df <- if (!is.null(cond_col)) {
-     df |> dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}, {{cond_col}})
+     df |> dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}}), {{cond_col}})
    } else {
-     df |> dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}})
+     df |> dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}}))
    }
  } else if (format == "wide") {
    df <- df |>
-     dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}) |>
+     dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}})) |>
      tidyr::pivot_longer(
        cols = -c({{seq_col}}, {{ptm_col}}),
        names_to = "SampleName",
@@ -98,14 +100,14 @@ format = match.arg(format)
 
  }
 
-
+if(isNormalized){
  df <- quant_relIntensity(df = df,
                           select_cols = intensity,
                           grouping_var = dplyr::all_of(c('SampleName',
                                                          rlang::as_name(rlang::ensym(seq_col))))
- )
+ )}
 
- df <- df |> dplyr::mutate(intensity = 100*intensity)
+ df <- df |> dplyr::mutate(intensity = scale*intensity)
 
 
 
