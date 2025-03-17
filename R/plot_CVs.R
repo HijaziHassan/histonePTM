@@ -12,7 +12,7 @@
 #' @importFrom dplyr summarise mutate n
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom scales label_percent
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_alert_warning
 #' @import ggplot2
 #'
 #' @return list of two ggplot2. the violin_plot and bar_plot of CVs
@@ -56,6 +56,7 @@ plot_CVs <- \(df, cond_col, cv_col, scale = 100, save_plot = FALSE, output_dir= 
                         names_to = "Metric", values_to = "Count") |>
     dplyr::mutate(Metric = factor(Metric, levels = c("Total ID's", "CV < 20%", "CV < 5%")))  # Ensure correct order
 
+  if(nrow(bar_data)>0){
   # Violin + Box Plot
   violin_plot <- ggplot2::ggplot(df, ggplot2::aes(x= {{cond_col}}, y= {{cv_col}}, color = {{cond_col}})) +
     ggplot2::geom_violin(trim = FALSE) +
@@ -138,7 +139,10 @@ plot_CVs <- \(df, cond_col, cv_col, scale = 100, save_plot = FALSE, output_dir= 
   }
   # Return both plots
   list(violin_plot = violin_plot, bar_plot = bar_plot)
-
+  }else{
+cli::cli_alert_warning('No data to graph CVs')
+    return(NULL)
+}
 
 }
 
