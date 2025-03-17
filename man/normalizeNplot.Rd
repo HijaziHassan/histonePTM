@@ -45,4 +45,5 @@ bar plots (representing either 'mean' or 'median') with jitter points (correspon
 \description{
 There are cases where the output of `analyzeHistone()` function is not satisfactory. This happens when the software integrates the same peak for two nearly coeluting peptidoforms
 as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data is the reason this function exists.
+Coefficient of variations are calculated.
 }

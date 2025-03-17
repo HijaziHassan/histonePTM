@@ -2,6 +2,7 @@
 #' @description
 #' There are cases where the output of `analyzeHistone()` function is not satisfactory. This happens when the software integrates the same peak for two nearly coeluting peptidoforms
 #' as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data is the reason this function exists.
+#' Coefficient of variations are calculated.
 #'
 #'
 #' @param df_corrected A dataframe containing the corrected raw intensity values along with the necessary column (see below)
@@ -40,7 +41,7 @@ labeling = match.arg(labeling)
 
 #check of all intensity column names are found in the dataset
   intensity_columns <- df_corrected |>
-    dplyr::select(dplyr::any_of({{int_cols}})) |>
+    dplyr::select(dplyr::all_of({{int_cols}})) |>
     colnames()
 
   if(!all(intensity_columns %in% colnames(df_corrected)) | rlang::is_empty(intensity_columns)) {
@@ -54,10 +55,25 @@ labeling = match.arg(labeling)
   #normalize data
 
   df_norm <- quant_relIntensity(df = df_corrected,
-                                select_cols = {{int_cols}},
+                                select_cols = intensity_columns,
                                 grouping_var = {{seq_col}}) |>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling({{ptm_col}}, residue= 'remove', labeling = labeling, rules= rules),
-                  PTM_unlabeled = stringr::str_remove_all(PTM_unlabeled, "\\*"), .after = {{ptm_col}})
+
+    quant_coefVariation(
+                        df= _,
+                        df_meta= df_meta,
+                        int_col= intensity_columns,
+                        seq_col = {{seq_col}},
+                        ptm_col = {{ptm_col}},
+                        format = 'wide') |>
+
+    dplyr::mutate(
+    PTM_unlabeled = misc_clearLabeling({{ptm_col}},
+                                       residue= 'remove',
+                                       labeling = labeling,
+                                       rules= rules),
+    PTM_unlabeled = stringr::str_remove_all(PTM_unlabeled, "\\*"), .after = {{ptm_col}})
+
+
 
   if(save_file){
     file = "corr_normalized.xlsx"
@@ -65,11 +81,12 @@ labeling = match.arg(labeling)
     cli::cli_alert_success("The corrected and normalized values are saved as {file}.")
   }
 
+
   #transform data into long format. add a clean PTM_unlabeled column for plotting
   df_long <- df_norm |>
-    dplyr::select(PTM_unlabeled, {{seq_col}}, {{seq_stretch_col}}, dplyr::all_of({{int_cols}})) |>
+    dplyr::select(PTM_unlabeled, dplyr::all_of(intensity_columns), {{seq_stretch_col}}) |>
     tidyr::pivot_longer(
-      cols = dplyr::all_of({{int_cols}}),
+      cols =  dplyr::all_of(intensity_columns),
       names_to = "sample",
       values_to = "intensity",
       values_drop_na = TRUE
@@ -83,7 +100,7 @@ labeling = match.arg(labeling)
 
   #plot
 
- p <-  plot_jitterbarIntvsPTM(df_labeled,
+ p <- plot_jitterbarIntvsPTM(df_labeled,
                          x_axis = PTM_unlabeled,
                          y_axis= intensity,
                          condition = Condition,
