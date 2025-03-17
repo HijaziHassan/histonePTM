@@ -21,7 +21,7 @@
 #' @param plot_title A title for the plot
 #' @importFrom stringr str_detect str_count str_remove
 #' @importFrom tidyr pivot_longer
-#' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows case_when
+#' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows case_when all_of
 #' @importFrom purrr map
 #' @importFrom tibble tibble
 #' @importFrom cli cli_alert_info cli_alert_warning
@@ -42,6 +42,17 @@ ptm_labelingAssessment <- function(df,
                                    plot_title= ""){
 
 type = match.arg(type)
+
+
+#store intensity columns' names
+int_cols <- df |>
+  dplyr::select(dplyr::all_of({{int_col}}))  |>
+  names()
+
+#raise error if intensity column names are misspelled or using wrong pattern inside tidyselect function.
+if(rlang::is_empty(int_cols)) cli::cli_abort(c("Missing or incorrect input.",
+                                               "x"= "The intensity columns' names were not found.",
+                                               "i" = "You either forgot to add or misspelled the names you provided in the `int_col` argument." ))
 
   #STY propionylation/TMAylation
   regex_OverLab = 'Propionyl.*\\([TSY]\\d+\\)|TMAyl(?:_correct)?.*\\([TSY]\\d+\\)|[TSY]\\d+(?:tma|pr)'
@@ -65,9 +76,9 @@ type = match.arg(type)
     }
 
     df_filtered <- df |>
-      dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}) |>
+      dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}})) |>
       dplyr::filter(stringr::str_detect({{seq_col}}, paste(seq, collapse = "|"))) |>
-      dplyr::distinct(dplyr::across({{int_col}}), .keep_all = TRUE)
+      dplyr::distinct(dplyr::across(dplyr::all_of({{int_col}})), .keep_all = TRUE)
 
 
     if (nrow(df_filtered) == 0) {
@@ -115,13 +126,13 @@ df_list <- list()
           )
         ) |>
 
-        dplyr::summarise(dplyr::across({{int_col}}, ~sum(.x, na.rm = TRUE)), .by = tag) |>
+        dplyr::summarise(dplyr::across(dplyr::all_of({{int_col}}), ~sum(.x, na.rm = TRUE)), .by = tag) |>
         dplyr::mutate(seq_analyzed = current_seq)
 
       df_all_norm <- df_all |>
         dplyr::mutate(
           dplyr::across(
-            .cols = {{int_col}},
+            .cols = dplyr::all_of({{int_col}}),
             .fns = ~ . * 100 / df_total |> dplyr::pull(dplyr::cur_column())
           )
         )
@@ -133,7 +144,7 @@ df_list <- list()
       plot <- df_all_norm |>
         dplyr::mutate(tag = factor(tag, levels= c('Total', 'Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
         tidyr::pivot_longer(
-          cols = {{int_col}},
+          cols = dplyr::all_of({{int_col}}),
           names_to = 'sample',
           values_to = 'intensity'
         ) |>
