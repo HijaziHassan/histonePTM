@@ -349,10 +349,11 @@ plotjit <- function(dataset,
     )
 
 
-    cli::cli_inform("Plotting: {id_col}")
+
 
   if (save_plot) {
 
+    cli::cli_inform("Plotting: {id_col}")
     ggplot2::ggsave(
       filename = stringr::str_glue("{id_col}.png"),
       path = output_dir,
