@@ -17,7 +17,7 @@
 #' @param ... to add any other columns
 #'
 #' @importFrom rlang is_missing is_empty sym
-#' @importFrom dplyr select summarise filter group_by arrange left_join
+#' @importFrom dplyr select summarise filter group_by arrange left_join all_of
 #' @importFrom cli cli_abort
 #' @importFrom stats sd
 #' @return The input dataframe plus 3 columns per condition: `sd_condition`, `avg_condition` and `CV_condition`.
@@ -50,7 +50,7 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
 
     #store intensity columns' names
     int_cols <- df |>
-      dplyr::select({{int_col}})  |>
+      dplyr::select(dplyr::all_of({{int_col}}))  |>
       names()
 
     #remove columns with no names or column renamed after repair to ...1, ..2
@@ -98,9 +98,9 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
       if("Condition" %in% colnames(df)){
 
         df |>
-          dplyr::select({{seq_col}}, {{ptm_col}}, {{int_col}}, ...) |>
+          dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of(int_cols), ...) |>
           dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...) |>
-          dplyr::summarise(CV = sd({{int_col}}, na.rm= TRUE)/mean({{int_col}}, na.rm = TRUE), .groups = "drop") |>
+          dplyr::summarise(CV = sd(int_cols, na.rm= TRUE)/mean(int_cols, na.rm = TRUE), .groups = "drop") |>
           dplyr::arrange(CV) -> df_cv
 
 
@@ -112,10 +112,10 @@ quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format 
       }else{
 
         df |>
-          select({{seq_col}}, {{ptm_col}}, {{int_col}}, ...) |>
+          select({{seq_col}}, {{ptm_col}}, dplyr::all_of(int_cols), ...) |>
           dplyr::left_join(x= _, y= df_meta, by = "SampleName") |>   #to add Condition column for coloring.
           dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...)
-          dplyr::summarise(CV = sd({{int_col}}, na.rm= TRUE)/mean({{int_col}}, na.rm = TRUE), .groups = "drop") |>
+          dplyr::summarise(CV = sd(int_cols, na.rm= TRUE)/mean(int_cols, na.rm = TRUE), .groups = "drop") |>
           dplyr::arrange(CV) -> df_cv
 
 

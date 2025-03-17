@@ -28,7 +28,7 @@
 #' quant_relIntensity(iris, contains("Length"), grouping_var = "Species")
 #' quant_relIntensity(iris, starts_with("Sepal"), grouping_var = "Species")
 #'}
-#' @importFrom dplyr across mutate
+#' @importFrom dplyr across mutate all_of
 #'
 #' @export
 
@@ -47,7 +47,7 @@ quant_relIntensity <- function(df, select_cols, grouping_var, norm_method = c('p
   }else if(norm_by =="peptide_total" ){
 
     df_norm <- df |>
-      dplyr::mutate(dplyr::across({{select_cols}}, ~ .normalize_vec(x=.)))
+      dplyr::mutate(dplyr::across(dplyr::all_of({{select_cols}}), ~ .normalize_vec(x=.)))
 
 }
 
