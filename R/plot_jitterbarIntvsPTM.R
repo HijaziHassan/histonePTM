@@ -21,10 +21,10 @@
 #' @importFrom dplyr select pull n_distinct mutate filter
 #' @importFrom stats reorder median qt
 #' @importFrom scales label_percent
-#' @importFrom rlang is_empty quo_name enquo
+#' @importFrom rlang is_empty quo_name enquo ensym quo_is_null
 #' @importFrom stringr str_glue
-#' @importFrom cli cli_abort cli_inform cli_alert_danger
-#' @importFrom tidyr nest drop_na
+#' @importFrom cli cli_abort cli_inform cli_alert_danger cli_alert_warning
+#' @importFrom tidyr nest drop_na replace_na
 #' @importFrom purrr map map2
 #' @import ggplot2
 #'
@@ -57,24 +57,30 @@ plot_jitterbarIntvsPTM <- function(dataset,
   if (!is.null(output_dir) && !dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
- if(!is.symbol(substitute(x_axis))){cli::cli_abort('remove the quotation around "x_axis" argument: {x_axis}.')}
- if(!is.symbol(substitute(y_axis))){cli::cli_abort('remove the quotation around "y_axis" argument: {y_axis}.')}
+
+  # Ensures x_axis and y_axis are symbols (i.e. column names)
+  x_axis <- rlang::ensym(x_axis)
+  y_axis <- rlang::ensym(y_axis)
+
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
   if(missing(condition)){cli::cli_abort('`Condition` column is missing')}
   if(missing(id_col)){cli::cli_abort('`id_col` column is missing')}
   #If PTM column used in grouping, it will no more be available in the nested dataframe
       # ==> Check if x_axis and plot_title arguments are not identical
 
-  xaxis_expr <- substitute(x_axis)
+  # Capture the unevaluated plot_title expression
   plottitle_expr <- substitute(plot_title)
 
-  # No problem if one is string and the other is closure
-  if (is.symbol(xaxis_expr) && is.symbol(plottitle_expr)) {
-
-    if(identical(deparse(xaxis_expr), deparse(plottitle_expr))){
+  # check if plot_title is a symbol
+  if (is.symbol(plottitle_expr)) {
+    # PTM and title cannot have the same column name.
+    if (identical(x_axis, plottitle_expr)) {
       cli::cli_abort(c(
-      "x" = '{.arg x_axis} and {.arg plot_title} are the same.'),
-      "i" = "choose a different a columno or a static string in {.arg plot_title} to entitle your plot(s).")}}
+        "x" = "{.arg x_axis} and {.arg plot_title} are the same.",
+        "i" = "Choose a different column or a static string in {.arg plot_title} to entitle your plot(s)."
+      ))
+    }
+  }
 
 
 
@@ -96,6 +102,20 @@ plot_jitterbarIntvsPTM <- function(dataset,
        dataset <- dataset |>
          dplyr::filter({{y_axis}} <= max_cutoff)
    }
+
+
+
+
+    condition_col <- dplyr::pull(dataset, {{condition}})
+
+    if (all(is.na(condition_col))) {
+      dataset <- dataset |> dplyr::mutate(!!rlang::ensym(condition) := "cond_1")
+      cli::cli_alert_warning("All values in the column were NA. Replaced with 'cond_1'.")
+    } else if (any(is.na(condition_col))) {
+      dataset <- dataset |> dplyr::mutate(!!rlang::ensym(condition) := tidyr::replace_na(condition_col, "cond_2"))
+      cli::cli_alert_warning("Some values in the column were NA. Replaced with 'cond_2'.")
+    }
+
 
 
 
