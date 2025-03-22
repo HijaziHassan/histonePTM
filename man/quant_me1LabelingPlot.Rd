@@ -12,6 +12,8 @@ quant_me1LabelingPlot(
   cond_col = NULL,
   me1 = "me1",
   me1_label = "bu",
+  isNormalized = FALSE,
+  scale = 100,
   format = c("wide", "long"),
   df_meta,
   save_plot = FALSE
@@ -32,16 +34,16 @@ quant_me1LabelingPlot(
 
 \item{me1_label}{Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl, ....)}
 
+\item{isNormalized}{bool; FALSE (default).}
+
+\item{scale}{1 or 100 (default). Multiply (normalized) intensity values by a scalar.}
+
 \item{format}{if set to `wide` (most often), data will be reshaped into long format before plotting. Check `df_meta`.}
 
 \item{df_meta}{(`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`).
 `SampleNames` MUST match exactly the names of the `int_col`columns.}
 
 \item{save_plot}{(`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown within the Plots pane.)}
-
-\item{isNormalized}{bool; FALSE (default).}
-
-\item{scale}{1 or 100 (default). Multiply (normalized) intensity values by a scalar.}
 }
 \value{
 Boxplot with jittered points to assess me1 labeling when using anhydrides to label lysines.
