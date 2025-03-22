@@ -12,8 +12,7 @@ normalizeNplot(
   seq_stretch_col,
   int_cols,
   save_file = TRUE,
-  labeling = c("none", "PA", "TMA", "PIC_PA"),
-  rules = NULL,
+  isNormalized = FALSE,
   ...
 )
 }
@@ -22,7 +21,7 @@ normalizeNplot(
 
 \item{df_meta}{A dataframe containing at least the 'Condition' and 'SampleName'. The latter MUST be the same the names of the `int_cols`.}
 
-\item{ptm_col}{A column containing PTM. The function `misc_clearLabeling()` according to `labeling` will be applied to remove any labeling.}
+\item{ptm_col}{A column containing PTM.}
 
 \item{seq_col}{A column containing stripped sequences. Will be used for normalization. Could also be used as `plot_title`.}
 
@@ -32,15 +31,13 @@ normalizeNplot(
 
 \item{save_file}{(\code{bool}) TRUE (default) to save the normalized file.}
 
-\item{labeling}{Labeling method (e.g. 'PA', 'TMA', 'PA_PIC', or 'none' (default)). Check `misc_clearLabeling()`.}
-
-\item{rules}{(optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.}
+\item{isNormalized}{bool; FALSE (default). If TRUE data will not be normalized.}
 
 \item{...}{Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot`, `max_cutoff`, `output_dir` etc ... Revise the documentation for more details.}
 }
 \value{
 Same output as `plot_jitterbarIntvsPTM()`. A dataframe grouped by 'id_col' (and 'plot_title' if passed) with a nested list-column harboring the generated
-bar plots (representing either 'mean' or 'median') with jitter points (corresponding to individual measurements per 'condition').
+bar plots (representing either 'mean' or 'median') with jitter points (corresponding to individual measurements per 'condition'). plots and normalized data can be saved.
 }
 \description{
 There are cases where the output of `analyzeHistone()` function is not satisfactory. This happens when the software integrates the same peak for two nearly coeluting peptidoforms

@@ -7,22 +7,21 @@
 #'
 #' @param df_corrected A dataframe containing the corrected raw intensity values along with the necessary column (see below)
 #' @param df_meta A dataframe containing at least the 'Condition' and 'SampleName'. The latter MUST be the same the names of the `int_cols`.
-#' @param ptm_col A column containing PTM. The function `misc_clearLabeling()` according to `labeling` will be applied to remove any labeling.
+#' @param ptm_col A column containing PTM.
 #' @param seq_col A column containing stripped sequences. Will be used for normalization. Could also be used as `plot_title`.
 #' @param seq_stretch_col A column containing the label of the sequences (will be used as title of the y axis).
 #' @param int_cols Intensity columns. `tidyselect` functions can be used (e.g. starts_with('abundance_')) or character vector (e.g `c('col1', 'col2')`).
 #' @param save_file (\code{bool}) TRUE (default) to save the normalized file.
-#' @param labeling Labeling method (e.g. 'PA', 'TMA', 'PA_PIC', or 'none' (default)). Check `misc_clearLabeling()`.
-#' @param rules (optional) Rules to unlabel PTM strings. Check `misc_clearLabeling()`.
+#' @param isNormalized bool; FALSE (default). If TRUE data will not be normalized.
 #' @param ... Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot`, `max_cutoff`, `output_dir` etc ... Revise the documentation for more details.
 #'
 #' @importFrom dplyr mutate select left_join join_by starts_with any_of all_of
 #' @importFrom tidyr pivot_longer
 #' @importFrom openxlsx write.xlsx
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_alert_success
 #' @importFrom rlang is_empty
 #' @return Same output as `plot_jitterbarIntvsPTM()`. A dataframe grouped by 'id_col' (and 'plot_title' if passed) with a nested list-column harboring the generated
-#' bar plots (representing either 'mean' or 'median') with jitter points (corresponding to individual measurements per 'condition').
+#' bar plots (representing either 'mean' or 'median') with jitter points (corresponding to individual measurements per 'condition'). plots and normalized data can be saved.
 #' @export
 
 normalizeNplot <- function(df_corrected,
@@ -32,12 +31,11 @@ normalizeNplot <- function(df_corrected,
                            seq_stretch_col,
                            int_cols,
                            save_file = TRUE,
-                           labeling= c('none', 'PA', 'TMA', 'PIC_PA'),
-                           rules= NULL,
+                           isNormalized = FALSE,
                            ...
                            ){
 
-labeling = match.arg(labeling)
+
 
 #check of all intensity column names are found in the dataset
   intensity_columns <- df_corrected |>
@@ -53,38 +51,37 @@ labeling = match.arg(labeling)
 
 
   #normalize data
-
+if(!isNormalized){
   df_norm <- quant_relIntensity(df = df_corrected,
                                 select_cols = intensity_columns,
-                                grouping_var = {{seq_col}}) |>
+                                grouping_var = {{seq_col}})
+}else{
 
-    quant_coefVariation(
-                        df= _,
-                        df_meta= df_meta,
-                        int_col= intensity_columns,
-                        seq_col = {{seq_col}},
-                        ptm_col = {{ptm_col}},
-                        format = 'wide') |>
-
-    dplyr::mutate(
-    PTM_unlabeled = misc_clearLabeling({{ptm_col}},
-                                       residue= 'remove',
-                                       labeling = labeling,
-                                       rules= rules),
-    PTM_unlabeled = stringr::str_remove_all(PTM_unlabeled, "\\*"), .after = {{ptm_col}})
+  df_norm <- df_corrected
+}
 
 
 
   if(save_file){
+
+    df_norm <- df_norm |>
+      quant_coefVariation(
+        df= _,
+        df_meta= df_meta,
+        int_col= intensity_columns,
+        seq_col = {{seq_col}},
+        ptm_col = {{ptm_col}},
+        format = 'wide')
+
     file = "corr_normalized.xlsx"
     df_norm |> openxlsx::write.xlsx(file = file)
     cli::cli_alert_success("The corrected and normalized values are saved as {file}.")
   }
 
 
-  #transform data into long format. add a clean PTM_unlabeled column for plotting
+  #transform data into long format.
   df_long <- df_norm |>
-    dplyr::select(PTM_unlabeled, dplyr::all_of(intensity_columns), {{seq_stretch_col}}) |>
+    dplyr::select({{ptm_col}}, dplyr::all_of(intensity_columns), {{seq_stretch_col}}) |>
     tidyr::pivot_longer(
       cols =  dplyr::all_of(intensity_columns),
       names_to = "sample",
@@ -97,11 +94,10 @@ labeling = match.arg(labeling)
   df_labeled <- dplyr::left_join(df_long, df_meta, by = dplyr::join_by(sample == SampleName))
 
 
-
   #plot
 
  p <- plot_jitterbarIntvsPTM(df_labeled,
-                         x_axis = PTM_unlabeled,
+                         x_axis = {{ptm_col}},
                          y_axis= intensity,
                          condition = Condition,
                          id_col = {{seq_stretch_col}},
