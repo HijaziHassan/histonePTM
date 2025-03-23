@@ -13,7 +13,8 @@ ptm_labelingAssessment(
   type = c("dodged", "stacked"),
   show_text = TRUE,
   save_plot = FALSE,
-  plot_title = ""
+  plot_title = "",
+  output_dir = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ two representations of PTMs can be recognized to filter upon: Propionyl (K12) or
 \item{save_plot}{bool; `FALSE` (default). Save or not the plot to the desktop.`}
 
 \item{plot_title}{A title for the plot}
+
+\item{output_dir}{Folder name to output the plots if `NULL` it defaults to the Working directory.}
 }
 \value{
 A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
