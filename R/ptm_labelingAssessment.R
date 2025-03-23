@@ -19,12 +19,13 @@
 #' @param show_text bool; TRUE (default) shows the percentages on the bars.
 #' @param save_plot bool; `FALSE` (default). Save or not the plot to the desktop.`
 #' @param plot_title A title for the plot
+#' @param output_dir Folder name to output the plots if `NULL` it defaults to the Working directory.
 #' @importFrom stringr str_detect str_count str_remove
 #' @importFrom tidyr pivot_longer
 #' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows case_when all_of
 #' @importFrom purrr map
 #' @importFrom tibble tibble
-#' @importFrom cli cli_alert_info cli_alert_warning
+#' @importFrom cli cli_alert_info cli_alert_warning cli_inform
 #' @import ggplot2
 #'
 #' @return A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
@@ -39,7 +40,8 @@ ptm_labelingAssessment <- function(df,
                                    type = c('dodged', 'stacked'),
                                    show_text = TRUE,
                                    save_plot = FALSE,
-                                   plot_title= ""){
+                                   plot_title= "",
+                                   output_dir= NULL){
 
 type = match.arg(type)
 
@@ -77,13 +79,20 @@ if(rlang::is_empty(int_cols)) cli::cli_abort(c("Missing or incorrect input.",
 
     df_filtered <- df |>
       dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}})) |>
-      dplyr::filter(stringr::str_detect({{seq_col}}, paste(seq, collapse = "|"))) |>
+      dplyr::filter(stringr::str_detect({{seq_col}}, paste0("^(", paste(seq, collapse = "|"), ")$"))) |>
       dplyr::distinct(dplyr::across(dplyr::all_of({{int_col}})), .keep_all = TRUE)
 
 
     if (nrow(df_filtered) == 0) {
-      cli::cli_alert_warning("None of the specified sequences were found in the data.")
-      return(NULL)
+      if(length(seq)>1){
+      cli::cli_alert_warning("None of the specified sequences {.val {seq}} were found in your data.")
+      }else{
+
+        cli::cli_alert_warning("The sequence {.val {seq}} was not found in your data.")
+
+      }
+
+      return()
     }
 
 
@@ -142,7 +151,7 @@ df_list <- list()
       # Plot for each sequence
 
       plot <- df_all_norm |>
-        dplyr::mutate(tag = factor(tag, levels= c('Total', 'Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
+        dplyr::mutate(tag = factor(tag, levels= c('Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
         tidyr::pivot_longer(
           cols = dplyr::all_of({{int_col}}),
           names_to = 'sample',
@@ -182,12 +191,18 @@ df_list <- list()
 
         ggplot2::ggplot(plot, ggplot2::aes(x= sample, y= intensity, fill= tag, label= pct_formatted)) +
           ggplot2::labs(y= "Relative Intensity (%)", fill= "", x= "", title= plot_title) +
-          ggplot2::geom_col(position= ggplot2::position_dodge2(preserve= 'single')) +
-          ggplot2::geom_text(size= 4, fontface = 'bold', color= 'black',
-                             na.rm = TRUE, position = ggplot2::position_dodge2(.9), vjust= -.5)+
+          ggplot2::geom_col(position= ggplot2::position_dodge2(preserve= 'single', width = 0.8)) +
+          ggplot2::geom_text(size= 3.9, fontface = 'bold', color= 'black',
+                             , position = ggplot2::position_dodge2(.8), vjust= -.5)+
           ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
           ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
-          ggplot2::scale_fill_brewer(palette = "Dark2") + custom_theme
+          #ggplot2::scale_fill_brewer(palette = "Dark2") +
+          ggplot2::scale_fill_manual(values= c("Desired" = "#1B9E77",
+                                       "OverLabeled" = "#D95F02",
+                                       "UnderLabeled" = "#7570B3",
+                                       "UnderOverLabeled" = "#E7298A"))+
+          ggplot2::coord_cartesian(clip = 'off')+
+          custom_theme
 
       }
 
@@ -201,7 +216,11 @@ df_list <- list()
                              size= 4, fontface = 'bold', color= 'white', na.rm = TRUE)+
           ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
           ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
-          ggplot2::scale_fill_brewer(palette = "Dark2") + custom_theme
+          ggplot2::scale_fill_manual(values = c("Desired" = "#1B9E77",
+                                       "OverLabeled" = "#D95F02",
+                                       "UnderLabeled" = "#7570B3",
+                                       "UnderOverLabeled" = "#E7298A"))+
+          custom_theme
       }
 
 
@@ -221,9 +240,14 @@ df_list <- list()
 
 
       if(save_plot){
-        cat(paste0('Plotting: ', current_seq))
+        output_dir <- if (is.null(output_dir)) getwd() else output_dir
+        if (!is.null(output_dir) && !dir.exists(output_dir)) {
+          dir.create(output_dir, recursive = TRUE)
+          cli::cli_inform('The folder {.val {output_dir}} is created to store the plot(s).')
+        }
+        cli::cli_inform("Plotting: {.val {current_seq}}")
         filename <- paste0('overlabassess_', current_seq, ".png")
-        ggplot2::ggsave(filename, plot_output, width = 8, height = 6)
+        ggplot2::ggsave(filename = filename, plot = plot_output,path = output_dir, width = 8, height = 6, dpi = 300)
       }
 
 
