@@ -7,8 +7,8 @@
 #' @param metafile An excel file containing user-defined `SampleName` and `file` columns ('Condition', 'Bioreplicate' or 'TechReplicate' are `optional``).
 #' @param hist_prot One or all of 5 histone proteins ('H3', 'H4', 'H2A', 'H2B', 'H1'). If you want to analyze them all, choose "All".
 #' @param labeling the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.
-#' @param Quant_threshold A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in EVERY condition.
-#' @param PSM_threshold A cutt-off value (default is `NULL`). The ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.
+#' @param Quant_threshold A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in at least one of the conditions.
+#' @param PSM_threshold A cutt-off value (default is `NULL`). Regardless of the condition, the ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.
 #' @param extra_filter Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).
 #' @param norm_method Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
@@ -340,11 +340,11 @@ if (!is.null(PSM_threshold) || !is.null(Quant_threshold)) {
       # Scenario 1: Both thresholds are not NULL
       if (!is.null(PSM_threshold) && !is.null(Quant_threshold)) {
         !(PSM_count < PSM_threshold |
-            rowSums(across(starts_with("Quantcount_"), ~ . < Quant_threshold)) > 0)
+            rowSums(across(starts_with("Quantcount_"), ~ .  >= Quant_threshold)) == 0)
       }
       # Scenario 2: PSM_threshold is NULL, Quant_threshold is not
       else if (is.null(PSM_threshold) && !is.null(Quant_threshold)) {
-        !(rowSums(across(starts_with("Quantcount_"), ~ . < Quant_threshold)) > 0)
+        !(rowSums(across(starts_with("Quantcount_"), ~ .  >= Quant_threshold)) == 0)
       }
       # Scenario 3: PSM_threshold is not NULL, Quant_threshold is NULL
       else if (!is.null(PSM_threshold) && is.null(Quant_threshold)) {
@@ -379,7 +379,8 @@ CompleteHistoneCases <- accepted_Histone |>
   dplyr::filter(fully_modified %in% c("TRUE", "Lysine_free_seq", "iRT")) |>
   dplyr::mutate(
   PTM_stripped = ptm_beautify(PTM, software = 'Proline', lookup= histptm_lookup, residue = 'removeK'),
-  .after = PTM
+  PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling, residue = "removeK"), .after = PTM
+
   ) |>
   dplyr::arrange(dplyr::desc(psm_score))
 
@@ -418,15 +419,12 @@ SHEET8 <- uniqueHistoneForms |>
   quant_relIntensity(select_cols = intensityCols,
                      grouping_var = sequence,
                      norm_method = norm_method) |>
-  # dplyr::rename(!!!dplyr::any_of(ColNames)) |>
   quant_coefVariation(df= _, df_meta= meta_names_merge,
                       int_col= dplyr::any_of(meta_names_merge$SampleName),
                       seq_col = sequence,
                       ptm_col = PTM,
-                      format = 'wide') |>
-  dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped,
-                                                   labeling = labeling, residue = "removeK"),
- .after= PTM_stripped)
+                      format = 'wide')
+
 
 
 ##names of the sheets where the previous data produced will be saved##
@@ -473,12 +471,10 @@ if (extra_filter %in% c("no_me1", "K37un", "no_me1_K37un")) {
 
   # Shared processing pipeline
   SHEET9 <- filtered_data |>
-    dplyr::mutate(PTM_unlabeled = misc_clearLabeling(PTM_stripped, labeling = labeling, residue = "removeK"), .after = PTM_stripped) |>
     quant_relIntensity(
       select_cols = intensityCols,
       grouping_var = sequence
     ) |>
-    #dplyr::rename(!!!dplyr::any_of(ColNames)) |>
     quant_coefVariation(
       df = _,
       df_meta = meta_names_merge,
