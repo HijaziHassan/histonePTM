@@ -151,7 +151,11 @@ file_name = tools::file_path_sans_ext(basename(mgf_file))
     cli::cli_progress_update()
   }
 
-  if(nrow(double_matrix) == 0L){cli::cli_alert_info("No diagnostic ion was found.")}else{
+  if(nrow(double_matrix) == 0L){
+    return(cli::cli_alert_info("No diagnostic ion was found."))
+
+
+    }else{
 
     # Combine the matrices and vector into a data frame
     final_df <- tibble::tibble(
