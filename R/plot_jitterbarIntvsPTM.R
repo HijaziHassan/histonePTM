@@ -240,9 +240,16 @@ plotjit <- function(dataset,
   dataset <- dataset |>
     tidyr::drop_na({{ y_axis }}) |>
     dplyr::group_by({{ x_axis }}, {{ condition }}) |>
-    dplyr::filter(dplyr::n() > 1) |>
+    dplyr::filter(dplyr::n() >= 1) |>
     dplyr::ungroup()
 
+  #adjust angle based on x-axis labels
+  angle = ifelse("size" %in% colnames(dataset) &&
+                   unique(dataset[["size"]]) > 10 &&
+                   any(nchar(dataset |> dplyr::pull({{x_axis}})) > 8),
+                 90,
+                 60
+  )
 
   # Compute summary statistics for error bars if applicable
   if (error_type != 'none') {
@@ -351,9 +358,10 @@ plotjit <- function(dataset,
       axis.text.x = ggplot2::element_text(
         size = 15,
         face = "bold",
-        angle = 60,
+        angle = angle,
         colour = "black",
-        hjust = 0.7
+        hjust = ifelse(angle == 90, 1, 0.7),
+        vjust = ifelse(angle == 90, 0.5, 0.85)
       ),
       axis.line.x = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
