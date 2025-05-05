@@ -5,21 +5,22 @@
 
 #' Assessing (over)Labeling Efficiency
 #'
-#' Sometimes overlabeling is very abundant which decrease sensitivity and affect quantification accuracy.
+#' Derivatization efficiency needs to be checked. Sometimes over/underlabeling is very abundant which decreases sensitivity and affects quantification accuracy.
 #'
-#' @param df Proteomics results dataset.
+#' @param df Proteomics results dataset. STYlabel must be set as variable modification in addition to K(me1+label).
 #' @param seq_col column containing bare peptide sequences
 #' @param seq sequence(s) to base the assessment on. Multiple sequences should be passed as a character vector.
-#' If empty or `NULL` (default), five H3 and H4 built-in sequences will be analyzed.
-#' If "All", then all the unique sequence in the `seq_col` will be analyzed.
-#' @param ptm_col column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma;, for overProp: Propionyl, prNt, pr). Only
+#' If empty or  \code{NULL} (default), five H3 and H4 built-in sequences will be analyzed.
+#' If "All", then all the unique sequence in the \code{seq_col} will be analyzed.
+#' @param ptm_col column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma; for overProp: Propionyl, prNt, pr). Only
 #'two representations of PTMs can be recognized to filter upon: Propionyl (K12) or K27bu-S32pr ....)
-#' @param int_col sample columns containing intensity values
+#' @param int_col sample columns containing intensity values.
 #' @param type Either "dodged (default)" or "stacked" to plot stacked or dodged bar plot.
-#' @param show_text bool; TRUE (default) shows the percentages on the bars.
-#' @param save_plot bool; `FALSE` (default). Save or not the plot to the desktop.`
+#' @param show_text bool;  \code{TRUE} (default) shows the percentages on the bars.
+#' The values are rounded to the nearest whole number unless it less than one, then it is rounded to the nearest tenth.
+#' @param save_plot bool;  \code{FALSE} (default). Save or not the plot(s).`
 #' @param plot_title A title for the plot
-#' @param output_dir Folder name to output the plots if `NULL` it defaults to the Working directory.
+#' @param output_dir character; A folder name to store the plots into if \code{save_plot} is set \code{TRUE}. If \code{NULL} (default), plots will be saved into the working directory.
 #' @importFrom stringr str_detect str_count str_remove
 #' @importFrom tidyr pivot_longer
 #' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows case_when all_of
@@ -29,6 +30,26 @@
 #' @import ggplot2
 #'
 #' @return A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
+#' @details
+#' Labeling categories are defined as follows:
+#'
+#' \describe{
+#'   \item{\strong{Desired}}{Peptides in which all lysine residues are modified or labeled in addition to the N-term.}
+#'   \item{\strong{OverLabeled}}{Peptides that have at least one labeled serine (S), threonine (T), or tyrosine (Y) residue.}
+#'   \item{\strong{UnderLabeled}}{
+#'     Peptides that contain any of the following unlabeled features:
+#'     \itemize{
+#'       \item Unlabeled peptide N-terminus
+#'       \item Unlabeled monomethylated lysine (Kme1)
+#'       \item Unlabeled lysine (K)
+#'     }
+#'     These may occur individually or together.
+#'   }
+#'   \item{\strong{UnderOverLabeled}}{Peptides that meet the criteria for both `UnderLabeled` and `OverLabeled`.}
+#' }
+
+
+#'
 #' @export
 
 
@@ -116,7 +137,8 @@ df_list <- list()
             stringr::str_count({{seq_col}}, "K") == stringr::str_count({{ptm_col}}, regex_Kmod),
             TRUE, FALSE
           ),
-          isNterm = stringr::str_detect({{ptm_col}}, regex_Nterm)
+          isNterm = stringr::str_detect({{ptm_col}}, regex_Nterm),
+          isFullyUnmod = is.na({{ptm_col}})
         )
 
 
@@ -128,7 +150,7 @@ df_list <- list()
       df_all <- df_tagged |>
         dplyr::mutate(
           tag = dplyr::case_when(
-            isNonLabeledme1 | !isFullyModified | !isNterm & !isOverLab ~ 'UnderLabeled',
+            isNonLabeledme1 | !isFullyModified | !isNterm & !isOverLab | isFullyUnmod ~ 'UnderLabeled',
             isOverLab & !(isNonLabeledme1 | !isFullyModified | !isNterm) ~ 'OverLabeled',
             isNterm & !isOverLab & !isNonLabeledme1 & isFullyModified ~ 'Desired',
             .default = 'UnderOverLabeled'
@@ -160,9 +182,11 @@ df_list <- list()
         dplyr::mutate(sample = stringr::str_remove(sample, 'abundance_'), # specific for Proline software
                       pct_formatted = {
                         if (!show_text) {
-                          NA_character_
+                          ''
                         } else if (type == "dodged") {
-                          paste0(round(intensity), "%")  # Ensure it's character
+                          ifelse(intensity < 1,
+                                 paste0(round(intensity, digits = 1), "%"),
+                                 paste0(round(intensity), "%"))
                         } else {
                           ifelse(intensity < 5, NA_character_, paste0(round(intensity), "%"))
                         }
