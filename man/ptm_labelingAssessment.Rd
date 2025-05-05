@@ -18,32 +18,51 @@ ptm_labelingAssessment(
 )
 }
 \arguments{
-\item{df}{Proteomics results dataset.}
+\item{df}{Proteomics results dataset. STYlabel must be set as variable modification in addition to K(me1+label).}
 
 \item{seq_col}{column containing bare peptide sequences}
 
 \item{seq}{sequence(s) to base the assessment on. Multiple sequences should be passed as a character vector.
-If empty or `NULL` (default), five H3 and H4 built-in sequences will be analyzed.
-If "All", then all the unique sequence in the `seq_col` will be analyzed.}
+If empty or  \code{NULL} (default), five H3 and H4 built-in sequences will be analyzed.
+If "All", then all the unique sequence in the \code{seq_col} will be analyzed.}
 
-\item{ptm_col}{column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma;, for overProp: Propionyl, prNt, pr). Only
+\item{ptm_col}{column containing peptide ptm information (for overTMA: TMAyl, tmaNt, and tmame1, tma; for overProp: Propionyl, prNt, pr). Only
 two representations of PTMs can be recognized to filter upon: Propionyl (K12) or K27bu-S32pr ....)}
 
-\item{int_col}{sample columns containing intensity values}
+\item{int_col}{sample columns containing intensity values.}
 
 \item{type}{Either "dodged (default)" or "stacked" to plot stacked or dodged bar plot.}
 
-\item{show_text}{bool; TRUE (default) shows the percentages on the bars.}
+\item{show_text}{bool;  \code{TRUE} (default) shows the percentages on the bars.
+The values are rounded to the nearest whole number unless it less than one, then it is rounded to the nearest tenth.}
 
-\item{save_plot}{bool; `FALSE` (default). Save or not the plot to the desktop.`}
+\item{save_plot}{bool;  \code{FALSE} (default). Save or not the plot(s).`}
 
 \item{plot_title}{A title for the plot}
 
-\item{output_dir}{Folder name to output the plots if `NULL` it defaults to the Working directory.}
+\item{output_dir}{character; A folder name to store the plots into if \code{save_plot} is set \code{TRUE}. If \code{NULL} (default), plots will be saved into the working directory.}
 }
 \value{
 A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
 }
 \description{
-Sometimes overlabeling is very abundant which decrease sensitivity and affect quantification accuracy.
+Derivatization efficiency needs to be checked. Sometimes over/underlabeling is very abundant which decreases sensitivity and affects quantification accuracy.
+}
+\details{
+Labeling categories are defined as follows:
+
+\describe{
+  \item{\strong{Desired}}{Peptides in which all lysine residues are modified or labeled in addition to the N-term.}
+  \item{\strong{OverLabeled}}{Peptides that have at least one labeled serine (S), threonine (T), or tyrosine (Y) residue.}
+  \item{\strong{UnderLabeled}}{
+    Peptides that contain any of the following unlabeled features:
+    \itemize{
+      \item Unlabeled peptide N-terminus
+      \item Unlabeled monomethylated lysine (Kme1)
+      \item Unlabeled lysine (K)
+    }
+    These may occur individually or together.
+  }
+  \item{\strong{UnderOverLabeled}}{Peptides that meet the criteria for both `UnderLabeled` and `OverLabeled`.}
+}
 }
