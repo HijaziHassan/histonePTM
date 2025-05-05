@@ -26,9 +26,9 @@ analyzeHistone(
 
 \item{labeling}{the labeling reagent used like 'PA' (default), 'TMA', 'PA_PIC', or 'none'. It's used to clear labeling modifications from PTM string by `misc_clearLabeling()`.}
 
-\item{Quant_threshold}{A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in EVERY condition.}
+\item{Quant_threshold}{A cutt-off value (default is `NULL`). The ID should be quantified in at least \code{Quant_threshold} samples in at least one of the conditions.}
 
-\item{PSM_threshold}{A cutt-off value (default is `NULL`). The ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.}
+\item{PSM_threshold}{A cutt-off value (default is `NULL`). Regardless of the condition, the ID should be identified in at least in one or more sample(s) with \code{PSM_threshold} PSMs.}
 
 \item{norm_method}{Normalization method. Either by 'peptide family' (default) or by "peptide_total". The latter depends on what is in your dataset and if you have prefiltered it or not.
 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.}
