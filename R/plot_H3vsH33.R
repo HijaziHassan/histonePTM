@@ -64,13 +64,11 @@ plot_H3vsH33 <- function(df, seq_col, seq_ptm_col, int_col, save_plot = FALSE, s
                   sample = gsub('abundance_', '', sample)
     ) -> RA_per_plot
 
-  datasave= NULL
+  datasave <- RA_per_plot |> dplyr::select(-reorder_col)
 
   if(save_file){
 
-    datasave <- RA_per_plot |> dplyr::select(-reorder_col)
-
-    openxlsx::write.xlsx(x = datasave, file = 'H3_H33.xlsx', sheetName = 'H3_H33')
+    openxlsx::write.xlsx(x = datasave, file = paste0(Sys.Date(), '_H3_H33.xlsx'), sheetName = 'H3_H33')
   }
 
  plotH3 <-  RA_per_plot |>
