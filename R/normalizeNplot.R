@@ -1,7 +1,7 @@
 #' Normalize and Plot
 #' @description
 #' There are cases where the output of `analyzeHistone()` function is not satisfactory. This happens when the software integrates the same peak for two nearly coeluting peptidoforms
-#' as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data is the reason this function exists.
+#' as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data after manual correction is the reason this function exists.
 #' Coefficient of variations are calculated.
 #'
 #'
@@ -12,6 +12,7 @@
 #' @param seq_stretch_col A column containing the label of the sequences (will be used as title of the y axis).
 #' @param int_cols Intensity columns. `tidyselect` functions can be used (e.g. starts_with('abundance_')) or character vector (e.g `c('col1', 'col2')`).
 #' @param save_file (\code{bool}) TRUE (default) to save the normalized file.
+#' @param file_name A name of the output excel file without the xlsx extension. e.g. "corr_normalized" (default).
 #' @param isNormalized bool; FALSE (default). If TRUE data will not be normalized.
 #' @param ... Additional arguments passed to `plot_jitterbarIntvsPTM` other than the column names such as `fun`, `error_type`, `plot_title`, `save_plot`, `max_cutoff`, `output_dir` etc ... Revise the documentation for more details.
 #'
@@ -30,6 +31,7 @@ normalizeNplot <- function(df_corrected,
                            seq_col,
                            seq_stretch_col,
                            int_cols,
+                           file_name = 'corr_normalized',
                            save_file = TRUE,
                            isNormalized = FALSE,
                            ...
@@ -73,7 +75,7 @@ if(!isNormalized){
         ptm_col = {{ptm_col}},
         format = 'wide')
 
-    file = "corr_normalized.xlsx"
+    file = paste0(file_name, ".xlsx")
     df_norm |> openxlsx::write.xlsx(file = file)
     cli::cli_alert_success("The corrected and normalized values are saved as {file}.")
   }

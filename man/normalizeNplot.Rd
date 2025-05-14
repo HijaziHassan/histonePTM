@@ -11,6 +11,7 @@ normalizeNplot(
   seq_col,
   seq_stretch_col,
   int_cols,
+  file_name = "corr_normalized",
   save_file = TRUE,
   isNormalized = FALSE,
   ...
@@ -29,6 +30,8 @@ normalizeNplot(
 
 \item{int_cols}{Intensity columns. `tidyselect` functions can be used (e.g. starts_with('abundance_')) or character vector (e.g `c('col1', 'col2')`).}
 
+\item{file_name}{A name of the output excel file without the xlsx extension. e.g. "corr_normalized" (default).}
+
 \item{save_file}{(\code{bool}) TRUE (default) to save the normalized file.}
 
 \item{isNormalized}{bool; FALSE (default). If TRUE data will not be normalized.}
@@ -41,6 +44,6 @@ bar plots (representing either 'mean' or 'median') with jitter points (correspon
 }
 \description{
 There are cases where the output of `analyzeHistone()` function is not satisfactory. This happens when the software integrates the same peak for two nearly coeluting peptidoforms
-as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data is the reason this function exists.
+as K18acK23un and K18unK23un. A need to re-normalize and to re-plot the data after manual correction is the reason this function exists.
 Coefficient of variations are calculated.
 }
