@@ -3,10 +3,11 @@
 #' Subtract naturally occuring abundances of MS XICs in stable isotope tracing experiments
 #'
 #'
-#' @param df A dataframe as Picor output but with raw values.
-#' @param time_col Name of thetime column.
-#' @param t0 Value of the t0 ( 0 , t0, T0 ...)
+#' @param df A dataframe as PICor input.
+#' @param time_col The time column.
+#' @param t0 Value of the reference sample in the time column ( e.g. "0" , "t0", "T0" ...)
 #' @param cond_col Condition column (Concentration, disease vs non-disease ...)
+#' @param avg_by (optional) A column to average by (e.g.TechReplicate).
 #'
 #' @importFrom readr parse_number
 #' @importFrom dplyr group_by group_split group_keys pull select bind_rows bind_cols rowwise mutate filter across matches all_of summarise if_else
@@ -27,7 +28,7 @@ quant_manIsoCorreciton <- function(df, time_col, t0, cond_col, avg_by) {
   col_names <- colnames(df)
   ## Step 1.1 classify them into odd and even
   all_isotopes <- classify_isotopes(col_names)
-  ## Step 1.2: isolat the even ones (acetyl has two heavy carbons)
+  ## Step 1.2: isolate the even ones (acetyl has two heavy carbons)
   even_iso <- all_isotopes[['even_iso']]
 
   ## Step 1.3: get-rid of odd C13 istopes

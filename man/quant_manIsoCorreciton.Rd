@@ -7,13 +7,15 @@
 quant_manIsoCorreciton(df, time_col, t0, cond_col, avg_by)
 }
 \arguments{
-\item{df}{A dataframe as Picor output but with raw values.}
+\item{df}{A dataframe as PICor input.}
 
-\item{time_col}{Name of thetime column.}
+\item{time_col}{The time column.}
 
-\item{t0}{Value of the t0 ( 0 , t0, T0 ...)}
+\item{t0}{Value of the reference sample in the time column ( e.g. "0" , "t0", "T0" ...)}
 
 \item{cond_col}{Condition column (Concentration, disease vs non-disease ...)}
+
+\item{avg_by}{(optional) A column to average by (e.g.TechReplicate).}
 }
 \value{
 A dataframe with corrected and normalized values.
