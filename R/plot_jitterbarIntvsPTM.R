@@ -246,7 +246,7 @@ plotjit <- function(dataset,
   #adjust angle based on x-axis labels
   angle = ifelse("size" %in% colnames(dataset) &&
                    unique(dataset[["size"]]) > 10 &&
-                   any(nchar(dataset |> dplyr::pull({{x_axis}})) > 8),
+                   any(nchar(dataset |> dplyr::pull({{x_axis}})) > 11),
                  90,
                  60
   )
@@ -356,7 +356,7 @@ plotjit <- function(dataset,
       ),
       axis.title.y = ggplot2::element_text(size = 16, face = "bold"),
       axis.text.x = ggplot2::element_text(
-        size = 15,
+        size = 13,
         face = "bold",
         angle = angle,
         colour = "black",
