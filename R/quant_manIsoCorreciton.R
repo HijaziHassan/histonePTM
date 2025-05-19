@@ -10,7 +10,7 @@
 #' @param avg_by (optional) A column to average by (e.g.TechReplicate).
 #'
 #' @importFrom readr parse_number
-#' @importFrom dplyr group_by group_split group_keys pull select bind_rows bind_cols rowwise mutate filter across matches all_of summarise if_else
+#' @importFrom dplyr group_by group_split group_keys pull select bind_rows bind_cols rowwise mutate filter across matches all_of summarise if_else where
 #' @importFrom purrr map
 #' @importFrom stringr str_to_lower str_glue str_flatten
 #' @importFrom tibble deframe
@@ -23,6 +23,9 @@
 #'
 quant_manIsoCorreciton <- function(df, time_col, t0, cond_col, avg_by) {
 
+  #delete columns where all values are zero
+  df <- df |>
+    dplyr::select(dplyr::where(\(int_value) !is.numeric(x = int_value ) || any(int_value != 0)))
 
   # Step 1: Extract columns of isotopes
   col_names <- colnames(df)
@@ -140,7 +143,6 @@ correct_isotopes <- function(df, time_col, t0, M0_ratios, even_iso) {
   # M+0 is only C12
   df_corr <- df |>
     dplyr::mutate(`M+0` = `No label`)
-
   # Parse numeric parts of even isotopes
   iso_dist <- readr::parse_number(even_iso)
 
