@@ -133,14 +133,39 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
                     search = factor(search)
                     )
 
-  p <-ggplot2::ggplot(df_plot,
-                      ggplot2::aes(x = Year, y = Count,
-                                   color = stringr::str_wrap(search, width = 20),
-                                   group = 1)) +
+
+  p <- ggplot2::ggplot(df_plot,
+                       ggplot2::aes(x = Year, y = Count,
+                                    color = stringr::str_wrap(search, width = 20),
+                                    group = 1)) +
     ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(color = "PubMed Search Term") +
     ggplot2::scale_color_brewer(palette = "Dark2") +
-    ggplot2::scale_x_continuous(breaks = \(x) seq(floor(min(x)), ceiling(max(x)), by = 1)) +
+    ggplot2::scale_x_continuous(
+      breaks = function(x) {
+        # Use actual data years, not the expanded axis range
+        actual_years <- sort(unique(df_plot$Year))
+        year_min <- min(actual_years)
+        year_max <- max(actual_years)
+        year_diff <- year_max - year_min
+
+        # If 2 years or less apart, show all years
+        if (year_diff <= 2) {
+          return(actual_years)
+        }
+
+        # For 3+ years: start, step by 2, end
+        middle_start <- year_min + 2
+        middle_end <- year_max - 2
+
+        if (middle_start <= middle_end) {
+          middle_years <- seq(middle_start, middle_end, by = 2)
+          return(c(year_min, middle_years, year_max))
+        } else {
+          return(c(year_min, year_max))
+        }
+      }
+    ) +
     ggplot2::theme_classic(base_size = 12) +
     ggplot2::theme(
       legend.title = ggplot2::element_text(size = 12, face = "bold"),
