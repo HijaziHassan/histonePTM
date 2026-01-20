@@ -160,8 +160,7 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
     cli::cli_alert_warning("Not enough data points to draw a line plot.")
     }
  return_list = list(Data = title_df_long,
-                    df_plot,
-                    Summary= title_df_wide[, c("year", "count")],
+                    Summary= df_plot,
                     plot= p)
  nonull_list = Filter(Negate(is.null), return_list)
 return(nonull_list)
