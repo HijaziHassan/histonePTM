@@ -123,31 +123,28 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
   }
 
 
-  if(nrow(title_df_wide)>2){
+  if(nrow(title_df_wide)>1){
 
-    df_plot <- title_df |> #dplyr::distinct() |>
-      dplyr::select(Year = year, search) |>
-      dplyr::count(Year, search, name = 'Count') |>
+    df_plot <- title_df_wide |> #dplyr::distinct() |>
+      dplyr::select(Year = year, search, Count = count) |>
+      #dplyr::count(Year, search, name = 'Count') |>
       dplyr::mutate(
                     search = stringr::str_remove_all(search, " AND \\d+\\[PDAT\\]"),
                     search = factor(search)
                     )
 
-  p <- ggplot2::ggplot(df_plot,
-                       aes(x= Year, y= Count,
-                           color= stringr::str_wrap(search, width = 20),
-                           group=1)
-                       )+
-      ggplot2::geom_line(linewidth= 1.2)+
-
-      ggplot2::labs(color = "PubMed Search Term")+
-      ggplot2::scale_color_brewer(palette = "Dark2")+
-      ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
-
-      ggplot2::theme_classic(base_size = 12)+
-      ggplot2::theme(
+  p <-ggplot2::ggplot(df_plot,
+                      ggplot2::aes(x = Year, y = Count,
+                                   color = stringr::str_wrap(search, width = 20),
+                                   group = 1)) +
+    ggplot2::geom_line(linewidth = 1.2) +
+    ggplot2::labs(color = "PubMed Search Term") +
+    ggplot2::scale_color_brewer(palette = "Dark2") +
+    ggplot2::scale_x_continuous(breaks = \(x) seq(floor(min(x)), ceiling(max(x)), by = 1)) +
+    ggplot2::theme_classic(base_size = 12) +
+    ggplot2::theme(
       legend.title = ggplot2::element_text(size = 12, face = "bold"),
-      legend.text = ggplot2::element_text(size= 8)
+      legend.text = ggplot2::element_text(size = 8)
     )
 
   if(save_plot){
@@ -162,7 +159,10 @@ litReview <- function(start, end, term, db= "pubmed", save_plot = FALSE, save_fi
 
     cli::cli_alert_warning("Not enough data points to draw a line plot.")
     }
- return_list = list(Data = title_df_long, df_plot, Summary= table(title_df_long$year), plot= p)
+ return_list = list(Data = title_df_long,
+                    df_plot,
+                    Summary= title_df_wide[, c("year", "count")],
+                    plot= p)
  nonull_list = Filter(Negate(is.null), return_list)
 return(nonull_list)
 
