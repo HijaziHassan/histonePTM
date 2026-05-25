@@ -9,13 +9,15 @@
 #' @param sep_ptm separator that separates PTMs (default is "-").
 #' @param format Format of `df` ('wide' (default) or 'long'))
 #' @param remove_ptm A ptm to be excluded. provided as a string.
-#' @param save_data \code{bool, FALSE} (default)
+#' @param save_file \code{bool, TRUE} (default)
 #' @param save_plot \code{bool, FALSE} (default)
+#' @param file_name A name of the output excel file without the xlsx extension. e.g. "siteAbundance" (default).
 #' @param ... additional arguments passed to `plot_jitterbarIntvsPTM()` function.
 #'
 #' @importFrom dplyr select filter pull summarize across bind_rows
 #' @importFrom stringr str_detect
 #' @importFrom purrr map
+#' @importFrom openxlsx write.xlsx
 #' @return dataframe with id_col(s), `PTMsite` containing the quantified sites, and the intensity column(s)
 #' @export
 #'
@@ -24,7 +26,8 @@ ptm_siteAbundance <- function(df, df_meta, ptm_col, id_col, int_cols
                              , format= c('wide', 'long')
                              , sep_ptm = '-'
                              , remove_ptm = NULL
-                             , save_data = FALSE
+                             , save_file = TRUE
+                             , filename = "siteAbundance"
                              , save_plot = FALSE
                              , ...) {
 
@@ -60,9 +63,9 @@ ptm_siteAbundance <- function(df, df_meta, ptm_col, id_col, int_cols
   }) |> dplyr::bind_rows()
 
 
-  if(save_data){
+  if(save_file){
 
-    write.csv(x = df_siteAbundance , file = "siteAbundance.csv")
+    df_siteAbundance |>  openxlsx::write.xlsx( file = paste0(filename, '.xlsx'))
 
   }
 

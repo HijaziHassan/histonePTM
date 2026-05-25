@@ -14,7 +14,8 @@ ptm_siteAbundance(
   format = c("wide", "long"),
   sep_ptm = "-",
   remove_ptm = NULL,
-  save_data = FALSE,
+  save_file = TRUE,
+  filename = "siteAbundance",
   save_plot = FALSE,
   ...
 )
@@ -36,11 +37,13 @@ ptm_siteAbundance(
 
 \item{remove_ptm}{A ptm to be excluded. provided as a string.}
 
-\item{save_data}{\code{bool, FALSE} (default)}
+\item{save_file}{\code{bool, TRUE} (default)}
 
 \item{save_plot}{\code{bool, FALSE} (default)}
 
 \item{...}{additional arguments passed to `plot_jitterbarIntvsPTM()` function.}
+
+\item{file_name}{A name of the output excel file without the xlsx extension. e.g. "siteAbundance" (default).}
 }
 \value{
 dataframe with id_col(s), `PTMsite` containing the quantified sites, and the intensity column(s)
