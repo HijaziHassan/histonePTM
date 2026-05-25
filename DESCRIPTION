@@ -14,11 +14,11 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 biocViews: Proteomics, MassSpectrometry, Preprocessing, Software
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Depends: 
     R (>= 3.5.0)
 Imports: 
-     dplyr, purrr, stringr, tidyr, tibble, rlang,  cli, 
+     dplyr (>= 1.2.0), purrr, stringr, tidyr, tibble, rlang,  cli, 
      ggplot2 (>= 3.5.0), ggtext, scales, ggridges,
      readxl, openxlsx, writexl, readr
 Suggests: 
@@ -35,4 +35,3 @@ Suggests:
 URL: https://github.com/HijaziHassan/histonePTM
 BugReports: https://github.com/HijaziHassan/histonePTM/issues
 Config/testthat/edition: 3
-
