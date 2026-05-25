@@ -15,7 +15,7 @@
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #' @param save_plot bool; TRUE (default). draw and save or not the jitter bar plots of PTMs vs intensity for each peptide.
 #'
-#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc coalesce
+#' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc coalesce recode_values group_walk group_by
 #' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim str_extract
 #' @importFrom tidyr nest drop_na
 #' @importFrom writexl write_xlsx
@@ -218,16 +218,26 @@ add_irt <- rlang::set_names(purrr::pluck(sequenceDB, "iRT", "label"),
 named <- c(named, add_irt)
 
 
+
 #give label to each sequence
 
 
 Histone <- Histone |>
-                #add column which labels each sequence by variant and K position
-  dplyr::mutate(seq_stretch= stringr::str_replace_all(sequence, named),
-                #extract Protein name without variants (H3 for H3 and H3.3, H2A for all H2A variants)
-                protein = substr(stringr::str_split_i(seq_stretch, "_", 1), 1, 3) |>
-                  #remove "." from H3.3, "m" from H3mm7/13 and "t" from "H3t"
-                  gsub("[[:punct:]]|m|t", "", x= _)
+   #add column which labels each sequence by variant and K position
+  dplyr::mutate(
+    seq_stretch = dplyr::recode_values(
+      sequence,
+      from = names(named),
+      to   = unname(named),
+      default = sequence,
+      unmatched = "default",
+      ptype = character()
+    ),
+
+    #extract Protein name without variants (H3 for H3 and H3.3, H2A for all H2A variants)
+    protein = substr(stringr::str_split_i(seq_stretch, "_", 1), 1, 3) |>
+      #remove "." from H3.3 or H1.x, "m" from H3mm7/13 and "t" from "H3t"
+      gsub("[[:punct:]]|m|t", "", x = _)
   )
 
 
@@ -610,7 +620,6 @@ extract_num_named_dfs <- function(name) {
 
 
 df_tobe_splitted |>
-
     tidyr::nest(.by = protein) |>
   dplyr::mutate(
     split_data = purrr::map(data, ~ split(.x, .x[['seq_stretch']]) |>
@@ -666,27 +675,57 @@ cli::cli_alert_success('An excel file summarizing the IDs per each {.val {ident_
 
 # Start of the Graphing Module --------------------------
 
+## RA plots
+if(save_plot == TRUE){
+cli::cli_alert_info('Plotting RA plots ...')
+
+df_plot <- df_tobe_splitted |>
+  dplyr::select(protein, sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(intensityCols)) |>
+  tidyr::pivot_longer(cols = dplyr::any_of(intensityCols), names_to = 'SampleName', values_to = 'intensity') |>
+  dplyr::left_join(meta_names_merge, dplyr::join_by(SampleName))
+
+df_plot |>
+  dplyr::group_by(protein) |>
+  dplyr::group_walk(~ {
+    #cli::cli_inform("RA plots of protein: {(.y$protein)}")
+    plot_jitterbarIntvsPTM(dataset = .x,
+                           x_axis = PTM_unlabeled,
+                           y_axis = intensity,
+                           condition = Condition,
+                           id_col = seq_stretch,
+                           fun = "mean",
+                           error_type = NULL,
+                           plot_title = sequence,
+                           save_plot = TRUE,
+                           output_dir = paste0(img_folder_name, "/RAplots/", .y$protein)
+    )
+  })}
+
 ## Site Abundance plot
 if(save_plot == TRUE){
 cli::cli_alert_info('Plotting RA site abundance plots ...')}
-siteAnalysis <- ptm_siteAbundance(df = df_tobe_splitted
+
+siteAnalysis <- df_tobe_splitted |>
+  dplyr::group_by(protein) |>
+  dplyr::group_walk(~ {
+    #cli::cli_inform("Site analysis of protein: {(.y$protein)}")
+ ptm_siteAbundance(df = .x,
                   ,df_meta = meta_names_merge
                   ,ptm_col = PTM
                   ,id_col = sequence
                   ,int_cols = intensityCols
                   , format = 'wide'
                   , remove_ptm = 'prNt|tmaNt'
-                  , save_plot = save_plot,
-                  , output_dir = paste0(img_folder_name, "/RAsiteplots")
+                  , save_plot = save_plot
+                  , save_file = TRUE
+                  , filename = paste0('./analysis/', folderName, '/SA_', .y$protein)
+                  , output_dir = paste0(img_folder_name, "/RAsiteplots/", .y$protein)
 )
 
-writexl::write_xlsx(siteAnalysis[['data']] , path = paste0('./analysis/', folderName,"/siteAbundance.xlsx"))
+ })
 
 
-
-if(save_plot == TRUE){
-## CV plot
-  cli::cli_alert_info('Plotting CV plots ...')
+cli::cli_alert_info('Plotting CV plots ...')
 
   df_tobe_splitted |>
     dplyr::select(tidyr::starts_with('cv_')) |>
@@ -698,32 +737,14 @@ if(save_plot == TRUE){
     plot_CVs(df = _,
              cond_col = Condition,
              cv_col = CV,
-             save_plot = TRUE,
+             save_plot = save_plot,
              scale = 1, #CVs are already multiplied by 100
              output_dir= img_folder_name )
 
-  cli::cli_alert_info('Plotting RA abundance plots ...')
-
-## RA plots
-df_tobe_splitted |>
-  dplyr::select(sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(intensityCols)) |>
-  tidyr::pivot_longer(cols = dplyr::any_of(intensityCols), names_to = 'SampleName', values_to = 'intensity') |>
-  dplyr::left_join(meta_names_merge, dplyr::join_by(SampleName)) |>
-  plot_jitterbarIntvsPTM(dataset = _,
-                         x_axis = PTM_unlabeled,
-                         y_axis = intensity,
-                         condition = Condition,
-                         id_col = seq_stretch,
-                         fun = "mean",
-                         error_type = NULL,
-                         plot_title = sequence,
-                         save_plot = TRUE,
-                         output_dir = paste0(img_folder_name, "/RAplots")
-                                             )
 
 
 
-}
+
 
 #End of the Graphing Module##########################
 
