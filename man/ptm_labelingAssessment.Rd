@@ -43,7 +43,7 @@ The values are rounded to the nearest whole number unless it less than one, then
 \item{output_dir}{character; A folder name to store the plots into if \code{save_plot} is set \code{TRUE}. If \code{NULL} (default), plots will be saved into the working directory.}
 }
 \value{
-A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
+A list of three: a dataframe combining all the data and a list of plot(s) for each sequence, and a dataframe for ID counts.
 }
 \description{
 Derivatization efficiency needs to be checked. Sometimes over/underlabeling is very abundant which decreases sensitivity and affects quantification accuracy.

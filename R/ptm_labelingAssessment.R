@@ -22,14 +22,14 @@
 #' @param plot_title A title for the plot
 #' @param output_dir character; A folder name to store the plots into if \code{save_plot} is set \code{TRUE}. If \code{NULL} (default), plots will be saved into the working directory.
 #' @importFrom stringr str_detect str_count str_remove
-#' @importFrom tidyr pivot_longer
+#' @importFrom tidyr pivot_longer complete
 #' @importFrom dplyr filter mutate summarise across select distinct if_else cur_column pull bind_rows case_when all_of
 #' @importFrom purrr map
 #' @importFrom tibble tibble
 #' @importFrom cli cli_alert_info cli_alert_warning cli_inform
 #' @import ggplot2
 #'
-#' @return A list of two lists: a dataframe combining all the data and a list of plot(s) for each sequence.
+#' @return A list of three: a dataframe combining all the data and a list of plot(s) for each sequence, and a dataframe for ID counts.
 #' @details
 #' Labeling categories are defined as follows:
 #'
@@ -98,6 +98,7 @@ if(rlang::is_empty(int_cols)) cli::cli_abort(c("Missing or incorrect input.",
       seq <- c('ISGLIYEETR', 'YRPGTVALREIR', 'KQLATKAAR', 'DNIQGITKPAIR', 'DAVTYTEHAKR', 'KSTGGKAPR', 'KSAP.TGGVKKPHR')
     }
 
+  #df containing sequence (containing all selected seqs), ptm and intensity columns
     df_filtered <- df |>
       dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}})) |>
       dplyr::filter(stringr::str_detect({{seq_col}}, paste0("^(", paste(seq, collapse = "|"), ")$"))) |>
@@ -116,19 +117,21 @@ if(rlang::is_empty(int_cols)) cli::cli_abort(c("Missing or incorrect input.",
       return()
     }
 
+# Analysis ----------------------------------
 
 plot_list = list()
 df_list <- list()
-
+#Analyze for each sequence
     results <- purrr::map(seq, function(current_seq) {
-      df_seq <- df_filtered |>
+     #dataframe containing only one sequence
+       df_seq <- df_filtered |>
         dplyr::filter(stringr::str_detect({{seq_col}}, current_seq))
-
+       #if the sequence is not found, return empty tibble
       if (nrow(df_seq) < 1) {
         cli::cli_alert_info('The sequence {.val {current_seq}} is not found in your {.arg seq_col} column.')
         return(tibble::tibble())
       }
-
+      #analyze the PTMs adding tags columns
       df_tagged <- df_seq |>
         dplyr::mutate(
           isOverLab = stringr::str_detect({{ptm_col}}, regex_OverLab),
@@ -140,14 +143,15 @@ df_list <- list()
           isNterm = stringr::str_detect({{ptm_col}}, regex_Nterm),
           isFullyUnmod = is.na({{ptm_col}})
         )
+# Intensity-based analysis -------------------------------
+
+# dataframe for total intensity of each sample
+      seq_total_sum <- df_tagged |>
+        dplyr::summarise(dplyr::across(dplyr::all_of({{int_col}}), ~sum(.x, na.rm = TRUE)))
 
 
-      df_total <- df_tagged |>
-        dplyr::summarise(dplyr::across({{int_col}}, ~sum(.x, na.rm = TRUE)))
-
-
-
-      df_all <- df_tagged |>
+#based on the tag,define the labeling status
+      df_labeled <- df_tagged |>
         dplyr::mutate(
           tag = dplyr::case_when(
             isNonLabeledme1 | !isFullyModified | !isNterm & !isOverLab | isFullyUnmod ~ 'UnderLabeled',
@@ -155,40 +159,64 @@ df_list <- list()
             isNterm & !isOverLab & !isNonLabeledme1 & isFullyModified ~ 'Desired',
             .default = 'UnderOverLabeled'
           )
-        ) |>
+        )
 
+      #dataframe total intensity of each category in each sample
+      df_summary <- df_labeled |>
         dplyr::summarise(dplyr::across(dplyr::all_of({{int_col}}), ~sum(.x, na.rm = TRUE)), .by = tag) |>
-        dplyr::mutate(seq_analyzed = current_seq)
+        dplyr::mutate(seq_analyzed = current_seq)  # Add sequence column
 
-      df_all_norm <- df_all |>
+      #normalize by total intensity of each sample
+      df_all_norm <- df_summary|>
         dplyr::mutate(
           dplyr::across(
             .cols = dplyr::all_of({{int_col}}),
-            .fns = ~ . * 100 / df_total |> dplyr::pull(dplyr::cur_column())
+            .fns = ~ . * 100 / seq_total_sum |> dplyr::pull(dplyr::cur_column())
           )
         )
 
 
 
-      # Plot for each sequence
+# Counting-based analysis -------------------------------
+      df_count <- df_labeled |>
+        dplyr::mutate(tag = factor(tag, levels= c('Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
+        tidyr::pivot_longer(
+          cols = dplyr::all_of({{int_col}}),
+          names_to = 'sample',
+          values_to = 'intensity',
+          values_drop_na = TRUE
+        ) |>
+        #dplyr::mutate(seq_analyzed = current_seq) |>
+        dplyr::count({{seq_col}}, sample, tag, name = "tag_count") |>
+        tidyr::complete({{seq_col}}, sample, tag, fill = list(tag_count = 0))
 
+
+# Plotting -------------------------------
+#dataframe with columns: tag, seq_analyzed, sample, intensity, and pct_formatted.
       plot <- df_all_norm |>
         dplyr::mutate(tag = factor(tag, levels= c('Desired', 'OverLabeled', 'UnderLabeled', 'UnderOverLabeled'))) |>
         tidyr::pivot_longer(
           cols = dplyr::all_of({{int_col}}),
           names_to = 'sample',
           values_to = 'intensity'
+        ) |>   tidyr::complete(
+          seq_analyzed,    # <— include it here
+          sample,
+          tag,
+          fill = list(intensity = 0)
         ) |>
         dplyr::mutate(sample = stringr::str_remove(sample, 'abundance_'), # specific for Proline software
                       pct_formatted = {
                         if (!show_text) {
                           ''
                         } else if (type == "dodged") {
-                          ifelse(intensity < 1,
-                                 paste0(round(intensity, digits = 1), "%"),
+                          ifelse(intensity== 0, "",
+                            ifelse(intensity < 1, "*",
+                                 #paste0(round(intensity, digits = 1), "%"),
                                  paste0(round(intensity), "%"))
+                                 )
                         } else {
-                          ifelse(intensity < 5, NA_character_, paste0(round(intensity), "%"))
+                          ifelse(intensity < 5 | is.na(intensity), "", paste0(round(intensity), "%"))
                         }
                       }
 
@@ -196,16 +224,19 @@ df_list <- list()
 
 
 
-
       sample_number <- length(colnames(df_filtered))-2
 
       angle = ifelse(sample_number < 10, 0, 45)
 
-      custom_theme <-  ggplot2::theme_classic(base_size = 14)+
+      custom_theme <-  ggplot2::theme_classic(base_size = 11)+
         ggplot2::theme(
           legend.position = "bottom", legend.direction = "horizontal",
           legend.text = ggplot2::element_text(face= "bold"),
+          legend.spacing.x = unit(0.1, 'cm'),
+          legend.key.width = unit(0.2, 'cm'),
+          legend.justification = c(0, 0),
           axis.text.x = ggplot2::element_text(angle = angle, vjust = 0.5),
+          axis.title.y = ggplot2::element_text(face = "bold", size = 12),
           axis.line = ggplot2::element_line(linewidth = 1.2),
           axis.text = ggplot2::element_text(face= 'bold', color = 'black')
         )
@@ -216,8 +247,8 @@ df_list <- list()
         ggplot2::ggplot(plot, ggplot2::aes(x= sample, y= intensity, fill= tag, label= pct_formatted)) +
           ggplot2::labs(y= "Relative Intensity (%)", fill= "", x= "", title= plot_title) +
           ggplot2::geom_col(position= ggplot2::position_dodge2(preserve= 'single', width = 0.8)) +
-          ggplot2::geom_text(size= 3.9, fontface = 'bold', color= 'black',
-                             , position = ggplot2::position_dodge2(.8), vjust= -.5)+
+          ggplot2::geom_text(size= 3.5, fontface = 'bold', color= 'black',
+                             , position = ggplot2::position_dodge(0.9), vjust= -.5)+
           ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
           ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
           #ggplot2::scale_fill_brewer(palette = "Dark2") +
@@ -238,7 +269,7 @@ df_list <- list()
           ggplot2::geom_col(width = 0.6) +
           ggplot2::geom_text(position= ggplot2::position_stack(vjust= 0.5),
                              size= 4, fontface = 'bold', color= 'white', na.rm = TRUE)+
-          ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= "#DEDEDE")+
+          ggplot2::geom_hline(yintercept = 100,  linetype = "dotted", color= '#b4b4b4')+
           ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.01))) +
           ggplot2::scale_fill_manual(values = c("Desired" = "#1B9E77",
                                        "OverLabeled" = "#D95F02",
@@ -278,7 +309,8 @@ df_list <- list()
 
       list(
         df_all_norm = df_all_norm,
-        plot_output = plot_output
+        plot_output = plot_output,
+        df_count= df_count
       )
 
     }
@@ -297,12 +329,14 @@ df_list <- list()
     plot_list <- results |>
       purrr::map("plot_output")
 
-
+    df_count <- results |>
+      purrr::map("df_count")
 
 
     return(list(
       data = df_all_norm_combined,
-      plot = plot_list
+      plot = plot_list,
+      counting = df_count
     ))
 
 
