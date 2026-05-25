@@ -123,12 +123,16 @@ plot_jitterbarIntvsPTM <- function(dataset,
     dplyr::mutate({{condition}} := factor({{condition}},
                                           levels = assort_cond(dataset,
                                                                condition_col = {{condition}},
-                                                               cond_order = cond_order)))
+                                                               cond_order = cond_order)),
+                  {{ x_axis }} := tidyr::replace_na(as.character({{ x_axis }}), "no_PTM")
+                  )
+
 
 
   id_col <- rlang::enquo(id_col)
   plot_title <- rlang::enquo(plot_title)
   plot_title_label <- rlang::as_label(plot_title)
+  global_cond_levels <- levels(dataset[[rlang::as_label(rlang::enquo(condition))]])
 
 
   # Check if plot_title is NULL or provided as a string (quoted)
@@ -166,7 +170,8 @@ plot_jitterbarIntvsPTM <- function(dataset,
            conf_level = conf_level,
            scale = scale,
            save_plot = save_plot,
-           output_dir = output_dir
+           output_dir = output_dir,
+           global_cond_levels = global_cond_levels
          )
        )
      )
@@ -206,7 +211,8 @@ plot_jitterbarIntvsPTM <- function(dataset,
             conf_level = conf_level,
             scale = scale,
             save_plot = save_plot,
-            output_dir= output_dir
+            output_dir= output_dir,
+            global_cond_levels = global_cond_levels
           )
         )
       )
@@ -230,7 +236,8 @@ plotjit <- function(dataset,
                     conf_level = 0.95,
                     scale = 100,
                     save_plot = FALSE,
-                    output_dir= NULL) {
+                    output_dir= NULL,
+                    global_cond_levels = NULL) {
 
 
   fun <- match.arg(fun)
@@ -278,6 +285,13 @@ plotjit <- function(dataset,
         .groups = "drop"
       )
   }
+
+  # Build named color/fill vectors from the global palette
+  n_cond <- length(global_cond_levels)
+  palette_colors <- if (!is.null(global_cond_levels) && n_cond > 0) {
+    setNames(RColorBrewer::brewer.pal(max(3, n_cond), "Set1")[seq_len(n_cond)],
+             global_cond_levels)
+  } else NULL
 
   # Create the plot
   p <- ggplot2::ggplot(dataset, ggplot2::aes(
@@ -329,8 +343,8 @@ plotjit <- function(dataset,
 
     # Customize scales
     ggplot2::scale_y_continuous(labels = scales::label_percent(scale = scale)) +
-    ggplot2::scale_colour_brewer(palette = "Set1") +
-    ggplot2::scale_fill_brewer(palette = "Set1") +
+    ggplot2::scale_colour_manual(values = palette_colors, drop = FALSE) +
+    ggplot2::scale_fill_manual(values = palette_colors, drop = FALSE) +
 
     # Add labels and title
     ggplot2::labs(
@@ -381,7 +395,8 @@ plotjit <- function(dataset,
 
   if (save_plot) {
 
-    cli::cli_inform("Plotting: {id_col}")
+    #cli::cli_inform("Plotting: {id_col}")
+
     ggplot2::ggsave(
       filename = stringr::str_glue("{id_col}.png"),
       path = output_dir,
@@ -391,6 +406,7 @@ plotjit <- function(dataset,
       units = "in",
       bg = "white"
     )
+
   }
 
   return(p)
