@@ -14,6 +14,7 @@
 #' 'no_me1' removes ALL peptides with unlabelled me1 . "no_me1_K37un" does the same but also removes H3K27-R40 peptides which are modified at K37.'none' does not do any filtration.
 #' @param output_result Either `signle` or `multiple`. This will decided if all ids from different proteins are in one file (`single`) or in a separate file (`multiple`).
 #' @param save_plot bool; TRUE (default). draw and save or not the jitter bar plots of PTMs vs intensity for each peptide.
+#' @param ... optional argument unique for the `plot_jitterbarIntvsPTM()` function used to plot the relative intensity plots.
 #'
 #' @importFrom dplyr mutate filter across left_join any_of select starts_with arrange if_else rename where desc coalesce recode_values group_walk group_by
 #' @importFrom stringr str_detect str_split_i str_replace_all str_count str_trim str_extract
@@ -69,7 +70,8 @@ analyzeHistone <- function(analysisfile,
                 norm_method = c('peptide_family', 'peptide_total'),
                 output_result= c('single', 'multiple'),
                 extra_filter = c( "none", 'no_me1', "K37un", "no_me1_K37un"),
-                save_plot = TRUE){
+                save_plot = TRUE,
+                ...){
 
 
   output_result = match.arg(output_result)
@@ -77,6 +79,9 @@ analyzeHistone <- function(analysisfile,
   labeling = match.arg(labeling)
   norm_method = match.arg(norm_method)
   extra_filter = match.arg(extra_filter)
+  dots <- rlang::list2(...)
+  cond_order_arg <- dots$cond_order  # NULL if not supplied
+
 # Data 1st Check -----------------------------------------------
 
 ## packages -------
@@ -697,8 +702,10 @@ df_plot |>
                            error_type = NULL,
                            plot_title = sequence,
                            save_plot = TRUE,
-                           output_dir = paste0(img_folder_name, "/RAplots/", .y$protein)
-    )
+                           output_dir = paste0(img_folder_name, "/RAplots/", .y$protein),
+                           cond_order = cond_order_arg
+                           )
+
   })}
 
 ## Site Abundance plot
