@@ -14,7 +14,8 @@ analyzeHistone(
   norm_method = c("peptide_family", "peptide_total"),
   output_result = c("single", "multiple"),
   extra_filter = c("none", "no_me1", "K37un", "no_me1_K37un"),
-  save_plot = TRUE
+  save_plot = TRUE,
+  ...
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ analyzeHistone(
 \item{extra_filter}{Either of 'no_me1', "K37un",  "no_me1_K37un", or "none" (default).}
 
 \item{save_plot}{bool; TRUE (default). draw and save or not the jitter bar plots of PTMs vs intensity for each peptide.}
+
+\item{...}{optional argument unique for the `plot_jitterbarIntvsPTM()` function used to plot the relative intensity plots.}
 }
 \value{
 At least 3 excel files fragmented based on different filters:
