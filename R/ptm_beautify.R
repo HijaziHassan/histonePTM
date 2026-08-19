@@ -23,6 +23,7 @@
 #'
 #' @importFrom stringr str_replace_all str_remove_all str_extract_all str_c str_remove str_extract str_detect
 #' @importFrom stats setNames
+#' @importFrom dplyr replace_values
 
 
 #function to round ptm masses. !!! this will remove (+) sign but keep (-) if exists
@@ -77,19 +78,12 @@ ptm_beautify <- function(PTM,
 
     pattern= '(?<=\\[)[^\\] ]+'
 
-  renamed_ptm <- stringr::str_replace_all({{PTM}}, pattern, function(mod) {
-    # Extract what is inside the brackets
-    #ptm_mass <- stringr::str_match(mod, pattern)[2]
-    ptm_mass_rounded <- as.character(.round_mod(mod, {{rd}}))
-
-    # Replace using the rounded lookup vector, if  exists
-    if (ptm_mass_rounded %in% names(rounded_lookup) ) {
-
-      return(rounded_lookup[[ptm_mass_rounded]])
-
-    } else {
-      return(mod)
-    }
+    renamed_ptm <- stringr::str_replace_all({{PTM}}, pattern, function(mod) {
+      ptm_mass_rounded <- as.character(.round_mod(mod, {{rd}}))
+      replace_values(ptm_mass_rounded,
+                    from    = names(rounded_lookup),
+                    to      = unname(rounded_lookup)
+      )
 
   }) |>  stringr::str_remove_all('\\[|\\]')
 
