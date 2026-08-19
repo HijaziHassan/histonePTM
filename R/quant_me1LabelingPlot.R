@@ -9,22 +9,27 @@
 #' @param ptm_col PTM column
 #' @param int_col Intensity column(s)
 #' @param cond_col (`optional`) Condition column (e.g. concentration) used for legend. If absent will be replaced by "None".
-#' @param me1 Monomethyl representation inside the `ptm_col`column (i.e. 'me1' (`default`) or 'Methyl', ...)
-#' @param me1_label Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl, ....)
+#' @param me1 Monomethyl representation inside the `ptm_col`column (i.e. default: "(?<![A-Za-z_])me1(?![A-Za-z])" or 'Methyl', ...)
+#' @param me1_label Monomethyl+label representation inside the `ptm_col`column (i.e. default: 'bu' or 'Butyryl, ....)
 #' @param isNormalized bool; FALSE (default).
 #' @param scale 1 or 100 (default). Multiply (normalized) intensity values by a scalar.
-#' @param format if set to `wide` (most often), data will be reshaped into long format before plotting. Check `df_meta`.
-#' @param df_meta (`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`).
-#' `SampleNames` MUST match exactly the names of the `int_col`columns.
+#' @param format if set to `wide` (i.e. multiple samples), data will be reshaped into long format before plotting. Check `df_meta`. If `long`, the `int_col` will be renamed `intensity`.
+#' @param df_meta (`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`). This will be used during plotting.
+#' `SampleNames` MUST match EXACTLY the names of the `int_col`columns.
 #' @param save_plot (`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown within the Plots pane.)
+#' @param save_data (`logical`). If `TRUE`, data containing all me1 or me1-labeled instances are saved in a csv file.
+#' @param plotfile_name (`character`). Name of the pdf file containing all the comparison box plots.
+#' @param datafile_name (`character`). Name of the csv file containing data of the plotted boxplots.
+#' @param output_dir (working directory (default)). A folder name to output the plot df file and the csv data file.
 #'
 #' @importFrom dplyr select left_join filter mutate inner_join right_join pull bind_rows
 #' @importFrom stringr str_detect str_replace_all str_wrap
 #' @importFrom cli cli_alert_warning col_red cli_abort cli_alert_info
 #' @importFrom rlang as_name ensym
 #' @importFrom tidyr pivot_longer drop_na
+#' @importFrom readr write_csv
 #' @importFrom grDevices dev.off pdf
-#' @return Boxplot with jittered points to assess me1 labeling when using anhydrides to label lysines.
+#' @return A list of two: `plots` list containing boxplot with jittered points per sequence and `data` containing a tibble storing all the data used to generate these plots.
 #' @export
 #'
 
@@ -33,13 +38,17 @@ quant_me1LabelingPlot <- function(df,
                                   ptm_col,
                                   int_col,
                                   cond_col= NULL,
-                                  me1 = "me1",
+                                  me1 = "(?<![A-Za-z_])me1(?![A-Za-z])",
                                   me1_label = "bu",
                                   isNormalized = FALSE,
                                   scale = 100,
                                   format= c('wide', 'long'),
                                   df_meta,
-                                  save_plot = FALSE){
+                                  save_plot = FALSE,
+                                  save_data = FALSE,
+                                  plotfile_name = 'plots_me1.pdf',
+                                  datafile_name = 'data_me1.csv',
+                                  output_dir= "."){
   # Check for missing arguments
   missing_args <- c(
     if (missing(df)) "df",
@@ -78,9 +87,9 @@ format = match.arg(format)
 
  if (format == "long") {
    df <- if (!is.null(cond_col)) {
-     df |> dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}}), {{cond_col}})
+     df |> dplyr::rename(intensity = {{int_col}}) |>  dplyr::select({{seq_col}}, {{ptm_col}}, {{cond_col}}, intensity)
    } else {
-     df |> dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of({{int_col}}))
+     df |> dplyr::rename(intensity = {{int_col}}) |> dplyr::select({{seq_col}}, {{ptm_col}}, intensity)
    }
  } else if (format == "wide") {
    df <- df |>
@@ -136,11 +145,12 @@ if(isNormalized == FALSE){
 unique_seq <- df |> dplyr::select({{seq_col}}) |> unique() |>  dplyr::pull()
 
 plots <- list()
+data_plots <- list()
 
 #loop over all unique sequences
- for(seq in unique_seq){
+ for(sq in unique_seq){
 
-  df_seq <- df |> dplyr::filter({{seq_col}} == seq)
+  df_seq <- df |> dplyr::filter({{seq_col}} == sq)
 
 
   df_me1 <- df_seq |>
@@ -170,93 +180,147 @@ plots <- list()
   #Join me1 and me1-labed in one dataframe
   df_doublets <- dplyr::bind_rows(df_me1_label,df_me1)
 
-
 # discard sequences with no me1 at all
-if(nrow(df_doublets)>0){
+if (nrow(df_doublets) > 0) {
 
-if(COND_COL == TRUE && !is.null(cond_col)){
-
-  p <- df_doublets |>
-    tidyr::drop_na(intensity) |>
-    ggplot2::ggplot(ggplot2::aes(y = intensity, x = {{ptm_col}}, color = {{cond_col}})) +
-    ggplot2::geom_boxplot(position = ggplot2::position_dodge(width = 0.7)) +
-    ggplot2::geom_jitter(position = ggplot2::position_dodge2(width  = 0.5)) +
-    ggplot2::labs(title= seq, y= "% Relative Intensity")+
-    ggplot2::scale_x_discrete(labels = wrap_labels)+
-    ggplot2::facet_wrap( ~ PTMx, scales = "free") +
-    ggplot2::scale_color_viridis_d(option = "H")+
-    ggplot2::theme_minimal(base_size = 12) +
-    ggplot2::theme(strip.text = ggplot2::element_blank(),
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-
-
-
-  plots[[seq]] <- p
-
-}else if (COND_COL == TRUE && is.null(cond_col)){
-
-  p <- df_doublets |>
-    tidyr::drop_na(intensity) |>
-    ggplot2::ggplot(ggplot2::aes(y = intensity, x = {{ptm_col}}, color = Condition)) +
-    ggplot2::geom_boxplot(position = ggplot2::position_dodge(width = 0.7)) +
-    ggplot2::geom_jitter(position = ggplot2::position_dodge2(width  = 0.5)) +
-    ggplot2::labs(title= seq, y= "% Relative Intensity")+
-    ggplot2::scale_x_discrete(labels = wrap_labels)+
-    ggplot2::facet_wrap( ~ PTMx, scales = "free") +
-    ggplot2::scale_color_viridis_d(option = "H")+
-    ggplot2::theme_minimal(base_size = 12) +
-    ggplot2::theme(strip.text = ggplot2::element_blank(),
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-
-
-  plots[[seq]] <- p
-
-}else{
-
-  p <- df_doublets |>
-    tidyr::drop_na(intensity) |>
-    ggplot2::ggplot(ggplot2::aes(y = intensity, x = {{ptm_col}}, color = "None")) +
-    ggplot2::geom_boxplot(position = ggplot2::position_dodge(width = 0.7)) +
-    ggplot2::geom_jitter(position = ggplot2::position_dodge2(width  = 0.5)) +
-    ggplot2::labs(title= seq, y= "% Relative Intensity")+
-    ggplot2::scale_x_discrete(labels = wrap_labels)+
-    ggplot2::facet_wrap( ~ PTMx, scales = "free") +
-    ggplot2::scale_color_viridis_d(option = "H")+
-    ggplot2::theme_minimal(base_size = 12) +
-    ggplot2::theme(strip.text = ggplot2::element_blank(),
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-
-
-  plots[[seq]] <- p
-}
-
-
-}
+  # color mapping depends on the COND_COL / cond_col state determined earlier
+  # (see the "Condition" column detection block above)
+  color_aes <- if (COND_COL == TRUE && !is.null(cond_col)) {
+    rlang::quo({{ cond_col }})          # user explicitly passed a column
+  } else if (COND_COL == TRUE && is.null(cond_col)) {
+    rlang::quo(Condition)               # merged/found "Condition" column
+  } else {
+    rlang::quo("None")                  # no condition available, group as "None"
   }
 
+   df_plot <- df_doublets |>
+    tidyr::drop_na(intensity)
+
+  p <- ggplot2::ggplot(data = df_plot, ggplot2::aes(y = intensity, x = {{ ptm_col }}, color = !!color_aes)) +
+    ggplot2::geom_boxplot(
+      width = 0.3,
+      position = ggplot2::position_dodge(width = 0.4),
+      outlier.shape = NA
+    ) +
+    ggplot2::geom_jitter(position = ggplot2::position_dodge2(width = 0.2)) +
+    ggplot2::labs(title = sq, y = "% Relative Intensity") +
+    ggplot2::scale_x_discrete(labels = wrap_labels) +
+    ggplot2::facet_wrap(~PTMx, scales = "free") +
+    ggplot2::scale_color_viridis_d(option = "H") +
+    ggplot2::theme_minimal(base_size = 12)+
+    ggplot2::theme(
+     #axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+     panel.spacing = ggplot2::unit(0.5, "lines")   # default is ~1 line;
+    )
+
+  plots[[sq]] <- p
+  data_plots[[sq]] <- df_plot
+
+}
+ }
+
+
+if (length(plots) == 0) {
+  cli::cli_alert_warning("No plots were generated — check your input data.")
+  return(NULL)
+}
+
+combined_data <- dplyr::bind_rows(data_plots, .id = "sequence")
+
+if(save_plot|save_data){
+output_dir <- if (is.null(output_dir)) getwd() else output_dir
+if (!is.null(output_dir) && !dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cli::cli_inform('The folder {.path {output_dir}} is created.')
+}
+}
+
   if(save_plot){
-   pdf("me1_labelling_efficiency_plots.pdf")
+
+    dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+    if (!grepl("\\.pdf$", plotfile_name, ignore.case = TRUE)) {
+      plotfile_name <- paste0(plotfile_name, ".pdf")
+    }
+
+    plot_path <- file.path(output_dir, plotfile_name)
+
+    pdf(plot_path, width = 11, height = 9, author = 'histonePTM')
+    on.exit(dev.off(), add = TRUE)
     for (plot_name in names(plots)) {
       cat(paste0('Saving plot: ', plot_name, "\n"))
-      print(plots[[plot_name]])
+
+      p <- plots[[plot_name]]
+
+      # count facet panels to decide how cramped this plot is
+      n_panels <- length(ggplot2::ggplot_build(p)$layout$panel_params)
+
+      # scale text size down as panel count grows
+      label_size <- dplyr::case_when(
+        n_panels <= 2 ~ 9,
+        n_panels <= 4 ~ 7.5,
+        n_panels <= 6 ~ 6.5,
+        TRUE          ~ 5.5
+      )
+
+      p <- p +
+        ggplot2::theme(
+          strip.text = ggplot2::element_blank(),
+          axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = label_size),
+          plot.margin = ggplot2::margin(t = 5, r = 5, b = 40, l = 5)
+        )
+
+      print(p)
     }
-    invisible(dev.off())
 
-  }else{
+    cli::cli_alert_success("Plots saved to {.path {plot_path}}")
 
-    return(plots)}
 
+  }
+
+if (save_data) {
+
+  if (!grepl("\\.csv$", datafile_name, ignore.case = TRUE)) {
+    datafile_name <- paste0(datafile_name, ".csv")
+  }
+  data_path <- file.path(output_dir, datafile_name)
+  readr::write_csv(combined_data, data_path)
+  cli::cli_alert_success("Data saved to {.path {data_path}}")
+}
+
+return(invisible(list(plots = plots, data = combined_data)))
 }
 
 
 
 #' @noRd
+wrap_by_hyphen <- function(label, max_width = 25) {
+  # split, keeping the hyphen attached to the end of each chunk
+  parts <- stringr::str_split(label, "(?<=[-\u2212])")[[1]]
 
-wrap_labels <- function(labels, max_width = 25) {
-  sapply(labels, function(label) {
-    if (stringr::str_detect(label, "; ")) { #adapted to Proline software
-      stringr::str_replace_all(label, "; ", "\n")
+  lines <- character(0)
+  current <- ""
+  for (p in parts) {
+    candidate <- paste0(current, p)
+    if (nchar(candidate) > max_width && current != "") {
+      lines <- c(lines, current)
+      current <- p
     } else {
+      current <- candidate
+    }
+  }
+  lines <- c(lines, current)
+  paste(lines, collapse = "\n")
+}
+
+#' @noRd
+wrap_labels <- function(labels, max_width = 17) {
+  sapply(labels, function(label) {
+    if (stringr::str_detect(label, "; ")) {                 # Proline-style semicolon lists
+      stringr::str_replace_all(label, "; ", "\n")
+    } else if (stringr::str_detect(label, "[-\u2212]")) {    # hyphen-chained labels (both - and −)
+      wrap_by_hyphen(label, max_width)
+    } else {                                                  # normal space-separated text
       stringr::str_wrap(label, width = max_width)
     }
   })
