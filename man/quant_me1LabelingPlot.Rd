@@ -10,13 +10,17 @@ quant_me1LabelingPlot(
   ptm_col,
   int_col,
   cond_col = NULL,
-  me1 = "me1",
+  me1 = "(?<![A-Za-z_])me1(?![A-Za-z])",
   me1_label = "bu",
   isNormalized = FALSE,
   scale = 100,
   format = c("wide", "long"),
   df_meta,
-  save_plot = FALSE
+  save_plot = FALSE,
+  save_data = FALSE,
+  plotfile_name = "plots_me1.pdf",
+  datafile_name = "data_me1.csv",
+  output_dir = "."
 )
 }
 \arguments{
@@ -30,23 +34,31 @@ quant_me1LabelingPlot(
 
 \item{cond_col}{(`optional`) Condition column (e.g. concentration) used for legend. If absent will be replaced by "None".}
 
-\item{me1}{Monomethyl representation inside the `ptm_col`column (i.e. 'me1' (`default`) or 'Methyl', ...)}
+\item{me1}{Monomethyl representation inside the `ptm_col`column (i.e. default: "(?<![A-Za-z_])me1(?![A-Za-z])" or 'Methyl', ...)}
 
-\item{me1_label}{Monomethyl+label representation inside the `ptm_col`column (i.e. 'bu' (`default`) or 'Butyryl, ....)}
+\item{me1_label}{Monomethyl+label representation inside the `ptm_col`column (i.e. default: 'bu' or 'Butyryl, ....)}
 
 \item{isNormalized}{bool; FALSE (default).}
 
 \item{scale}{1 or 100 (default). Multiply (normalized) intensity values by a scalar.}
 
-\item{format}{if set to `wide` (most often), data will be reshaped into long format before plotting. Check `df_meta`.}
+\item{format}{if set to `wide` (i.e. multiple samples), data will be reshaped into long format before plotting. Check `df_meta`. If `long`, the `int_col` will be renamed `intensity`.}
 
-\item{df_meta}{(`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`).
-`SampleNames` MUST match exactly the names of the `int_col`columns.}
+\item{df_meta}{(`optional`). If df is in `wide` format, then one can provide df_meta containing at least two columns (`SampleName` and `Condition`). This will be used during plotting.
+`SampleNames` MUST match EXACTLY the names of the `int_col`columns.}
 
 \item{save_plot}{(`logical`). If `TRUE`, all the plots will be saved in one pdf. If `FALSE` (`default`), the plot(s) will be shown within the Plots pane.)}
+
+\item{save_data}{(`logical`). If `TRUE`, data containing all me1 or me1-labeled instances are saved in a csv file.}
+
+\item{plotfile_name}{(`character`). Name of the pdf file containing all the comparison box plots.}
+
+\item{datafile_name}{(`character`). Name of the csv file containing data of the plotted boxplots.}
+
+\item{output_dir}{(working directory (default)). A folder name to output the plot df file and the csv data file.}
 }
 \value{
-Boxplot with jittered points to assess me1 labeling when using anhydrides to label lysines.
+A list of two: `plots` list containing boxplot with jittered points per sequence and `data` containing a tibble storing all the data used to generate these plots.
 }
 \description{
 Evaluate the efficiency of monomethylated lysine derivarization per sequencexPTM combination.
