@@ -4,7 +4,7 @@
 \alias{misc_shiftNumbers}
 \title{Shift position numbers in histone modification labels}
 \usage{
-misc_shiftNumbers(labels, by = -1, pattern = "(?<=K)[0-9]+")
+misc_shiftNumbers(labels, by = -1, pattern = "(?<=[KST])[0-9]+")
 }
 \arguments{
 \item{labels}{Character vector of labels containing numbers to shift.}
@@ -14,7 +14,8 @@ Use -1 to convert from UniProt numbering (including Met) to the
 histone field standard (excluding Met). Use +1 for the reverse.}
 
 \item{pattern}{Regular expression pattern for the numbers to shift.
-Default is \code{"(?<=K)[0-9]+"} (numbers immediately preceded by "K").}
+Default is \code{"(?<=[KST])[0-9]+"} (numbers immediately preceded
+by K, S, or T).}
 }
 \value{
 Character vector with shifted numbers.
@@ -27,15 +28,27 @@ in the sequence, resulting in a +1 offset. This function shifts the numbers
 to convert between these numbering systems (e.g., converting UniProt positions
 to the histone field standard).
 }
+\details{
+By default, it shifts numbers immediately preceded by **K**, **S**, or **T**
+(the most common modified residues in histones). You can supply a custom
+pattern for other residues (e.g., R).
+}
 \examples{
-# Convert from UniProt numbering to histone standard (remove Met offset)
+# Shift lysine positions (remove Met offset)
 misc_shiftNumbers("tmaNt-K19ac-K24tma", by = -1)
 # Result: "tmaNt-K18ac-K23tma"
+
+# Shift serine/threonine positions (phosphorylation sites)
+misc_shiftNumbers("S10ph-T3ph", by = -1)
+# Result: "S9ph-T2ph"
 
 # Works with semicolon‑separated lists too
 misc_shiftNumbers("Propionyl (Any N-term); Dimethyl (K10); Propionyl (K15)", by = -1)
 # Result: "Propionyl (Any N-term); Dimethyl (K9); Propionyl (K14)"
 
 # Convert from histone standard back to UniProt numbering (add Met offset)
-misc_shiftNumbers(c("K27me3", "K36me2"), by = 1)
+misc_shiftNumbers(c("K27me3", "S10ph"), by = 1)
+
+# Custom pattern: shift numbers after R (arginine)
+misc_shiftNumbers("R2me1", pattern = "(?<=R)[0-9]+", by = -1)
 }

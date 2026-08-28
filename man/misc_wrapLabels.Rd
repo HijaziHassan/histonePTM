@@ -4,52 +4,43 @@
 \alias{misc_wrapLabels}
 \title{Wrap modification labels for plotting}
 \usage{
-misc_wrapLabels(labels, max_width = 20)
+misc_wrapLabels(ptm_strings, max_width = 20)
 }
 \arguments{
-\item{labels}{Character vector of labels to wrap.}
+\item{ptm_strings}{Character vector of PTM labels to wrap.}
 
 \item{max_width}{Maximum number of characters per line before wrapping.
 Default is 20.}
 }
 \value{
-A character vector of the same length as \code{labels}, with newline
-        characters (\code{"\\n"}) inserted where wrapping occurs.
+A character vector of the same length as \code{ptm_strings}, with
+        newline characters (\code{\\n}) inserted where wrapping occurs.
 }
 \description{
-This function wraps histone modification labels to fit within plot margins.
-It handles three common formats:
+Wraps histone PTM labels so they fit within plot margins.
+Handles three common formats:
 \itemize{
-  \item Semicolon-separated lists (e.g., "K4me1; K9me3") → split into separate lines
-  \item Hyphen/minus-chained labels (e.g., "K27me3-K36me2-K79me1") → wrap at hyphens,
-        keeping the hyphen attached to the preceding chunk
-  \item Plain text → standard word wrapping using \code{stringr::str_wrap()}
+  \item Semicolon-separated lists (e.g., "K4me1; K9me3") — splits at "; " and
+        attempts to keep each segment under \code{max_width}.
+  \item Hyphen/minus-chained labels (e.g., "K27me3-K36me2") — wraps at hyphens,
+        keeping the hyphen attached to the preceding chunk.
+  \item Plain text — simple word wrapping on spaces.
 }
 }
 \examples{
-# Example labels from real proteomics data
+# Semicolon-separated list
+misc_wrapLabels("Propionyl (Any N-term); Dimethyl (K10); Propionyl (K15)")
+
+# Hyphen-chained labels
+misc_wrapLabels("tmaNt-K19ac-K24tma")
+
+# Force narrower wrapping
+misc_wrapLabels("tmaNt-K19ac-K24tma", max_width = 10)
+
+# Mixed vector
 labels <- c(
-  "TMAyl_correct (Any N-term); TMAyl-me1_DP (K1); Acetyl (K6)",
-  "tmaNt-K28tmame1-K37tma-K38tma",
-  "tmaNt-me3-tmame1-tma"
+  "tmaNt-K19ac-K24tma",
+  "Propionyl (Any N-term); Dimethyl (K10); Propionyl (K15)"
 )
-
-# Apply default wrapping (max_width = 20)
-wrapped <- misc_wrapLabels(labels)
-
-# View raw strings with \n characters
-print(wrapped)
-
-# View formatted output with actual line breaks
-cat("Formatted labels:\n")
-cat(wrapped, sep = "\n\n")
-
-# Try a narrower width to force more breaks
-wrapped_narrow <- misc_wrapLabels(labels, max_width = 10)
-cat("\nNarrow width (10 chars):\n")
-cat(wrapped_narrow, sep = "\n\n")
-
-# Works with single labels too
-misc_wrapLabels("K27me3-K36me2-K79me1-K80me2", max_width = 12)
-
+cat(misc_wrapLabels(labels), sep = "\n\n")
 }
