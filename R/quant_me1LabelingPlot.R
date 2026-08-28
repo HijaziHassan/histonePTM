@@ -205,7 +205,7 @@ if (nrow(df_doublets) > 0) {
     ggplot2::geom_jitter(position = ggplot2::position_dodge2(width = 0.2)) +
     ggplot2::labs(title = sq, y = "% Relative Intensity") +
     ggplot2::scale_x_discrete(labels = wrap_labels) +
-    ggplot2::facet_wrap(~PTMx, scales = "free") +
+    ggplot2::facet_grid(~ PTMx, scales = "free_x", space = "free_x") +
     ggplot2::scale_color_viridis_d(option = "H") +
     ggplot2::theme_minimal(base_size = 12)+
     ggplot2::theme(
