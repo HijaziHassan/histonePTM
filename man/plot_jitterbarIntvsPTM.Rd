@@ -18,43 +18,53 @@ plot_jitterbarIntvsPTM(
   scale = 100,
   cond_order = NULL,
   save_plot = FALSE,
-  output_dir = NULL
+  output_dir = ".",
+  base_point_size = 2.5,
+  base_bar_width = 0.7,
+  base_text_size = 13
 )
 }
 \arguments{
-\item{dataset}{A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguments below.
+\item{dataset}{A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label. see `id_col`) and Condition.
 A 5th column can be provided to be the plot title.}
 
-\item{x_axis}{x variable (PTM column)}
+\item{x_axis}{x_axis variable (PTM column)}
 
-\item{y_axis}{y variable (intensity column). If already values are percentage, set \code{scale} to 1.}
+\item{y_axis}{y_axis variable (intensity column). If already values are percentage, set \code{scale} to 1.}
 
 \item{condition}{The condition column (WT vs disease, concentration, ...)}
 
-\item{id_col}{unique ID column such as sequence or sequence label}
+\item{id_col}{Unique ID column such as sequence or sequence label}
 
-\item{plot_title}{(\code{optional})A column with values to be the plot_title (optional).}
+\item{plot_title}{(optional) A column with values to be the plot_title.}
 
-\item{max_cutoff}{(\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.}
+\item{max_cutoff}{(optional) Maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.}
 
-\item{fun}{mean (\code{default}) or median. This will be the height of the bar.}
+\item{fun}{"mean" (default) or "median" - the height of the bar.}
 
-\item{error_type}{one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).}
+\item{error_type}{one of  "none" (default), "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).}
 
-\item{conf_level}{Confidence level (e.g. 0.95 (default), 0.99, etc...)}
+\item{conf_level}{Confidence level (default 0.95)}
 
-\item{scale}{100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.}
+\item{scale}{100 (default). If you want to keep values as they are, use 1. No other values are allowed.}
 
-\item{cond_order}{(optional). A character vector containing conditions according to which bars will be ordered in the plot.}
+\item{cond_order}{(optional). Character vector of condition order.}
 
-\item{save_plot}{(\code{logical}; FALSE \code{default})}
+\item{save_plot}{Logical. If `TRUE`, saves the plot to disk. Default is `FALSE`.}
 
 \item{output_dir}{(character; Optional) The output directory for the plots to be saved in. Default to working directory if unassigned.}
+
+\item{base_point_size}{Base point size (will be scaled down for many categories)}
+
+\item{base_bar_width}{Base bar width (will be scaled down for many categories)}
+
+\item{base_text_size}{Base text size (will be scaled down for many categories)}
 }
 \value{
 A dataframe grouped by `id_col` (and `plot_title` if passed) with a nested list-column harboring the generated bar plots
 (representing either `mean` or `median`) with jitter points (corresponding to individual measurements per `condition`).
 }
 \description{
-Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
+Individual measurements are plotted as points with a bar representing
+the median (or mean). Bars are grouped/colored per condition.
 }

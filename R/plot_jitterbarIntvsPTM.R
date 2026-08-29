@@ -1,22 +1,26 @@
 #' @title Intensity vs PTM grouped bar plot with jittered points
 #' @description
-#' Individual measurements will be plotted as data points. Their median (or mean) will be represented as a bar. Each bar will be colored according to the condition.
+#' Individual measurements are plotted as points with a bar representing
+#' the median (or mean). Bars are grouped/colored per condition.
 #'
-#' @param dataset A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label) and Condition. check the arguments below.
+#' @param dataset A dataframe in long format with at least 4 columns: Intensity, PTM, sequence (or sequence label. see `id_col`) and Condition.
 #' A 5th column can be provided to be the plot title.
-#' @param x_axis x variable (PTM column)
-#' @param y_axis y variable (intensity column). If already values are percentage, set \code{scale} to 1.
+#' @param x_axis x_axis variable (PTM column)
+#' @param y_axis y_axis variable (intensity column). If already values are percentage, set \code{scale} to 1.
 #' @param condition The condition column (WT vs disease, concentration, ...)
-#' @param id_col unique ID column such as sequence or sequence label
-#' @param plot_title (\code{optional})A column with values to be the plot_title (optional).
-#' @param max_cutoff (\code{optional; numeric} A the maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.
-#' @param fun mean (\code{default}) or median. This will be the height of the bar.
-#' @param error_type one of "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).
-#' @param conf_level Confidence level (e.g. 0.95 (default), 0.99, etc...)
-#' @param scale 100 (\code{default}). If you want to keep values as they are use 1. No other values are allowed.
-#' @param cond_order (optional). A character vector containing conditions according to which bars will be ordered in the plot.
-#' @param save_plot (\code{logical}; FALSE \code{default})
+#' @param id_col Unique ID column such as sequence or sequence label
+#' @param plot_title (optional) A column with values to be the plot_title.
+#' @param max_cutoff (optional) Maximum value above which values will be filtered out. It is added to draw separately low abundant PTMs.
+#' @param fun "mean" (default) or "median" - the height of the bar.
+#' @param error_type one of  "none" (default), "CI" (confidence interval), "SE" (standard error), "SD" (standard deviation).
+#' @param conf_level Confidence level (default 0.95)
+#' @param scale 100 (default). If you want to keep values as they are, use 1. No other values are allowed.
+#' @param cond_order (optional). Character vector of condition order.
+#' @param save_plot Logical. If `TRUE`, saves the plot to disk. Default is `FALSE`.
 #' @param output_dir (character; Optional) The output directory for the plots to be saved in. Default to working directory if unassigned.
+#' @param base_point_size Base point size (will be scaled down for many categories)
+#' @param base_bar_width Base bar width (will be scaled down for many categories)
+#' @param base_text_size Base text size (will be scaled down for many categories)
 #'
 #' @importFrom dplyr select pull n_distinct mutate filter
 #' @importFrom stats reorder median qt
@@ -47,26 +51,31 @@ plot_jitterbarIntvsPTM <- function(dataset,
                              scale = 100,
                              cond_order= NULL,
                              save_plot = FALSE,
-                             output_dir = NULL
+                             output_dir = ".",
+                             base_point_size = 2.5,
+                             base_bar_width = 0.7,
+                             base_text_size = 13
 ){
 
 
 # Check inputs------------
   fun <- match.arg(fun)
-  output_dir <- if (is.null(output_dir)) getwd() else output_dir
-  if (!is.null(output_dir) && !dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-  }
+  error_type <- match.arg(error_type)
+  # output_dir <- if (is.null(output_dir)) getwd() else output_dir
+  # if (!is.null(output_dir) && !dir.exists(output_dir)) {
+  #   dir.create(output_dir, recursive = TRUE)
+  # }
 
-  # Ensures x_axis and y_axis are symbols (i.e. column names)
-  x_axis <- rlang::ensym(x_axis)
-  y_axis <- rlang::ensym(y_axis)
 
   stopifnot("Error: `scale` must be either 1 or 100." = scale %in% c(1, 100))
   if(missing(condition)){cli::cli_abort('`Condition` column is missing')}
   if(missing(id_col)){cli::cli_abort('`id_col` column is missing')}
   #If PTM column used in grouping, it will no more be available in the nested dataframe
       # ==> Check if x_axis and plot_title arguments are not identical
+
+  # Ensures x_axis and y_axis are symbols (i.e. column names)
+  x_axis <- rlang::ensym(x_axis)
+  y_axis <- rlang::ensym(y_axis)
 
   # Capture the unevaluated plot_title expression
   plottitle_expr <- substitute(plot_title)
@@ -87,25 +96,17 @@ plot_jitterbarIntvsPTM <- function(dataset,
   # prepare the dataset ------------
 
 
-# make sure max_cutoff is numeric.
 
-  if(is.symbol(substitute(max_cutoff))){
-
-    max_cutoff_str <- deparse(substitute(max_cutoff))
-    cli::cli_alert_danger("The intensity filter `{max_cutoff_str}` is ignored. {.arg max_cutoff} must be numeric.")
-
-    }else if (is.character(max_cutoff)){
-
-          cli::cli_alert_danger("The intensity filter {.arg {max_cutoff}} is ignored. {.arg max_cutoff} must be numeric.")
-
-  }else if (is.numeric(max_cutoff)) {
-       dataset <- dataset |>
-         dplyr::filter({{y_axis}} <= max_cutoff)
-   }
+  # Apply max_cutoff filter
+  if (is.numeric(max_cutoff)) {
+    dataset <- dataset |> dplyr::filter({{ y_axis }} <= max_cutoff)
+  } else if (!is.null(max_cutoff)) {
+    cli::cli_alert_danger("`max_cutoff` must be numeric – ignoring.")
+  }
 
 
 
-
+  # Handle missing condition values
     condition_col <- dplyr::pull(dataset, {{condition}})
 
     if (all(is.na(condition_col))) {
@@ -113,12 +114,12 @@ plot_jitterbarIntvsPTM <- function(dataset,
       cli::cli_alert_warning("All values in the column were NA. Replaced with 'cond_1'.")
     } else if (any(is.na(condition_col))) {
       dataset <- dataset |> dplyr::mutate(!!rlang::ensym(condition) := tidyr::replace_na(condition_col, "cond_2"))
-      cli::cli_alert_warning("Some values in the column were NA. Replaced with 'cond_2'.")
+      cli::cli_alert_warning("Some values in the column were NA - Replaced with 'cond_2'.")
     }
 
 
 
-
+  # Factor conditions and clean x_axis
   dataset <- dataset |>
     dplyr::mutate({{condition}} := factor({{condition}},
                                           levels = assort_cond(dataset,
@@ -127,141 +128,160 @@ plot_jitterbarIntvsPTM <- function(dataset,
                   {{ x_axis }} := tidyr::replace_na(as.character({{ x_axis }}), "no_PTM")
                   )
 
+  global_cond_levels <- levels(dataset[[rlang::as_label(rlang::enquo(condition))]])
 
 
   id_col <- rlang::enquo(id_col)
   plot_title <- rlang::enquo(plot_title)
+
+  # ---- Nest and plot ----
+
   plot_title_label <- rlang::as_label(plot_title)
-  global_cond_levels <- levels(dataset[[rlang::as_label(rlang::enquo(condition))]])
 
 
   # Check if plot_title is NULL or provided as a string (quoted)
- if (rlang::quo_is_null(plot_title) || !plot_title_label %in% names(dataset)) {
-
-   dataset <- dataset |>
-     tidyr::nest(data = -!!id_col) |>
-     dplyr::mutate(
-       data = purrr::map(
-         data,
-         ~ .x |>
-           dplyr::mutate(
-             size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]])
-           )
-       )
-     )
-
-
-
-   dataset <- dataset |>
-     dplyr::mutate(
-       plots = purrr::map2(
-         .x = {{id_col}},
-         .y = data,
-         .f = ~ plotjit(
-           id_col = .x,
-           dataset = .y,
-           x_axis = {{x_axis}},
-           y_axis = {{y_axis}},
-           condition = {{condition}},
-           plot_title = {{plot_title}},
-           max_cutoff = max_cutoff,
-           fun = fun,
-           error_type = error_type,
-           conf_level = conf_level,
-           scale = scale,
-           save_plot = save_plot,
-           output_dir = output_dir,
-           global_cond_levels = global_cond_levels
-         )
-       )
-     )
-
-
-
-
-  } else {
-
-
+  if (rlang::quo_is_null(plot_title) || !plot_title_label %in% names(dataset)) {
     dataset <- dataset |>
-      tidyr::nest(data = -c(!!id_col, !!plot_title)) |>
-      dplyr::mutate(data = purrr::map(data, ~ .x |> #size to adjust the size of the jitter points
-                                        dplyr::mutate(size = dplyr::n_distinct(.x[[rlang::quo_name(rlang::enquo(x_axis))]]))
-
-      ))
-
-    cols <- list(
-      dataset |> dplyr::pull({{id_col}}),
-      dataset |> dplyr::pull(data),
-      dataset |> dplyr::pull({{plot_title}})
-    )
-
-    dataset <- dataset |>
+      tidyr::nest(data = -!!id_col) |>
       dplyr::mutate(
+        n_categories = purrr::map_int(data, ~ dplyr::n_distinct(.x[[rlang::quo_name(x_axis)]])),
         plots = purrr::pmap(
-          cols,
-          .f = ~ plotjit(
-            id_col = ..1,
-            dataset = ..2,
-            x_axis = {{x_axis}},
-            y_axis = {{y_axis}},
-            condition = {{condition}},
-            plot_title = ..3,
-            fun = fun,
-            error_type = error_type,
-            conf_level = conf_level,
-            scale = scale,
-            save_plot = save_plot,
-            output_dir= output_dir,
-            global_cond_levels = global_cond_levels
-          )
+          list(!!id_col, data, n_categories),
+          function(id, dat, ncat) {
+            plotjit(
+              id_col = id,
+              dataset = dat,
+              x_axis = {{ x_axis }},
+              y_axis = {{ y_axis }},
+              condition = {{ condition }},
+              plot_title = NULL,
+              fun = fun,
+              error_type = error_type,
+              conf_level = conf_level,
+              scale = scale,
+              global_cond_levels = global_cond_levels,
+              n_categories = ncat,
+              base_point_size = base_point_size,
+              base_bar_width = base_bar_width,
+              base_text_size = base_text_size,
+              save_plot = save_plot,
+              output_dir = output_dir
+            )
+          }
         )
       )
+  } else {
+      # With plot_title – nest by id_col and plot_title
+      dataset <- dataset |>
+        tidyr::nest(data = -c(!!id_col, !!plot_title)) |>
+        dplyr::mutate(
+          n_categories = purrr::map_int(data, ~ dplyr::n_distinct(.x[[rlang::quo_name(x_axis)]])),
+          plots = purrr::pmap(
+            list(!!id_col, data, !!plot_title, n_categories),
+            function(id, dat, title, ncat) {
+              plotjit(
+                id_col = id,
+                dataset = dat,
+                x_axis = {{ x_axis }},
+                y_axis = {{ y_axis }},
+                condition = {{ condition }},
+                plot_title = title,
+                fun = fun,
+                error_type = error_type,
+                conf_level = conf_level,
+                scale = scale,
+                global_cond_levels = global_cond_levels,
+                n_categories = ncat,
+                base_point_size = base_point_size,
+                base_bar_width = base_bar_width,
+                base_text_size = base_text_size,
+                save_plot = save_plot,
+                output_dir = output_dir
+              )
+            }
+          )
+        )
+    }
 
+  return(dataset)
 }
-
-}
-
 
 #' @noRd
-
 plotjit <- function(dataset,
                     x_axis,
-                    y_axis,  # Intensity
-                    condition,  # variable on which comparison is done
-                    id_col,  # could be sequence or sequence label
-                    plot_title = NULL,  # optional: should be stripped sequence
-                    max_cutoff= NULL,
+                    y_axis,
+                    condition,
+                    id_col,
+                    plot_title = NULL,
+                    max_cutoff = NULL,
                     fun = c("mean", "median"),
                     error_type = c("none", "CI", "SE", "SD"),
                     conf_level = 0.95,
                     scale = 100,
                     save_plot = FALSE,
-                    output_dir= NULL,
-                    global_cond_levels = NULL) {
-
+                    output_dir = '.',
+                    global_cond_levels = NULL,
+                    n_categories = NULL,
+                    base_point_size = 2.5,
+                    base_bar_width = 0.7,
+                    base_text_size = 13) {
 
   fun <- match.arg(fun)
   error_type <- match.arg(error_type)
 
+  # ---- Initial empty dataset guard ----
+  if (nrow(dataset) == 0) {
+    cli::cli_alert_warning("No data for {id_col} – skipping plot.")
+    return(ggplot2::ggplot() +
+             ggplot2::theme_void() +
+             ggplot2::labs(title = "No data"))
+  }
 
+  # ---- Compute n_categories if not provided ----
+  if (is.null(n_categories)) {
+    n_categories <- dataset |>
+      dplyr::pull({{ x_axis }}) |>
+      unique() |>
+      length()
+  }
+
+  # ---- Adaptive sizing ----
+  scale_factor <- n_categories^(-0.15)
+
+  # ---- Clean data (filter out NAs and groups with < 1) ----
   dataset <- dataset |>
     tidyr::drop_na({{ y_axis }}) |>
     dplyr::group_by({{ x_axis }}, {{ condition }}) |>
     dplyr::filter(dplyr::n() >= 1) |>
     dplyr::ungroup()
 
-  #adjust angle based on x-axis labels
-  angle = ifelse("size" %in% colnames(dataset) &&
-                   unique(dataset[["size"]]) > 10 &&
-                   any(nchar(dataset |> dplyr::pull({{x_axis}})) > 11),
-                 90,
-                 60
-  )
+  # ---- Re-check after filtering ----
+  if (nrow(dataset) == 0) {
+    cli::cli_alert_warning("No data remaining for {id_col} after filtering – skipping plot.")
+    return(ggplot2::ggplot() +
+             ggplot2::theme_void() +
+             ggplot2::labs(title = "No data after filtering"))
+  }
 
-  # Compute summary statistics for error bars if applicable
+  # Clamp scale_factor to prevent extreme values
+  scale_factor <- max(0.95, min(1.2, scale_factor))
+
+  point_size <- base_point_size * scale_factor
+  bar_width <- base_bar_width * scale_factor
+  x_axis_text_size <- base_text_size * scale_factor
+  x_axis_text_size <- max(x_axis_text_size, 8)   # never smaller than 8 pt
+
+  # Angle for x-axis labels: 90° if many categories with long labels
+  max_label_len <- dataset |>
+    dplyr::pull({{ x_axis }}) |>
+    as.character() |>
+    nchar() |>
+    max(na.rm = TRUE)   # <-- added na.rm = TRUE for safety
+
+  angle <- if (n_categories > 10 && max_label_len > 11) 90 else 60
+
+  # ---- Compute summary statistics for error bars if applicable ----
   if (error_type != 'none') {
-
-
     summary_stats <- dataset |>
       dplyr::group_by({{ x_axis }}, {{ condition }}) |>
       dplyr::summarize(
@@ -297,14 +317,27 @@ plotjit <- function(dataset,
   p <- ggplot2::ggplot(dataset, ggplot2::aes(
     x = stats::reorder({{ x_axis }}, {{ y_axis }}),
     y = {{ y_axis }},
-   # color = {{ condition }},
     fill = {{ condition }}
   )) +
     ggplot2::stat_summary(
-      fun = fun, show.legend = TRUE, geom = "bar",
-      , width = 0.5,
+      fun = fun,
+      show.legend = TRUE,
+      geom = "bar",
+      width = bar_width,
       position = ggplot2::position_dodge2(preserve = "single"),
-      alpha = 0.5
+      alpha = 0.5,
+      aes(fill = {{ condition }})
+    ) +
+    ggplot2::geom_jitter(
+      aes(color = {{ condition }}),
+      position = ggplot2::position_jitterdodge(
+        dodge.width = bar_width,
+        jitter.width = 0.1
+      ),
+      shape = 19,
+      size = point_size,
+      alpha = 1,
+      show.legend = FALSE
     )
 
   # Add error bars if specified
@@ -317,96 +350,75 @@ plotjit <- function(dataset,
         ymax = ymax,
         group = {{ condition }}
       ),
-      width = 0.0,  # Thin line
+      width = 0.0,
       size = 0.9,
-      position = ggplot2::position_dodge(width = 0.5),
-      inherit.aes = FALSE,  # Avoid inheriting aes from the main dataset
+      position = ggplot2::position_dodge(width = bar_width),
+      inherit.aes = FALSE,
       color = "black"
     )
-
   }
 
-  # Add jittered points
-  p <- p + ggplot2::geom_jitter(aes(color = {{ condition }}),
-    show.legend = FALSE,
-    position = ggplot2::position_jitterdodge(
-      dodge.width = 0.5,
-      jitter.width = 0.1
-    ),
-    shape = 19,
-    #color = "black",
-    size = ifelse("size" %in% colnames(dataset) && unique(dataset[["size"]]) > 10,
-                  2.75 / (1 + 0.05 * (unique(dataset[["size"]]) - 10)), #decay fn to adapt point size to # of PTM combinations
-                  2.75),
-    alpha = 1
-  ) +
-
-    # Customize scales
+  # Customize scales & labels
+  p <- p +
     ggplot2::scale_y_continuous(labels = scales::label_percent(scale = scale)) +
     ggplot2::scale_colour_manual(values = palette_colors, drop = FALSE) +
     ggplot2::scale_fill_manual(values = palette_colors, drop = FALSE) +
-
-    # Add labels and title
     ggplot2::labs(
       x = "",
-      y =  wrap_label(stringr::str_glue("% of all variably modified forms of {id_col}")),
-      title = ifelse(is.null(plot_title), "", plot_title)
+      y = "% of variably modified forms",
+      title = if (is.null(plot_title)) "" else plot_title
     ) +
-
-    # Apply theme settings
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
-      panel.grid.major.x  = ggplot2::element_blank(),
-      panel.grid.major.y  = ggplot2::element_line(color = "grey70"),
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_line(color = "grey70"),
       axis.text.y = ggplot2::element_text(
-        size = 15,
+        size = base_text_size,
         face = "bold",
-        margin = ggplot2::margin(
-          t = 0,
-          r = 20,
-          b = 0,
-          l = 20
-        )
+        margin = ggplot2::margin(t = 0, r = 2, b = 0, l = 0)
       ),
-      axis.title.y = ggplot2::element_text(size = 16, face = "bold"),
       axis.text.x = ggplot2::element_text(
-        size = 13,
+        size = x_axis_text_size,
         face = "bold",
         angle = angle,
         colour = "black",
-        hjust = ifelse(angle == 90, 1, 0.7),
-        vjust = ifelse(angle == 90, 0.5, 0.85)
+        hjust = if (angle == 90) 1 else 0.7,
+        vjust = if (angle == 90) 0.5 else 0.85
+      ),
+      axis.title.y = ggplot2::element_text(
+        size = base_text_size,
+        face = "bold",
+        margin = ggplot2::margin(r = 3)
       ),
       axis.line.x = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
-      plot.margin = ggplot2::unit(c(0.5, 0.5, 0.2, 0.5), "cm") ,
-      legend.text = ggplot2::element_text(face = "bold", size = 14),
+      plot.margin = ggplot2::unit(c(0.5, 0.5, 0.2, 0.5), "cm"),
+      legend.text = ggplot2::element_text(face = "bold", size = base_text_size),
       legend.position = "inside",
       legend.position.inside = c(0.01, 0.95),
       legend.justification = c(0, 1),
       legend.direction = "vertical",
       legend.title = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
-      title = ggplot2::element_text(size = 17)
+      title = ggplot2::element_text(size = base_text_size)
     )
 
-
-
-
+  # ---- Save plots ----
   if (save_plot) {
-
-    #cli::cli_inform("Plotting: {id_col}")
-
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+    }
+    plot_width <- 6 + n_categories * 0.25
+    plot_height <- 6 + n_categories * 0.1
     ggplot2::ggsave(
       filename = stringr::str_glue("{id_col}.png"),
       path = output_dir,
       dpi = 300,
-      height = 7,
-      width = 10,
+      height = min(plot_height, 14),
+      width = min(plot_width, 20),
       units = "in",
       bg = "white"
     )
-
   }
 
   return(p)
@@ -414,54 +426,30 @@ plotjit <- function(dataset,
 
 
 
-
-
-
 #' @noRd
-
-
 
 assort_cond <- function(data, condition_col,  cond_order) {
 
-  conditions <- data |> dplyr::select({{condition_col}}) |> dplyr::pull()
+  conditions <- data |> dplyr::pull({{condition_col}})
 
   if (!is.null(cond_order)) {
     check_diff = base::setdiff(cond_order, unique(conditions))
 
     if(!rlang::is_empty(check_diff)){
       cli::cli_abort(c( 'x' = 'The provided conditions in `cond_order` do not match the ones in your dataset.',
-                        'i' = 'Check the following condition(s): {check_diff}'))}else{
-    sorted_levels <-  cond_order
-                                               }
-  } else {
+                        'i' = 'Check the following condition(s): {check_diff}'
+                        ))
+      } else {
+        return(cond_order)
+      }
+  }
 
     #to order conditions based on the numeric values (so 12 mM does not come before 5 mM for e.g.)
     unique_levels <- unique(conditions)
-
     numeric_values <- as.numeric(gsub("[^0-9.]", "", unique_levels))
-
     if (any(!is.na(numeric_values))) {
-
-      sorted_levels <- unique_levels[order(numeric_values)]
-
+      return(unique_levels[order(numeric_values)])
     } else {
-
-    sorted_levels <- sort(unique_levels)
-
+      return(sort(unique_levels))
     }
   }
-
-return(sorted_levels)
-
-}
-
-
-
-#' @noRd
-wrap_label <- function(label, width = 35) {
-if (nchar(label) > 47) {
-  stringr::str_wrap(label, width = width)
-} else {
-  label
-}
-}
