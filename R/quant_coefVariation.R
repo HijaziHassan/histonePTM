@@ -1,211 +1,182 @@
-
-
-
-
-
-
-#' Calculate Coefficient of Variation
+#' Calculate Coefficient of Variation (CV) for peptide intensities
 #'
-#' @param df dataframe
-#' @param df_meta dataframe containing at least these two columns: `SampleName` and `Condition`.
-#' If `TechnicalReplicate` exist and needed to be treated separately, the easiest way to transform your `df` into long format,
-#' then use `format = long` and add replace the `...` argument with the `TechnicalReplicate` column name.
-#' @param seq_col sequence column
-#' @param ptm_col PTM column
-#' @param int_col intensity columns
-#' @param format  'wide' or 'long'
-#' @param ... to add any other columns
+#' Computes mean, standard deviation, and coefficient of variation (CV)
+#' for each peptide (and PTM) across replicate samples within each condition.
+#' Supports both wide and long data formats.
 #'
-#' @importFrom rlang is_missing is_empty sym
-#' @importFrom dplyr select summarise filter group_by arrange left_join all_of
-#' @importFrom cli cli_abort
+#' @param df A data frame containing peptide intensities.
+#' @param df_meta Metadata with `SampleName` and `Condition` columns.
+#'   Required for `format = "wide"`.
+#' @param int_col Character vector of intensity column names, or a single
+#'   intensity column name for long format.
+#' @param seq_col Unquoted column name for sequence identifier.
+#' @param ptm_col Unquoted column name for PTM information (optional).
+#' @param format Either `"wide"` (default) or `"long"`.
+#' @param scale Multiplier for CV. Default `100` (percent).
+#' @param min_replicates Minimum replicates required. Default `2`.
+#' @param ... Additional grouping columns for long format.
+#'
+#' @return The input data frame with added columns:
+#'   `avg_<condition>`, `sd_<condition>`, `cv_<condition>`.
+#'
+#' @importFrom rlang is_missing sym
+#' @importFrom dplyr select summarise filter group_by left_join all_of mutate
+#' @importFrom cli cli_abort cli_alert_warning
 #' @importFrom stats sd
-#' @return The input dataframe plus 3 columns per condition: `sd_condition`, `avg_condition` and `CV_condition`.
 #' @export
+quant_coefVariation <- function(df,
+                                df_meta = NULL,
+                                int_col,
+                                seq_col,
+                                ptm_col = NULL,
+                                format = c("wide", "long"),
+                                scale = 100,
+                                min_replicates = 2,
+                                ...) {
 
-quant_coefVariation <- function(df, df_meta, int_col, seq_col, ptm_col,  format = c("wide", "long"), ...){
+  format <- match.arg(format)
 
+  # ---- Input validation ----
+  if (rlang::is_missing(df)) {
+    cli::cli_abort("Did you forget to pass your dataset to the `df` argument?")
+  }
+  if (rlang::is_missing(seq_col)) {
+    cli::cli_abort("You did not provide the name of the sequence column in `seq_col`.")
+  }
 
+  # ---- Empty data guard ----
+  if (nrow(df) == 0) {
+    cli::cli_alert_warning("Input data frame is empty. Returning as is.")
+    return(df)
+  }
 
-  if(rlang::is_missing(df)){
-    cli::cli_abort('Did you forget to pass your dataset to the `df` argument?')}
-  if(rlang::is_missing(seq_col)){
-    cli::cli_abort('You did not provide the name of the sequence column in `seq_col`.')}
+  # ---- Wide format ----
+  if (format == "wide") {
+    if (rlang::is_missing(df_meta)) {
+      cli::cli_abort(c(
+        "If data is in `format = 'wide'`, `df_meta` must be provided.",
+        "x" = "`df_meta` argument is missing.",
+        "i" = "Provide a data frame with `SampleName` and `Condition` columns."
+      ))
+    }
 
-### Wide format ---------------------
-  if(format == 'wide'){  #&& save_plot== TRUE
+    # Get intensity column names
+    int_cols <- df |> dplyr::select(dplyr::all_of({{ int_col }})) |> names()
 
+    if (rlang::is_empty(int_cols)) {
+      cli::cli_abort(c(
+        "Missing or incorrect input.",
+        "x" = "The intensity columns' names were not found.",
+        "i" = "Check the names provided in `int_col`."
+      ))
+    }
 
-#In wide format, metadata must be provided.
-    if(rlang::is_missing(df_meta)) cli::cli_abort(c( "If the data is in `format= 'wide', the `df_meta` argument must be provided.",
-                                           "x" = "`df_meta` argument is missing.",
-                                           "i" = "Provide a dataframe containing `SampleNames` and `Condition` columns.
-                                           SampleNames must contain the same name of the columns containing intensity values."))
+    # Clean metadata
+    df_meta <- df_meta[, !grepl("^\\.{3}[1-9]$|^$", colnames(df_meta))]
+    df_meta <- df_meta |> dplyr::filter(SampleName %in% int_cols)
 
+    if (nrow(df_meta) == 0) {
+      cli::cli_abort("No matching samples found between `df` and `df_meta`.")
+    }
 
-
+    # Map samples to conditions
+    sample_cond <- split(df_meta$SampleName, df_meta$Condition)
+    unique_cond <- unique(df_meta$Condition)
+    unique_cond <- unique_cond[!is.na(unique_cond)]
 
     df_cv <- df
 
-
-    #store intensity columns' names
-    int_cols <- df |>
-      dplyr::select(dplyr::all_of({{int_col}}))  |>
-      names()
-
-    #remove columns with no names or column renamed after repair to ...1, ..2
-    df_meta <-  df_meta[, !grepl("^\\.{3}[1-9]$|^$", colnames(df_meta))]
-
-    df_meta <- df_meta |> dplyr::filter(SampleName %in% int_cols)
-
-
-    #To extract sample names from metadata as named vector
-    sample_cond = split(df_meta$SampleName, df_meta$Condition)
-    unique_cond = unique(df_meta$Condition)
-
-
-#raise error if intensity column names are misspelled or using wrong pattern inside tidyselect function.
-    if(rlang::is_empty(int_cols)) cli::cli_abort(c("Missing or incorrect input.",
-                                         "x"= "The intensity columns' names were not found.",
-                                         "i" = "You either forgot to add or misspelled the names you provided in the `int_col` argument." ))
-    #remove NAs
-    unique_cond <- unique_cond[!is.na(unique_cond)]
-
-#iterate over each condition.
     for (cond in unique_cond) {
-      #Find the indices of the intensity columns correponding to each condition
-     indices = which(colnames(df_cv) %in% intersect(int_cols, sample_cond[[cond]]))
+      indices <- which(colnames(df_cv) %in% intersect(int_cols, sample_cond[[cond]]))
 
-      df_cv <- df_cv |>
-        mutate(
-
-            !!paste0("avg_", cond) := rowMeans(df_cv[ ,indices, drop = FALSE], na.rm = TRUE), #drop = FALSE keeps dataframe structure otherwise it will turn to vector.
-            !!paste0("sd_",  cond) := apply(df_cv[,  indices], 1, sd, na.rm = TRUE),
-            !!paste0("cv_",  cond) := round((!!rlang::sym(paste0("sd_", cond)) / !!rlang::sym(paste0("avg_", cond))) * 100, 2)
+      if (length(indices) < min_replicates) {
+        cli::cli_alert_warning(
+          "Condition '{cond}' has only {length(indices)} replicate(s). CV will be NA."
         )
       }
 
+      avg_col <- paste0("avg_", cond)
+      sd_col  <- paste0("sd_", cond)
+      cv_col  <- paste0("cv_", cond)
 
+      df_cv <- df_cv |>
+        dplyr::mutate(
+          !!avg_col := rowMeans(df_cv[, indices, drop = FALSE], na.rm = TRUE),
+          !!sd_col  := apply(df_cv[, indices, drop = FALSE], 1, sd, na.rm = TRUE)
+        )
+
+      # Compute CV safely (avoid division by zero)
+      df_cv <- df_cv |>
+        dplyr::mutate(
+          !!cv_col := dplyr::if_else(
+            .data[[avg_col]] == 0 | is.na(.data[[avg_col]]) | length(indices) < min_replicates,
+            NA_real_,
+            round((.data[[sd_col]] / .data[[avg_col]]) * scale, 2)
+          )
+        )
+    }
 
     return(df_cv)
 
+    # ---- Long format ----
+  } else if (format == "long") {
 
-### Long Format -------------------------------------------
-    }else if(format == "long"){
+    # Capture additional grouping columns
+    extra_groups <- rlang::enquos(...)
 
-
-
-      if("Condition" %in% colnames(df)){
-
-        df |>
-          dplyr::select({{seq_col}}, {{ptm_col}}, dplyr::all_of(int_cols), ...) |>
-          dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...) |>
-          dplyr::summarise(CV = sd(int_cols, na.rm= TRUE)/mean(int_cols, na.rm = TRUE), .groups = "drop") |>
-          dplyr::arrange(CV) -> df_cv
-
-
-
-      }else if(rlang::is_missing(df_meta)){cli::cli_abort(c( "If the data is in `format= 'long' and contains no `Condition' column, the `df_meta` argument must be provided.",
-                                                   "x" = "`Condition` column is missing.",
-                                                   "i" = "Provide `df_meta` dataframe containing `SampleNames` and `Condition`."))
-
-      }else{
-
-        df |>
-          select({{seq_col}}, {{ptm_col}}, dplyr::all_of(int_cols), ...) |>
-          dplyr::left_join(x= _, y= df_meta, by = "SampleName") |>   #to add Condition column for coloring.
-          dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...)
-          dplyr::summarise(CV = sd(int_cols, na.rm= TRUE)/mean(int_cols, na.rm = TRUE), .groups = "drop") |>
-          dplyr::arrange(CV) -> df_cv
-
-
-          # tidyr::pivot_longer(cols = {{int_col}},
-          #                     names_to = "SampleName",
-          #                     values_to = "intensity") |>
-          # dplyr::left_join(x= _, y= df_meta, by = "SampleName") |>   #to add Condition column for coloring.
-          # dplyr::group_by(Condition, {{ptm_col}},{{seq_col}}, ...)
-          # dplyr::summarise(CV = sd(!!!{{int_col}}, na.rm= TRUE)/mean(!!!{{int_col}}, na.rm = TRUE), .groups = "drop") |>
-          # # dplyr::arrange(CV) -> df_cv
-
-
-      }
-
-      return(df_cv)
-
+    if ("Condition" %in% colnames(df)) {
+      df_cv <- df |>
+        dplyr::select({{ seq_col }}, {{ ptm_col }}, dplyr::all_of(int_col), !!!extra_groups) |>
+        dplyr::group_by(Condition, {{ ptm_col }}, {{ seq_col }}, !!!extra_groups) |>
+        dplyr::summarise(
+          n_replicates = dplyr::n(),
+          mean_val = mean(.data[[int_col]], na.rm = TRUE),
+          sd_val   = sd(.data[[int_col]], na.rm = TRUE),
+          .groups = "drop"
+        ) |>
+        dplyr::mutate(
+          CV = dplyr::if_else(
+            n_replicates >= min_replicates & mean_val != 0 & !is.na(mean_val),
+            round((sd_val / mean_val) * scale, 2),
+            NA_real_
+          )
+        ) |>
+        dplyr::arrange(CV)
+    } else if (rlang::is_missing(df_meta)) {
+      cli::cli_abort(c(
+        "If data is in `format = 'long'` and contains no `Condition` column,",
+        "`df_meta` must be provided.",
+        "x" = "`Condition` column is missing.",
+        "i" = "Provide `df_meta` with `SampleName` and `Condition` columns."
+      ))
+    } else {
+      df_cv <- df |>
+        dplyr::select({{ seq_col }}, {{ ptm_col }}, dplyr::all_of(int_col), !!!extra_groups) |>
+        dplyr::left_join(df_meta, by = "SampleName") |>
+        dplyr::group_by(Condition, {{ ptm_col }}, {{ seq_col }}, !!!extra_groups) |>
+        dplyr::summarise(
+          n_replicates = dplyr::n(),
+          mean_val = mean(.data[[int_col]], na.rm = TRUE),
+          sd_val   = sd(.data[[int_col]], na.rm = TRUE),
+          .groups = "drop"
+        ) |>
+        dplyr::mutate(
+          CV = dplyr::if_else(
+            n_replicates >= min_replicates & mean_val != 0 & !is.na(mean_val),
+            round((sd_val / mean_val) * scale, 2),
+            NA_real_
+          )
+        ) |>
+        dplyr::arrange(CV)
     }
-#
-#
-#   if(plot){
-#
-#
-#     df_long <- df_cv |>
-#       pivot_longer(cols = contains(rawfilenames$SampleName),
-#                    names_to = "SampleName",
-#                    values_to = "intensity",
-#                    values_drop_na = TRUE)
-#   }
-#
-# #boxplot
-# df_cv |>
-#   ggplot(aes(x= Condition, y= CV, color = Condition))+
-#
-#   geom_boxplot(linewidth = .8)+
-#   geom_point()+
-#   geom_hline(yintercept = 0.2, linetype = "dashed", linewidth = 1.2)+
-#   labs(y= "% CV", x= "")+
-#   scale_color_manual(values = color_palette)+
-#   scale_fill_manual(values = color_palette)+
-#   scale_y_continuous(expand = c(0,0),labels = scales::percent)+
-#   theme_classic(base_size = 40)+
-#   coord_cartesian(clip = "off")+
-#   theme(legend.position = "None",
-#         axis.text.x = element_text(size= 45,colour = "black"),
-#
-#         axis.line.y = element_blank(),
-#         axis.ticks.y = element_blank(),
-#         panel.grid.major.y = element_line(linewidth = 1, colour = "grey90"))
-#
-# ggsave("CV_H3_boxplot_2.png", height = 5, width = 7, dpi = 300, units =  "in", bg = "white")
 
+    # Warn if any CVs are NA
+    if (any(is.na(df_cv$CV))) {
+      cli::cli_alert_warning(
+        "Some CV values are NA (insufficient replicates or mean = 0)."
+      )
+    }
 
-
-
-  #
-  #
-  # #line
-  #
-  # df2 |>
-  #   ggplot(aes(x= PTM, y= CV, color = Condition, group = Condition))+
-  #   geom_point()+
-  #   geom_line(linewidth = 1)+
-  #   geom_hline(yintercept = 0.2, linetype = "dashed", linewidth = 1.2)+
-  #   labs(y= "% CV", x= "", color= "")+
-  #   facet_wrap(~variant, scales = "free")+
-  #   scale_color_manual(values = color_palette)+
-  #   scale_fill_manual(values = color_palette)+
-  #   scale_y_continuous(labels = scales::percent)+
-  #
-  #   theme_classic()+
-  #   theme(legend.position = "top",
-  #         axis.text.y = element_text(size = 40, margin = margin(t = 0, r = 10, b = 0, l = 10)),
-  #         axis.title.y = element_text(size= 42, face= "bold"),
-  #         axis.text.x = element_text(size= 45, angle = 60, colour = "black",hjust = 1),
-  #         legend.text = element_text(face = "bold", size= 35),
-  #         strip.text = element_text(face = "bold", size= 35))
-  #
-  # ggsave("CV_H3.png", height = 8, width = 12, dpi = 300, units =  "in", bg = "white")
-
-
-
+    return(df_cv)
+  }
 }
-
-
-
-
-
-
-
-
-
-
-

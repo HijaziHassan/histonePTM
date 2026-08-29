@@ -2,38 +2,47 @@
 % Please edit documentation in R/quant_coefVariation.R
 \name{quant_coefVariation}
 \alias{quant_coefVariation}
-\title{Calculate Coefficient of Variation}
+\title{Calculate Coefficient of Variation (CV) for peptide intensities}
 \usage{
 quant_coefVariation(
   df,
-  df_meta,
+  df_meta = NULL,
   int_col,
   seq_col,
-  ptm_col,
+  ptm_col = NULL,
   format = c("wide", "long"),
+  scale = 100,
+  min_replicates = 2,
   ...
 )
 }
 \arguments{
-\item{df}{dataframe}
+\item{df}{A data frame containing peptide intensities.}
 
-\item{df_meta}{dataframe containing at least these two columns: `SampleName` and `Condition`.
-If `TechnicalReplicate` exist and needed to be treated separately, the easiest way to transform your `df` into long format,
-then use `format = long` and add replace the `...` argument with the `TechnicalReplicate` column name.}
+\item{df_meta}{Metadata with `SampleName` and `Condition` columns.
+Required for `format = "wide"`.}
 
-\item{int_col}{intensity columns}
+\item{int_col}{Character vector of intensity column names, or a single
+intensity column name for long format.}
 
-\item{seq_col}{sequence column}
+\item{seq_col}{Unquoted column name for sequence identifier.}
 
-\item{ptm_col}{PTM column}
+\item{ptm_col}{Unquoted column name for PTM information (optional).}
 
-\item{format}{'wide' or 'long'}
+\item{format}{Either `"wide"` (default) or `"long"`.}
 
-\item{...}{to add any other columns}
+\item{scale}{Multiplier for CV. Default `100` (percent).}
+
+\item{min_replicates}{Minimum replicates required. Default `2`.}
+
+\item{...}{Additional grouping columns for long format.}
 }
 \value{
-The input dataframe plus 3 columns per condition: `sd_condition`, `avg_condition` and `CV_condition`.
+The input data frame with added columns:
+  `avg_<condition>`, `sd_<condition>`, `cv_<condition>`.
 }
 \description{
-Calculate Coefficient of Variation
+Computes mean, standard deviation, and coefficient of variation (CV)
+for each peptide (and PTM) across replicate samples within each condition.
+Supports both wide and long data formats.
 }
