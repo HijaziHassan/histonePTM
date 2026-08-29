@@ -14,7 +14,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 biocViews: Proteomics, MassSpectrometry, Preprocessing, Software
 LazyData: true
-RoxygenNote: 7.3.3
 Depends: 
     R (>= 3.5.0)
 Imports: 
@@ -35,3 +34,4 @@ Suggests:
 URL: https://github.com/HijaziHassan/histonePTM
 BugReports: https://github.com/HijaziHassan/histonePTM/issues
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
