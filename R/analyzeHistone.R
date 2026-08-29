@@ -23,7 +23,7 @@
 #' @importFrom openxlsx writeData read.xlsx createWorkbook getSheetNames saveWorkbook addWorksheet
 #' @importFrom rlang check_installed is_missing set_names
 #' @importFrom purrr map map2 walk2 pluck map_dbl
-#' @importFrom cli cli_alert_warning cli_alert_success cli_abort cli_h1 cli_h2 cli_h3
+#' @importFrom cli cli_alert_warning cli_alert_success cli_abort cli_h1 cli_h2 cli_h3 cli_text cli_progress_step
 #'
 #' @return At least 3 excel files fragmented based on different filters:
 #' \describe{
@@ -114,8 +114,9 @@ cli::cli({
 })
 
 
-
- cat("\nCreating folders to store the results ...\n")
+cli::cli_text("")
+ cli::cli_text("\nCreating folders to store the results ...")
+ cli::cli_text("")
   misc_createFolder(foldername = "analysis")
   misc_createFolder(foldername = exp_folder_name)
   if(save_plot ==TRUE){
@@ -682,7 +683,6 @@ cli::cli_alert_success('An excel file summarizing the IDs per each {.val {ident_
 
 ## RA plots
 if(save_plot == TRUE){
-cli::cli_alert_info('Plotting RA plots ...')
 
 df_plot <- df_tobe_splitted |>
   dplyr::select(protein, sequence, seq_stretch,  PTM_unlabeled, dplyr::any_of(intensityCols)) |>
@@ -692,7 +692,7 @@ df_plot <- df_tobe_splitted |>
 df_plot |>
   dplyr::group_by(protein) |>
   dplyr::group_walk(~ {
-    #cli::cli_inform("RA plots of protein: {(.y$protein)}")
+    cli::cli_progress_step("RA plotting for protein {(.y$protein)}")
     plot_jitterbarIntvsPTM(dataset = .x,
                            x_axis = PTM_unlabeled,
                            y_axis = intensity,
@@ -706,17 +706,21 @@ df_plot |>
                            cond_order = cond_order_arg
                            )
 
-  })}
+
+
+  })
+
+
+}
 
 ## Site Abundance plot
 if(save_plot == TRUE){
-cli::cli_alert_info('Plotting RA site abundance plots ...')}
 
 siteAnalysis <- df_tobe_splitted |>
   dplyr::group_by(protein) |>
   dplyr::group_walk(~ {
-    #cli::cli_inform("Site analysis of protein: {(.y$protein)}")
- ptm_siteAbundance(df = .x,
+   cli::cli_progress_step("Site analysis of protein: {(.y$protein)}")
+    ptm_siteAbundance(df = .x,
                   ,df_meta = meta_names_merge
                   ,ptm_col = PTM
                   ,id_col = sequence
@@ -730,34 +734,51 @@ siteAnalysis <- df_tobe_splitted |>
 )
 
  })
+}
 
 
-cli::cli_alert_info('Plotting CV plots ...')
+cv_cols <- df_tobe_splitted |>
+  dplyr::select(tidyr::starts_with("cv_")) |>
+  colnames()
 
-  df_tobe_splitted |>
-    dplyr::select(tidyr::starts_with('cv_')) |>
-    tidyr::pivot_longer(cols = tidyr::everything()
-                        , names_to = "Condition"
-                        , names_prefix = "cv_"
-                        , values_to = 'CV',
-                        values_drop_na = TRUE) |>
-    plot_CVs(df = _,
-             cond_col = Condition,
-             cv_col = CV,
-             save_plot = save_plot,
-             scale = 1, #CVs are already multiplied by 100
-             output_dir= img_folder_name )
+n_conditions <- length(cv_cols)
+
+cli::cli_progress_step(
+  "Plotting CV plots for {n_conditions} condition{?s} ...",
+  msg_done = "Saved {n_conditions} CV plot{?s} to {.file {img_folder_name}}",
+  msg_failed = "Failed to save CV plots",
+  spinner = TRUE
+)
+
+df_tobe_splitted |>
+  dplyr::select(tidyr::starts_with("cv_")) |>
+  tidyr::pivot_longer(
+    cols = tidyr::everything(),
+    names_to = "Condition",
+    names_prefix = "cv_",
+    values_to = "CV",
+    values_drop_na = TRUE
+  ) |>
+  plot_CVs(
+    df = _,
+    cond_col = Condition,
+    cv_col = CV,
+    save_plot = save_plot,
+    scale = 1, # CVs are already multiplied by 100
+    output_dir = img_folder_name
+  )
+
+cli::cli_progress_done()
 
 
 
 
+# End of the Graphing Module ##########################
 
-
-#End of the Graphing Module##########################
-
-cat("\n", date(), "\n")
-cat(" A plus dans le bus ^_^!")
-
+cli::cli_alert_success("Graphing module completed.")
+cli::cli_text("")
+cli::cli_text("{.emph A plus dans le bus ^_^!}")
+cli::cli_text("Run finished at: {format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')}")
 
   }
 
